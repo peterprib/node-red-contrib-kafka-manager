@@ -1,0 +1,38 @@
+{
+  "name": "node-red-contrib-kafka-manager",
+  "version": "0.0.1",
+  "description": "Node-RED implements Kafka manager with associand associated .",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peterprib/node-red-contrib-kafka-manager.git"
+  },
+  "keywords": [
+    "node-red",
+    "adminstration",
+    "broker",
+    "consumer",
+    "kafka",
+    "manager",
+    "producer",
+    "streaming"
+  ],
+  "node-red": {
+    "nodes": {
+      "kafkaAdmin": "kafkaManager/kafkaAdmin.js",
+      "kafkaBroker": "kafkaManager/kafkaBroker.js",
+      "kafkaConsumer": "kafkaManager/kafkaConsumer.js",
+      "kafkaProducer": "kafkaManager/kafkaProducer.js"
+    }
+  },
+  "author": "Peter Prib",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/peterprib/node-red-contrib-kafka-manager/issues"
+  },
+  "homepage": "https://github.com/peterprib/node-red-contrib-kafka-manager#readme"
+}

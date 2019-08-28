@@ -1,0 +1,166 @@
+<script type="text/x-red" data-help-name="Kafka Consumer">
+    <p>Get a connection for the message to be used in following nodes</p>
+    <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+</script>
+
+<script type="text/x-red" data-template-name="Kafka Consumer">
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+    	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
+    	<input type="text" id="node-input-broker">
+  	</div>
+  	
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i> Topic </label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
+        <input type="text" id="node-input-groupId" placeholder="groupId">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-autoCommit"><i class="fa fa-list-ul"></i> Auto Commit </label>
+        <select id="node-input-autoCommit" placeholder="autoCommitt">
+            <option value="true">True</option>
+            <option value="false">False</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-autoCommitIntervalMs"><i class="icon-bookmark"></i>Auto Commit Interval (Ms)</label>
+        <input type="number" id="node-input-autoCommitIntervalMs" step=100 min=100 max=10000  >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-fetchMaxWaitMs"><i class="icon-bookmark"></i>Fetch Max Wait (Ms)</label>
+        <input type="number" id="node-input-fetchMaxWaitMs" step=10 min=10 max=10000  >
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-fetchMinBytes"><i class="icon-bookmark"></i>Fetch Min Bytes</label>
+        <input type="number" id="node-input-fetchMinBytes" step=1 min=1 max=10000  >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-fetchMaxBytes"><i class="icon-bookmark"></i>Fetch Max Bytes</label>
+        <input type="number" id="node-input-fetchMaxBytes" step=1024 min=1024 max=1024000000 >
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-fromOffset"><i class="icon-bookmark"></i>From Offset</label>
+        <input type="number" id="node-input-fromOffset" step=10 min=0 max=1024000000 >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
+        <select id="node-input-encoding" placeholder="autoCommitt">
+            <option value="utf8">utf8</option>
+            <option value="buffer">raw</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-keyEncoding"><i class="fa fa-list-ul"></i> Key Encoding </label>
+        <select id="node-input-keyEncoding" placeholder="autoCommitt">
+            <option value="utf8">utf8</option>
+            <option value="buffer">raw</option>
+        </select>
+    </div>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Kafka Consumer',{
+    	category: 'input',
+        defaults: {
+            name: {value:"",required:false},
+            broker: {type:"Kafka Broker"},
+            topic: {value:"",required:true},
+            groupId: {value:"kafka-node-group",required:true},
+            autoCommit: {value:"true",required:true},
+            autoCommitIntervalMs: {value:5000,required:true},
+            fetchMaxWaitMs: {value:100,required:true},
+            fetchMinBytes: {value:1,required:true},
+            fetchMaxBytes: {value:1024 * 1024,required:true},
+            fromOffset: {value:0,required:true},
+            encoding: {value:'utf8',required:true},
+            keyEncoding: {value:'utf8',required:true}
+        },
+	    inputs:0,
+        inputLabels: "",
+        outputs:1,
+        outputLabels: ["Message"],
+        icon: "message.png",
+        label: function() {
+            return this.name||this._("Kafka Consumer");
+        },
+        labelStyle: function() {
+            return "node_label_italic";
+        },
+        oneditprepare: function() {
+        },
+        oneditsave: function() {
+        },
+        oneditresize: function(size) {
+        },
+        button: {
+            enabled: function() {
+                return !this.changed;
+            },
+            onclick: function() {
+                if (this.changed) {
+                    return RED.notify(RED._("Queue undeployed changes"),"warning");
+                }
+                var label = this._def.label.call(this);
+                if (label.length > 30) {
+                    label = label.substring(0,50)+"...";
+                }
+                label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+                var node = this;
+                
+                function sendCommand(element,action) {
+                	const nodeName="Kafka Consumer";
+                	$(element).dialog("close");
+                	$.get( "/KafkaConsumer/"+node.id+"/"+action )
+			        .done(function( json ) {
+            			    	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
+                			}).fail(function( jqXHR, textStatus, error ) {
+                   				if (jqXHR.status === 404) {
+     			                	RED.notify(node._(nodeName+" signal not deployed"),"error");
+                				} else if (jqXHR.status === 500) {
+   				                	RED.notify(node._(nodeName+" signal inject failed with error "+textStatus||""),"error");
+                				} else if (jqXHR.status === 0) {
+ 									RED.notify(node._(nodeName+" signal no response"),"error");
+                   				} else {
+									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus),"error");
+								}
+							});
+                }
+                $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
+  				.dialog({
+      				modal: true, title: (node.name||'Kafka Consumer'), zIndex: 10000, autoOpen: true,
+   					width: 'auto', resizable: false,
+					buttons: {
+						pause: function () {
+							sendCommand(this,"pause");
+						},
+						resume: function () {
+							sendCommand(this,"resume");
+						}
+					},
+					close: function (event, ui) {
+				    	$(this).remove();
+					}
+				});
+            }
+        }
+ 
+    });
+</script>

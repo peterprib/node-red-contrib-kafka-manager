@@ -1,0 +1,107 @@
+<script type="text/x-red" data-help-name="Kafka Broker">
+    <p>Define a Kafka Broker. </p>
+</script>
+
+<script type="text/x-red" data-template-name="Kafka Broker">
+
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input  id="node-config-input-name" type="text" >
+    </div>
+
+  	<div class="form-row">
+        <label for="node-config-input-host"><i class="icon-bookmark"></i> Host</label>
+        <input type="text" id="node-config-input-host">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="icon-bookmark"></i> Port</label>
+        <input type="number" id="node-config-input-port">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-user"><i class="icon-bookmark"></i> User</label>
+        <input type="text" id="node-config-input-user">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="icon-bookmark"></i> Password</label>
+        <input type="password" id="node-config-input-password">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-connectTimeout"><i class="fa fa-tag"></i> Connect Timeout (ms) </label>
+        <input type="number" min="100" max="100" step="100" id="node-config-input-connectTimeout">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-requestTimeout"><i class="fa fa-tag"></i> Request Timeout (ms) </label>
+        <input type="number" min="100" max="100000" step="100" id="node-config-input-requestTimeout">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-autoConnect"><i class="fa fa-tag"></i> Auto Connect </label>
+         <select id="node-config-input-autoConnect">
+         	<option value="true">True</option>
+         	<option value="false">False</option>
+         </select>
+    </div
+
+    <div class="form-row">
+        <label for="node-config-input-idleConnection"><i class="fa fa-tag"></i> Idle Connection (mins) </label>
+        <input type="number" min="1" max="1000" step="1" id="node-config-input-idleConnection">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-reconnectOnIdle"><i class="fa fa-tag"></i> Reconnect On Idle </label>
+         <select id="node-config-input-reconnectOnIdle">
+         	<option value="true">True</option>
+         	<option value="false">False</option>
+         </select>
+    </div
+
+    <div class="form-row">
+        <label for="node-config-input-maxAsyncRequests"><i class="fa fa-tag"></i> Max Async Requests (ms) </label>
+        <input type="number" min="1" max="1000" step="1" id="node-config-input-maxAsyncRequests">
+    </div>
+
+    <div class="form-row">
+        <label for="node-config-input-checkInterval"><i class="fa fa-tag"></i> Check Interval (secs) </label>
+        <input type="number" id="node-config-input-checkInterval" min=0 max=4096 step=1>
+    </div>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Kafka Broker',{
+        category: 'config',
+        icon: "setting.png",
+        defaults: {
+        	name: {required:false},
+        	host: {value:"localhost" ,required:true},
+            port: {value:9092, required:false},
+			connectTimeout: {value:10000, required:false},
+			requestTimeout: {value:30000, required:false},
+			autoConnect: {value:"true", required:false},
+			idleConnection: {value:5, required:false},
+			reconnectOnIdle: {value:"true", required:false},
+			maxAsyncRequests: {value:10, required:false},
+			checkInterval: {value:10, required:false}        },
+        credentials: {
+            user: {type:'text'},
+            password: {type:'password'}
+        },
+        label: function() {
+        	this.service=this.name||(this.host+(+this.port?":"+this.port:""));
+            return this.service;
+        },
+        labelStyle: function() {
+            return "node_label_italic";
+        },
+  	    oneditprepare: function() {
+    		// this.credentials.username is set to the appropriate value
+    		// this.credentials.password is not set
+    		// this.credentials.has_password indicates if the property is present in the runtime
+  		}
+    });
+</script>

@@ -1,0 +1,97 @@
+<script type="text/x-red" data-help-name="Kafka Producer">
+    <p>Get a connection for the message to be used in following nodes</p>
+    <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+</script>
+
+<script type="text/x-red" data-template-name="Kafka Producer">
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+    	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
+    	<input type="text" id="node-input-broker">
+  	</div>
+
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i> Topic </label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-requireAcks"><i class="fa fa-tag"></i> Require Ack </label>
+        <input type="number" min="0" max="1"  id="node-input-requireAcks" >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-ackTimeoutMs"><i class="fa fa-tag"></i> Ack Timeout (Ms) </label>
+        <input type="number" min="100" max="100000" step="100" id="node-input-ackTimeoutMs" >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-partitionerType"><i class="fa fa-tag"></i> Partitioner </label>
+        <select id="node-input-partitionerType">
+         	<option value="0">default</option>
+         	<option value="1">random</option>
+         	<option value="2">cyclic</option>
+         	<option value="3">keyed</option>
+         	<option value="4">custom</option>
+         </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-key"><i class="fa fa-tag"></i> Key </label>
+        <input type="text" id="node-input-key" placeholder="key">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-partition"><i class="fa fa-tag"></i> Partition </label>
+        <input type="number" min="0" max="1000" step="1" id="node-input-partition">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-attributes"><i class="fa fa-tag"></i> Attributes</label>
+         <select id="node-input-attributes">
+         	<option value="0">No compression</option>
+         	<option value="1">Compress using GZip</option>
+         	<option value="2">Compress using snappy</option>
+         </select>
+    </div>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Kafka Producer',{
+    	category: 'output',
+        defaults: {
+            name: {value:"",required:false},
+            broker: {type:"Kafka Broker"},
+            topic: {value:"",required:true},
+            requireAcks: {value:1,required:true},
+            ackTimeoutMs: {value:100,required:true},
+            partitionerType: {value:0,required:true},
+            key: {required:false},
+            partition: {value:0,required:true},
+            attributes: {value:0,required:true}
+        },
+	    inputs:1,
+        inputLabels: "",
+        outputs:0,
+        outputLabels: [],
+        icon: "publish.png",
+        label: function() {
+            return this.name||this._("Kafka Producer");
+        },
+        labelStyle: function() {
+            return "node_label_italic";
+        },
+        oneditprepare: function() {
+        },
+        oneditsave: function() {
+        },
+        oneditresize: function(size) {
+        }
+    });
+</script>
