@@ -34,6 +34,7 @@ Provide the ability to process administration tasks such as create and list topi
 ## Kafka Consumer
 
 Consumer of topic messages in kafka which are generated into node-red message. 
+Provides types of base and high level.
 
 ![Kafka Consumer](documentation/consumer.JPG "Kafka Consumer")
 
@@ -41,7 +42,8 @@ Consumer of topic messages in kafka which are generated into node-red message.
 
 ## Kafka Producer
 
-Converts a node-red message into a kafka messages. 
+Converts a node-red message into a kafka messages.
+Provides types of base and high level.
 
 ![Kafka Producer](documentation/producer.JPG "Kafka Producer")
 
@@ -86,6 +88,9 @@ Includes sample script for start kafka in windows using node-red
 ------------------------------------------------------------
 
 # Version
+
+0.0.2 Add in High level producer/consumer.  
+	Make connection more robust on kafka up/down due to bugs and problem points in in [kafka-node][4] 
 
 0.0.1 base
 

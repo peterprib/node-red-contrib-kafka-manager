@@ -13,7 +13,7 @@ function debugOn(m) {
 	}
 	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] Kafka Consumer "+(m instanceof Object?JSON.stringify(m):m));
 }
-let debug=debugOff,debugCnt=100;
+let debug=debugOn,debugCnt=100;
 
 let kafka;
 
@@ -35,10 +35,60 @@ function sendMsg(node,message) {
 		}
 	});
 }
+function connect(node) {
+	node.consumer = new kafka[(node.connectionType||"Consumer")](node.client,
+    		[
+            	{ topic: node.topic, partition: 0 }
+            ],
+           	{	groupId: node.groupId||"kafka-node-group",
+            	autoCommit: (node.autoCommit||"true")=="true",
+            	autoCommitIntervalMs: node.autoCommitIntervalMs||5000,
+            	fetchMaxWaitMs: node.fetchMaxWaitMs||100,
+            	fetchMinBytes: node.fetchMinBytes||1,
+            	fetchMaxBytes: node.fetchMaxBytes||1024 * 1024,
+            	fromOffset: node.fromOffset||0,
+            	encoding: node.encoding||'utf8',
+            	keyEncoding: node.keyEncoding||'utf8'
+         	}
+       	);
+      	node.consumer.on('message', (message)=>{
+      		if(!node.ready) {
+      			node.ready=true;
+           		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
+           		if(message.value==null) return;  //  seems to send an empty on connect in no messages waiting
+      		}
+      		if(node.timedout) {
+           		node.timedout=false;
+           		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
+      		}
+      		if(Array.isArray(message)) {
+      			message.forEach( (r)=>sendMsg(node,r));
+      		} else {
+      			sendMsg(node,message);
+      		}
+    	});
+      	
+		node.consumer.on('error', function (e) {
+			if(e.message.startsWith("Request timed out")) {
+	       		node.status({ fill: 'yellow', shape: 'ring', text: e.message });
+				node.log("on error "+e.message);
+				node.timedout=true;
+				return;
+			}
+			node.error("on error "+e.message);
+			
+			const err=node.brokerNode.getRevisedMessage(e.message);
+       		node.status({ fill: 'red', shape: 'ring', text: err });
+		})
+		node.consumer.on('offsetOutOfRange', function (e) {
+			node.error(e);
+       		node.status({ fill: 'red', shape: 'ring', text: e.message });
+		})
+}
 module.exports = function(RED) {
     function KafkaConsumerNode(n) {
         RED.nodes.createNode(this,n);
-        var node=Object.assign(this,n,{connected:false});
+        var node=Object.assign(this,n,{connected:false,paused:false,timedout:false});
         node.brokerNode=RED.nodes.getNode(node.broker);
    		node.status({ fill: 'yellow', shape: 'ring', text: "Initialising" });
    		try{
@@ -48,46 +98,20 @@ module.exports = function(RED) {
    			}
    			if(!node.topic) throw Error("Topic is null or empty string");
       		node.client = node.brokerNode.getKafkaClient();
-        	node.consumer = new kafka.Consumer(node.client,
-        		[
-                	{ topic: node.topic, partition: 0 }
-                ],
-               	{	groupId: node.groupId||"kafka-node-group",
-                	autoCommit: (node.autoCommit||"true")=="true",
-                	autoCommitIntervalMs: node.autoCommitIntervalMs||5000,
-                	fetchMaxWaitMs: node.fetchMaxWaitMs||100,
-                	fetchMinBytes: node.fetchMinBytes||1,
-                	fetchMaxBytes: node.fetchMaxBytes||1024 * 1024,
-                	fromOffset: node.fromOffset||0,
-                	encoding: node.encoding||'utf8',
-                	keyEncoding: node.keyEncoding||'utf8'
-             	}
-           	);
-          	node.consumer.on('connect', function () {
-           		node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
-          	});        
-          	node.consumer.on('message', (message)=>{
-          		if(!node.ready) {
-          			node.ready=true;
-               		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
-               		if(message.value==null) return;  //  seems to send an empty on connect in no messages waiting
-          		}
-          		if(Array.isArray(message)) {
-          			message.forEach( (r)=>sendMsg(node,r));
-          		} else {
-          			sendMsg(node,message);
-          		}
-        	});
-          	
-			node.consumer.on('error', function (e) {
-				node.error("on error "+e.message);
-				const err=node.brokerNode.getRevisedMessage(e.message);
-	       		node.status({ fill: 'red', shape: 'ring', text: err });
-			})
-			node.consumer.on('offsetOutOfRange', function (e) {
-				node.error(e);
-	       		node.status({ fill: 'red', shape: 'ring', text: e.message });
-			})
+   			node.brokerNode.onStateUp.push({node:node,callback:function(){connect(node);}});  //needed due to bug in kafka driver
+   			node.brokerNode.stateUp.push({node:node,callback: function() {
+   					if(this.paused) {
+						this.log("state changed to up and in paused state");
+						return;
+					}
+   					if(!this.ready) {
+						this.log("state changed to up but not in ready state");
+						return;
+					}
+					this.log("state changed to up, resume issued");
+					this.resume();
+   				} 
+   			});
     		node.on("close", function(removed,done) {
 	       		node.status({ fill: 'red', shape: 'ring', text: "closed" });
     			node.consumer.close(false,()=>{
@@ -96,10 +120,12 @@ module.exports = function(RED) {
 				done();
        		});
 			node.pause = (()=>{
+				node.paused=true;
 				node.consumer.pause();
 	       		node.status({ fill: 'red', shape: 'ring', text: "paused" });
 			});
 			node.resume = (()=>{
+				node.resumed=true;
 				node.consumer.resume();
            		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
 			});

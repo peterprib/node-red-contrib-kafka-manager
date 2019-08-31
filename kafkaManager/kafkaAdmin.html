@@ -85,7 +85,7 @@
                 				} else if (jqXHR.status === 0) {
  									RED.notify(node._(nodeName+" signal no response"),"error");
                    				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus),"error");
+									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
 								}
 					});
                 }

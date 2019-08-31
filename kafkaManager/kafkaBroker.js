@@ -35,24 +35,26 @@ function hostAvailable(host, port, node, availableCB, downCB, timeoutCB) {
     	(downCB||timeoutCB).apply(node,["time out"]);
     }).connect(port, host);
 };
-
 function stateChange(list,state){
 	list.forEach((r)=>{
-		r.node.log("state change "+state)
-		r.callback.apply(r.node,[r.args])
+		r.node.log("state change "+state);
+		r.callback.apply(r.node,[r.args]);
 	})
 };
-
 function testHost(node) {
-	debug({label:"testHost",host:node.host, port:node.port, node:node.id});
+	debug({label:"testHost",host:node.host, port:node.port, node:node.id,available:node.available});
     hostAvailable(node.host,node.port,node,
-    	(node)=>{
+    	()=>{
        		if(node.available) return;
        		node.available=true;
-       		node.log("state change up");
+       		node.log("state change up, processing "+node.stateUp.length+" node scripts");
        		stateChange(node.stateUp,"Up");
+       		while(node.onStateUp.length) {
+       			let r=node.onStateUp.shift();
+       			r.callback.apply(r.node,[r.args]);
+       		}
        	},
-       	(node,err)=>{
+       	(err)=>{
        		if(!node.available) return;
        		node.available=false;
        		node.error("state change down "+err.toString());
@@ -148,7 +150,7 @@ function connectKafka(node,type){
 module.exports = function(RED) {
     function KafkaBrokerNode(n) {
         RED.nodes.createNode(this,n);
-        let node=Object.assign(this,n,{available:false,connect:connect,setState:setState,stateUp:[],stateDown:[]});
+        let node=Object.assign(this,n,{available:false,connect:connect,setState:setState,stateUp:[],stateDown:[],onStateUp:[]});
         node.getKafkaDriver = (()=> {
         	if(!kafka) {
         		try{
@@ -162,7 +164,7 @@ module.exports = function(RED) {
         });
         
 		node.getKafkaClient = ((o)=> {
-			const options=Object.assign({
+			let options=Object.assign({
    				kafkaHost: node.host+':'+node.port,
    				connectTimeout: node.connectTimeout||10000,
    				requestTimeout: node.requestTimeout||30000,
@@ -170,15 +172,25 @@ module.exports = function(RED) {
    				idleConnection: node.idleConnection||5,
    				reconnectOnIdle: (node.reconnectOnIdle||"true")=="true",
    				maxAsyncRequests: node.maxAsyncRequests||10
+				
+//   			sslOptions: Object, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false } (Kafka 0.9+)
+/*
+var fs = require("fs");
+var sslOptions = {
+  key : fs.readFileSync("./rootCa.key"),
+  cert : fs.readFileSync("./rootCa.crt")
+};
+ */
     		},o)
+    		
+    		if(node.credentials.has_password) {
+    			options.sasl={ mechanism: 'plain', username: this.credentials.user, password: node.credentials.password };
+    		}
+    		
     		debug({label:"getKafkaClient",options:options});
         	return new kafka.KafkaClient(options);
         });
 		node.getRevisedMessage = ((err)=> {
-			if(err.startsWith("Broker not available (loadMetadataForTopics)")) {
-				node.connection.connect();
-				return err+", reconnect issued, try again";
-			}
 			if(err.startsWith("connect ECONNREFUSED")) return "Connection refused, check if Kafka up";
 			return err;
         });

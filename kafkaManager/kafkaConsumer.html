@@ -11,6 +11,14 @@
     </div>
 
     <div class="form-row">
+        <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
+         <select id="node-input-type">
+         	<option value="Consumer">Base</option>
+         	<option value="HighLevelConsumer">High Level (round robin)</option>
+         </select>
+    </div>
+    
+    <div class="form-row">
     	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
     	<input type="text" id="node-input-broker">
   	</div>
@@ -91,7 +99,8 @@
             fetchMaxBytes: {value:1024 * 1024,required:true},
             fromOffset: {value:0,required:true},
             encoding: {value:'utf8',required:true},
-            keyEncoding: {value:'utf8',required:true}
+            keyEncoding: {value:'utf8',required:true},
+            connectionType: {value:"",required:true}
         },
 	    inputs:0,
         inputLabels: "",
@@ -105,6 +114,9 @@
             return "node_label_italic";
         },
         oneditprepare: function() {
+            if(!this.v) {
+        		this.connectionType="Consumer";
+        	}
         },
         oneditsave: function() {
         },
@@ -139,7 +151,7 @@
                 				} else if (jqXHR.status === 0) {
  									RED.notify(node._(nodeName+" signal no response"),"error");
                    				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus),"error");
+									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
 								}
 							});
                 }

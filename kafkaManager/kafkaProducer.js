@@ -72,10 +72,35 @@ function setInError(node,errmsg) {
 	node.status({ fill: 'yellow', shape: 'ring', text: "send error "+errmsg });
 	node.inError=true;
 }
+
+function connect(node) {
+	node.producer = new kafka[(node.connectionType||"Producer")](node.client,
+		{
+				// Configuration for when to consider a message as acknowledged, default 1
+		requireAcks: node.partitionerType||1,
+			    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
+		ackTimeoutMs: node.partitionerType||100,
+			    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
+		partitionerType: node.partitionerType||0
+	});
+	node.status({ fill: 'yellow', shape: 'ring', text: "Waiting on "+ node.brokerNode.name });
+	node.producer.on('error', function (e) {
+		node.error("on error "+e.message);
+		const err=node.brokerNode.getRevisedMessage(e.message);
+		node.status({ fill: 'red', shape: 'ring', text: err });
+	})
+	node.producer.on('ready', function () {
+		node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
+		node.connected=true;
+		node.log("connected and processing "+node.waiting.length+" messages");
+		producerSend(node,node.waiting);
+	});
+}
+
 module.exports = function(RED) {
     function KafkaProducerNode(n) {
         RED.nodes.createNode(this,n);
-        var node=Object.assign(this,n,{connected:false,waiting:[]});
+        let node=Object.assign(this,n,{connected:false,waiting:[]});
         node.brokerNode=RED.nodes.getNode(node.broker);
    		node.status({ fill: 'yellow', shape: 'ring', text: "Initialising" });
    		try{
@@ -84,27 +109,7 @@ module.exports = function(RED) {
    				kafka = node.brokerNode.getKafkaDriver();
    			}
    			node.client = node.brokerNode.getKafkaClient();
-   			node.producer = new kafka.Producer(node.client,
-   					{
-   			    // Configuration for when to consider a message as acknowledged, default 1
-   			    requireAcks: node.partitionerType||1,
-   			    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
-   			    ackTimeoutMs: node.partitionerType||100,
-   			    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
-   			    partitionerType: node.partitionerType||0
-   			});
-   	   		node.status({ fill: 'yellow', shape: 'ring', text: "Waiting on "+ node.brokerNode.name });
-			node.producer.on('error', function (e) {
-				node.error("on error "+e.message);
-				const err=node.brokerNode.getRevisedMessage(e.message);
-	       		node.status({ fill: 'red', shape: 'ring', text: err });
-			})
-   	        node.producer.on('ready', function () {
-   	       		node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
-   	            node.connected=true;
-           		node.log("connected and processing "+node.waiting.length+" messages");
-   	           	producerSend(node,node.waiting);
-   	        });
+   			node.brokerNode.onStateUp.push({node:node,callback:function(){connect(node);}});  //needed due to bug in kafka driver
     	} catch (e) {
 			node.error(e.message);
        		node.status({ fill: 'red', shape: 'ring', text: e.message });
@@ -116,7 +121,7 @@ module.exports = function(RED) {
             	producerSend(node,msg);
             	return;
             }
-            node.waiting.push(msg);
+        	node.waiting.push(msg);
         });
 		node.on("close", function(removed,done) {
        		node.status({ fill: 'red', shape: 'ring', text: "closed" });
