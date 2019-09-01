@@ -14,19 +14,43 @@
         <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
          <select id="node-input-type">
          	<option value="Consumer">Base</option>
-         	<option value="HighLevelConsumer">High Level (round robin)</option>
          </select>
     </div>
-    
+ 
     <div class="form-row">
     	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
     	<input type="text" id="node-input-broker">
   	</div>
-  	
+    
     <div class="form-row">
-        <label for="node-input-topic"><i class="fa fa-tag"></i> Topic </label>
-        <input type="text" id="node-input-topic" placeholder="Topic">
+        <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaConsumer-tabs"></ul>
     </div>
+
+    <div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
+		<div id="kafkaConsumer-tab-topics" style="display:none">
+		
+   <div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
+		<label style="vertical-align:top;">
+			<i class="fa fa-list-alt"></i> Topic 
+        	<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+		</label>
+		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
+				<table>
+ 	              	<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+                		<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+                			<td style="min-width: 10px;">Delete</td>
+                			<td style="min-width: 200px;">Name</td>
+                			<td style="min-width: 60px;">Offset</td>
+                			<td style="min-width: 60px;">Partition</td>
+                		</tr>
+                	</tbody>
+			</table>
+		</div>
+    </div>		
+		
+	    </div>
+
+		<div id="kafkaConsumer-tab-options" style="display:none">
 
     <div class="form-row">
         <label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
@@ -46,6 +70,10 @@
         <input type="number" id="node-input-autoCommitIntervalMs" step=100 min=100 max=10000  >
     </div>
 
+	    </div>
+
+		<div id="kafkaConsumer-tab-fetch" style="display:none">
+    
     <div class="form-row">
         <label for="node-input-fetchMaxWaitMs"><i class="icon-bookmark"></i>Fetch Max Wait (Ms)</label>
         <input type="number" id="node-input-fetchMaxWaitMs" step=10 min=10 max=10000  >
@@ -60,6 +88,11 @@
         <label for="node-input-fetchMaxBytes"><i class="icon-bookmark"></i>Fetch Max Bytes</label>
         <input type="number" id="node-input-fetchMaxBytes" step=1024 min=1024 max=1024000000 >
     </div>
+
+	    </div>
+
+		<div id="kafkaConsumer-tab-encoding" style="display:none">
+		
     
     <div class="form-row">
         <label for="node-input-fromOffset"><i class="icon-bookmark"></i>From Offset</label>
@@ -81,6 +114,10 @@
             <option value="buffer">raw</option>
         </select>
     </div>
+		
+	    </div>
+
+    </div>
 
 </script>
 
@@ -90,14 +127,15 @@
         defaults: {
             name: {value:"",required:false},
             broker: {type:"Kafka Broker"},
-            topic: {value:"",required:true},
+            topic: {required:false},    // legacy can be removed in future
+            topics: {value:[{topic:"topic1",offset:0,partition:0}],required:true},
             groupId: {value:"kafka-node-group",required:true},
             autoCommit: {value:"true",required:true},
-            autoCommitIntervalMs: {value:5000,required:true},
-            fetchMaxWaitMs: {value:100,required:true},
-            fetchMinBytes: {value:1,required:true},
-            fetchMaxBytes: {value:1024 * 1024,required:true},
-            fromOffset: {value:0,required:true},
+            autoCommitIntervalMs: {value:5000,required:true,validate:RED.validators.number()},
+            fetchMaxWaitMs: {value:100,required:true,validate:RED.validators.number()},
+            fetchMinBytes: {value:1,required:true,validate:RED.validators.number()},
+            fetchMaxBytes: {value:1024 * 1024,required:true,validate:RED.validators.number()},
+            fromOffset: {value:0,required:true,validate:RED.validators.number()},
             encoding: {value:'utf8',required:true},
             keyEncoding: {value:'utf8',required:true},
             connectionType: {value:"",required:true}
@@ -114,11 +152,70 @@
             return "node_label_italic";
         },
         oneditprepare: function() {
-            if(!this.v) {
+        	let tabs = RED.tabs.create({
+                id: "node-config-kafkaConsumer-tabs",
+                onchange: function(tab) {
+                    $("#node-config-kafkaConsumer-tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                }
+            });
+            tabs.addTab({
+                id: "kafkaConsumer-tab-topics",
+                label: "Topics"
+            });
+            tabs.addTab({
+                id: "kafkaConsumer-tab-options",
+                label: "Options"
+            });
+            tabs.addTab({
+                id: "kafkaConsumer-tab-fetch",
+                label: "Fetch"
+            });
+            tabs.addTab({
+                id: "kafkaConsumer-tab-encoding",
+                label: "Encoding"
+            });
+        
+            if(!this.connectionType) {
         		this.connectionType="Consumer";
         	}
+        	
+        	let node=this;
+  	    	if(!node.topics) {   // due to legacy
+  	    	 	node.topics=node.topic?[{topic:node.topic,offset:0,partition:0}]:[];
+  	    	 	node.topic=null;
+  	    	}
+  	    	if(!node.topics.length) {
+  	    		node.topics.push({topic:"topic0",offset:0,partition:0});
+  	    	}
+  	    	node.topics.forEach((r)=>addTopic(r.topic,r.offset,r.partition));
+            $("#node-input-add-topic").click(function() {
+               addTopic("topic"+$("#node-input-topics-tbody").children().length, 0,0);
+            });
+            function addTopic(topic,offset,partition) {
+  	        	let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
+  	        	if($("#node-input-topics-tbody").children().length>2){
+	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
+        	        deleteButton.click(function() {
+            	    	$(this).parent().remove();
+                	});
+  	        	} else {
+  	        		$('<a/>').appendTo(row);
+  	        	}
+                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
+				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', offset)).appendTo(row); // offset
+				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', partition)).appendTo(row); // partition
+            }
+        	
         },
         oneditsave: function() {
+           	let inputs,node=this;
+        	node.topics=[];
+        	$('#node-input-topics-tbody tr:gt(0)').each(function () {
+            	inputs=$(this).find("input");
+            	node.topics.push({topic:inputs[0].value,offset:parseInt(inputs[1].value,10),partition:parseInt(inputs[2].value,10)});
+			});
         },
         oneditresize: function(size) {
         },

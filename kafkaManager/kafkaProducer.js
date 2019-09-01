@@ -1,6 +1,22 @@
 const ts=(new Date().toString()).split(' ');
 console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] Kafka Producer Copyright 2019 Jaroslav Peter Prib");
 
+const debugOff=(()=>false);
+function debugOn(m) {
+	const ts=(new Date().toString()).split(' ');
+	const label="Kafka Producer";
+	if(!debugCnt--) {
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging turn off");
+		debug=debugOff;
+	}
+	if(debugCnt<0) {
+		debugCnt=100;
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging next "+debugCnt+" debug points");
+	}
+	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" "+(m instanceof Object?JSON.stringify(m):m));
+}
+let debug=debugOn,debugCnt=100;
+
 let kafka;
 
 function producerSend(node,msg,retry) {

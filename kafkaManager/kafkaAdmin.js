@@ -3,6 +3,7 @@ console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] Kafka Admin Co
 
 const debugOff=(()=>false);
 function debugOn(m) {
+	const ts=(new Date().toString()).split(' ');
 	if(!debugCnt--) {
 		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] Kafka Admin debugging turn off");
 		debug=debugOff;
@@ -15,7 +16,6 @@ function debugOn(m) {
 }
 let debug=debugOn,debugCnt=100;
 
-//let kafka;
 function msgProcess(node,msg,err,data) {
 	debug({label:"msgProcess",error:err,data:data});
 	if(err) {
@@ -118,9 +118,6 @@ module.exports = function(RED) {
    		node.status({ fill: 'yellow', shape: 'ring', text: "Deferred connection" });
    		try{
    			if(!node.brokerNode) throw Error("Broker not found "+node.broker);
-//			if(!kafka) {
-//				kafka = node.brokerNode.getKafkaDriver();
-//			}
             node.on('input', function (msg) {
 /*            	if(mg.topic=="state") {
             		let state=0,nodeStates=[];
@@ -198,7 +195,6 @@ module.exports = function(RED) {
         				return;
         			case 'connect': 
         				debug({label:"httpadmin connect",connection:Object.keys(node.connection)});
-debug({label:"httpadmin connect",connection:Object.keys(node.connection)});
         				node.connection.connect((err,data)=>adminRequest(node,res,err,data));
         				return;
     	       	     default:

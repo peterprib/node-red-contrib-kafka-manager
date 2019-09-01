@@ -3,6 +3,7 @@ console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] Kafka Consumer
 
 const debugOff=(()=>false);
 function debugOn(m) {
+	const ts=(new Date().toString()).split(' ');
 	if(!debugCnt--) {
 		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] Kafka Consumer debugging turn off");
 		debug=debugOff;
@@ -20,10 +21,10 @@ let kafka;
 function ConsumerSend(node,msg) {
 	node.Consumer.send([{topic: msg.topic, messages: msg.payload}],function (err, data) {
 		if(err) node.error(err);
-		debug("data sent "+JSON.stringify(data) );
 	});
 }
 function sendMsg(node,message) {
+	debug({label:"sendMsg",node:node.id,message:message});
 	node.send({
 		topic:message.topic||node.topic,
 		payload:message.value,
@@ -36,10 +37,9 @@ function sendMsg(node,message) {
 	});
 }
 function connect(node) {
-	node.consumer = new kafka[(node.connectionType||"Consumer")](node.client,
-    		[
-            	{ topic: node.topic, partition: 0 }
-            ],
+	debug({label:"connect",node:node.id});
+	node.client = node.brokerNode.getKafkaClient();
+	node.consumer = new kafka[(node.connectionType||"Consumer")](node.client,node.topics,
            	{	groupId: node.groupId||"kafka-node-group",
             	autoCommit: (node.autoCommit||"true")=="true",
             	autoCommitIntervalMs: node.autoCommitIntervalMs||5000,
@@ -52,6 +52,7 @@ function connect(node) {
          	}
        	);
       	node.consumer.on('message', (message)=>{
+      		debug({label:"consumer.on.message",node:node.id,message:message});
       		if(!node.ready) {
       			node.ready=true;
            		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
@@ -69,6 +70,7 @@ function connect(node) {
     	});
       	
 		node.consumer.on('error', function (e) {
+      		debug({label:"consumer.on.error",node:node.id,error:e});
 			if(e.message.startsWith("Request timed out")) {
 	       		node.status({ fill: 'yellow', shape: 'ring', text: e.message });
 				node.log("on error "+e.message);
@@ -81,6 +83,7 @@ function connect(node) {
        		node.status({ fill: 'red', shape: 'ring', text: err });
 		})
 		node.consumer.on('offsetOutOfRange', function (e) {
+      		debug({label:"consumer.on.offsetOutOfRange",node:node.id,error:e});
 			node.error(e);
        		node.status({ fill: 'red', shape: 'ring', text: e.message });
 		})
@@ -92,27 +95,30 @@ module.exports = function(RED) {
         node.brokerNode=RED.nodes.getNode(node.broker);
    		node.status({ fill: 'yellow', shape: 'ring', text: "Initialising" });
    		try{
+    		if(!node.topics) node.topics=[{topic: node.topic, partition: 0 }]; //legacy can be removed in future
    			if(!node.brokerNode) throw Error("Broker not found "+node.broker);
    			if(!kafka) {
    				kafka = node.brokerNode.getKafkaDriver();
    			}
-   			if(!node.topic) throw Error("Topic is null or empty string");
-      		node.client = node.brokerNode.getKafkaClient();
-   			node.brokerNode.onStateUp.push({node:node,callback:function(){connect(node);}});  //needed due to bug in kafka driver
+   			node.brokerNode.onStateUp.push({node:node,callback:function(){
+	      		debug({label:"brokerNode.stateUp",node:node.id});
+   				connect(node);
+   			}});  //needed due to bug in kafka driver
    			node.brokerNode.stateUp.push({node:node,callback: function() {
-   					if(this.paused) {
-						this.log("state changed to up and in paused state");
-						return;
-					}
-   					if(!this.ready) {
-						this.log("state changed to up but not in ready state");
-						return;
-					}
-					this.log("state changed to up, resume issued");
-					this.resume();
-   				} 
-   			});
+   	      		debug({label:"brokerNode.stateUp",node:node.id});
+   				if(this.paused) {
+					this.log("state changed to up and in paused state");
+					return;
+				}
+   				if(!this.ready) {
+					this.log("state changed to up but not in ready state");
+					return;
+				}
+				this.log("state changed to up, resume issued");
+				this.resume();
+   			}});
     		node.on("close", function(removed,done) {
+	      		debug({label:"close",node:node.id});
 	       		node.status({ fill: 'red', shape: 'ring', text: "closed" });
     			node.consumer.close(false,()=>{
     				node.log("closed");
@@ -120,27 +126,34 @@ module.exports = function(RED) {
 				done();
        		});
 			node.pause = (()=>{
+	      		debug({label:"pause",node:node.id});
 				node.paused=true;
 				node.consumer.pause();
 	       		node.status({ fill: 'red', shape: 'ring', text: "paused" });
 			});
 			node.resume = (()=>{
+	      		debug({label:"resume",node:node.id});
 				node.resumed=true;
 				node.consumer.resume();
            		node.status({ fill: 'green', shape: 'ring', text: "Ready with "+ node.brokerNode.name });
 			});
 			node.addTopics = ((topics, fromOffset)=>{
 				node.consumer.addTopics(topics,
-					(err, added)=>{},
+					(err, added)=>{
+			      		debug({label:"consumer.addTopics",node:node.id,topics:topics,fromOffset:fromOffset,added:added,error:err});
+					},
 					fromOffset
 				);
 			});
 			node.removeTopics = ((topics)=>{
-				node.consumer.removeTopics(topics,(err,added)=>{	
+				node.consumer.removeTopics(topics,(err,removed)=>{	
+		      		debug({label:"consumer.addTopics",node:node.id,topics:topics,removed:removed,error:err});
 				});
 			});
 			node.commit = (()=>{
-				node.consumer.commit((err, data)=>{});
+				node.consumer.commit((err, data)=>{
+		      		debug({label:"commit",node:node.id,error:err,data:data});
+				});
 			});
 			node.setOffset = ((topic, partition, offset)=>node.consumer.setOffset(topic, partition, offset));
 			node.pauseTopics = ((topics)=>node.consumer.pauseTopics(topics));

@@ -1,5 +1,5 @@
-# node-red-contrib-kafka-manager
-Nodes for working with apache kafka, a streaming product.
+# [node-red-contrib-kafka-manager][2]
+[Node Red][1] for working with apache kafka, a streaming product.
 First initial release using [kafka-node][4] .
 
 * Kafka Broker
@@ -7,11 +7,15 @@ First initial release using [kafka-node][4] .
 * Kafka Consumer
 * Kafka Producer
 
+Has a test GUI which allows topics to be added.
+
 ## To Do
 
-* sign-on connection
-* Multi topic 
-* add HighLevelProducer, ProducerStream, ConsumerStream, ConsumerGroup,ConsumerGroupStream and Offset
+* ConsumerGroup
+* ProducerStream
+* ConsumerStream
+* ConsumerGroupStream
+* Offset
 
 ------------------------------------------------------------
 
@@ -20,6 +24,7 @@ First initial release using [kafka-node][4] .
 Defines the client interface to kafka. 
 
 ![Kafka Broker](documentation/broker.JPG "Kafka Broker")
+![Kafka Broker Options](documentation/brokerOptions.JPG "Kafka Broker Options")
 
 ------------------------------------------------------------
 
@@ -37,6 +42,9 @@ Consumer of topic messages in kafka which are generated into node-red message.
 Provides types of base and high level.
 
 ![Kafka Consumer](documentation/consumer.JPG "Kafka Consumer")
+![Kafka Consumer Options](documentation/consumerOptions.JPG "Kafka Consumer Options")
+![Kafka Consumer Fetch](documentation/consumerFetch.JPG "Kafka Consumer Fetch")
+![Kafka Consumer Encoding](documentation/consumerEncoding.JPG "Kafka Consumer Encoding")
 
 ------------------------------------------------------------
 
@@ -89,8 +97,13 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
-0.0.2 Add in High level producer/consumer.  
-	Make connection more robust on kafka up/down due to bugs and problem points in in [kafka-node][4] 
+0.1.0 Add in High level producer/consumer.
+  	Further fixes to make connection more robust on kafka up/down
+  	Multi host per broker
+  	Multi Topic for consumer
+
+0.0.2 Add in High level producer. 
+  	Make connection more robust on kafka up/down due to bugs and problem points in in [kafka-node][4] 
 
 0.0.1 base
 

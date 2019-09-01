@@ -9,66 +9,99 @@
         <input  id="node-config-input-name" type="text" >
     </div>
 
-  	<div class="form-row">
-        <label for="node-config-input-host"><i class="icon-bookmark"></i> Host</label>
-        <input type="text" id="node-config-input-host">
+    <div class="form-row">
+        <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaBroker-tabs"></ul>
     </div>
 
-    <div class="form-row">
-        <label for="node-config-input-port"><i class="icon-bookmark"></i> Port</label>
-        <input type="number" id="node-config-input-port">
+    <div id="node-config-kafkaBroker-tabs-content" style="min-height: 170px;">
+		<div id="kafkaBroker-tab-connection" style="display:none">
+
+
+   <div class="form-row node-input-hosts-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
+		<label style="vertical-align:top;">
+			<i class="fa fa-list-alt"></i> Hosts 
+        	<a href="#" class="editor-button editor-button-small" id="node-input-add-host" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+		</label>
+		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
+				<table>
+ 	              	<tbody id="node-input-hosts-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+                		<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+                			<td style="min-width: 10px;">Delete</td>
+                			<td style="min-width: 200px;">Name</td>
+                			<td style="min-width: 60px;">Port </td>
+                		</tr>
+                	</tbody>
+			</table>
+		</div>
     </div>
 
-    <div class="form-row">
-        <label for="node-config-input-user"><i class="icon-bookmark"></i> User</label>
-        <input type="text" id="node-config-input-user">
-    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-password"><i class="icon-bookmark"></i> Password</label>
-        <input type="password" id="node-config-input-password">
-    </div>
+			<div class="form-row">
+				<input type="checkbox" id="node-config-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
+				<label for="node-config-input-usetls" style="width: auto">Use TLS</label>
+				<div id="node-config-row-tls" class="hide">
+					<label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls"><span data-i18n="mqtt.label.tls-config"></span></label><input style="width: 300px;" type="text" id="node-config-input-tls">
+ 		        </div>
+		 	</div>
+ 	
+		    <div class="form-row">
+		        <label for="node-config-input-user"><i class="icon-bookmark"></i> User</label>
+		        <input type="text" id="node-config-input-user">
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-connectTimeout"><i class="fa fa-tag"></i> Connect Timeout (ms) </label>
-        <input type="number" min="100" max="100" step="100" id="node-config-input-connectTimeout">
-    </div>
+		    <div class="form-row">
+		        <label for="node-config-input-password"><i class="icon-bookmark"></i> Password</label>
+		        <input type="password" id="node-config-input-password">
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-requestTimeout"><i class="fa fa-tag"></i> Request Timeout (ms) </label>
-        <input type="number" min="100" max="100000" step="100" id="node-config-input-requestTimeout">
-    </div>
+		</div>
 
-    <div class="form-row">
-        <label for="node-config-input-autoConnect"><i class="fa fa-tag"></i> Auto Connect </label>
-         <select id="node-config-input-autoConnect">
-         	<option value="true">True</option>
-         	<option value="false">False</option>
-         </select>
-    </div
+		<div id="kafkaBroker-tab-options" style="display:none">
+		
+			<div class="form-row">
+        		<label for="node-config-input-connectTimeout"><i class="fa fa-tag"></i> Connect Timeout (ms) </label>
+		        <input type="number" min="100" max="100" step="100" id="node-config-input-connectTimeout">
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-idleConnection"><i class="fa fa-tag"></i> Idle Connection (mins) </label>
-        <input type="number" min="1" max="1000" step="1" id="node-config-input-idleConnection">
-    </div>
+		    <div class="form-row">
+		        <label for="node-config-input-requestTimeout"><i class="fa fa-tag"></i> Request Timeout (ms) </label>
+ 		       <input type="number" min="100" max="100000" step="100" id="node-config-input-requestTimeout">
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-reconnectOnIdle"><i class="fa fa-tag"></i> Reconnect On Idle </label>
-         <select id="node-config-input-reconnectOnIdle">
-         	<option value="true">True</option>
-         	<option value="false">False</option>
-         </select>
-    </div
+		    <div class="form-row">
+		        <label for="node-config-input-autoConnect"><i class="fa fa-tag"></i> Auto Connect </label>
+		         <select id="node-config-input-autoConnect">
+		         	<option value="true">True</option>
+		         	<option value="false">False</option>
+		         </select>
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-maxAsyncRequests"><i class="fa fa-tag"></i> Max Async Requests (ms) </label>
-        <input type="number" min="1" max="1000" step="1" id="node-config-input-maxAsyncRequests">
-    </div>
+		    <div class="form-row">
+		        <label for="node-config-input-idleConnection"><i class="fa fa-tag"></i> Idle Connection (mins) </label>
+ 				<input type="number" min="1" max="1000" step="1" id="node-config-input-idleConnection">
+		    </div>
 
-    <div class="form-row">
-        <label for="node-config-input-checkInterval"><i class="fa fa-tag"></i> Check Interval (secs) </label>
-        <input type="number" id="node-config-input-checkInterval" min=0 max=4096 step=1>
-    </div>
+		    <div class="form-row">
+		        <label for="node-config-input-reconnectOnIdle"><i class="fa fa-tag"></i> Reconnect On Idle </label>
+ 		        <select id="node-config-input-reconnectOnIdle">
+		         	<option value="true">True</option>
+		         	<option value="false">False</option>
+		         </select>
+		    </div>
+
+		    <div class="form-row">
+		        <label for="node-config-input-maxAsyncRequests"><i class="fa fa-tag"></i> Max Async Requests (ms) </label>
+		        <input type="number" min="1" max="1000" step="1" id="node-config-input-maxAsyncRequests">
+		    </div>
+
+		    <div class="form-row">
+		        <label for="node-config-input-checkInterval"><i class="fa fa-tag"></i> Check Interval (secs) </label>
+		        <input type="number" id="node-config-input-checkInterval" min=0 max=4096 step=1>
+		    </div>
+
+		</div>
+
+	</div>
 
 </script>
 
@@ -78,30 +111,106 @@
         icon: "setting.png",
         defaults: {
         	name: {required:false},
-        	host: {value:"localhost" ,required:true},
-            port: {value:9092, required:false},
-			connectTimeout: {value:10000, required:false},
-			requestTimeout: {value:30000, required:false},
+        	host: {required:false},   // legacy can be removed in future
+        	port: {required:false},   // legacy can be removed in future
+        	hosts: {value:[{host:"127.0.0.1",port:9092}] ,required:true},
+			connectTimeout: {value:10000, required:false,validate:RED.validators.number()},
+			requestTimeout: {value:30000, required:false,validate:RED.validators.number()},
 			autoConnect: {value:"true", required:false},
-			idleConnection: {value:5, required:false},
+			idleConnection: {value:5, required:false,validate:RED.validators.number()},
 			reconnectOnIdle: {value:"true", required:false},
-			maxAsyncRequests: {value:10, required:false},
-			checkInterval: {value:10, required:false}        },
+			maxAsyncRequests: {value:10, required:false,validate:RED.validators.number()},
+			checkInterval: {value:10, required:false,validate:RED.validators.number()},
+			tls: {type:"tls-config",required: false},
+			usetls: {value: false}
+	    },
         credentials: {
             user: {type:'text'},
             password: {type:'password'}
         },
         label: function() {
-        	this.service=this.name||(this.host+(+this.port?":"+this.port:""));
+        	if(this.name) {
+        	   	this.service=this.name
+        	} else {
+	        	this.service=node.hosts.map((r)=>r.host+":"+r.port).join(" ");
+        	}
             return this.service;
         },
         labelStyle: function() {
             return "node_label_italic";
         },
   	    oneditprepare: function() {
-    		// this.credentials.username is set to the appropriate value
-    		// this.credentials.password is not set
-    		// this.credentials.has_password indicates if the property is present in the runtime
-  		}
+  	    	let tabs = RED.tabs.create({
+                id: "node-config-kafkaBroker-tabs",
+                onchange: function(tab) {
+                    $("#node-config-kafkaBroker-tabs-content").children().hide();
+                    $("#" + tab.id).show();
+                }
+            });
+            tabs.addTab({
+                id: "kafkaBroker-tab-connection",
+                label: "Connection"
+            });
+            tabs.addTab({
+                id: "kafkaBroker-tab-options",
+                label: "Options"
+            });
+  	    	
+  	    	if(typeof this.usetls === 'undefined') {
+                this.usetls = false;
+                $("#node-config-input-usetls").prop("checked",false);
+            }
+            function updateTLSOptions() {
+                if ($("#node-config-input-usetls").is(':checked')) {
+                    $("#node-config-row-tls").show();
+                } else {
+                    $("#node-config-row-tls").hide();
+                }
+            }
+            updateTLSOptions();
+            $("#node-config-input-usetls").on("click",function() {
+                updateTLSOptions();
+            });
+            
+  	    	let node=this;
+  	    	if(!node.hosts) {   // due to legacy
+  	    	 	node.hosts=node.host?[{host:node.host,port:node.port}]:[];
+  	    	 	node.host=null;
+  	    	}
+  	    	if(!node.hosts.length) {
+  	    		node.hosts.push({host:"127.0.0.1",port:9092});
+  	    	}
+  	    	node.hosts.forEach((r)=>addHost(r.host,r.port));
+            $("#node-input-add-host").click(function() {
+               addHost("localhost", 9091+$("#node-input-hosts-tbody").children().length);
+            });
+            function addHost(host,port) {
+  	        	let row=$('<tr/>').appendTo($("#node-input-hosts-tbody"));
+  	        	if($("#node-input-hosts-tbody").children().length>2){
+	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
+        	        deleteButton.click(function() {
+            	    	$(this).parent().remove();
+                	});
+  	        	} else {
+  	        		$('<a/>').appendTo(row);
+  	        	}
+
+                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', host)).appendTo(row); // host
+				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', port)).appendTo(row); // port
+            }
+            
+  		},
+  		oneditsave: function() {
+            if (!$("#node-config-input-usetls").is(':checked')) {
+                $("#node-config-input-tls").val("");
+            }
+           	let inputs,node=this;
+        	node.hosts=[];
+        	$('#node-input-hosts-tbody tr:gt(0)').each(function () {
+            	inputs=$(this).find("input");
+            	node.hosts.push({host:inputs[0].value,port:parseInt(inputs[1].value,10)});
+			});
+        }
     });
 </script>

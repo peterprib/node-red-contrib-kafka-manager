@@ -3,7 +3,8 @@ console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] Kafka Broker C
 
 const debugOff=(()=>false);
 function debugOn(m) {
-	const label="Kafka Broker"
+	const ts=(new Date().toString()).split(' ');
+	const label="Kafka Broker";
 	if(!debugCnt--) {
 		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging turn off");
 		debug=debugOff;
@@ -21,19 +22,36 @@ let kafka;
 function hostAvailable(host, port, node, availableCB, downCB, timeoutCB) {
 	debug({label:"hostAvailable",host:host, port:port, node:node.id});
 	const socket=new require('net').Socket();
-	socket.setTimeout(2000);
 	socket.on('connect', function() {
 		debug({label:"hostAvailable connect",host:host, port:port, node:node.id});
-		socket.destroy();
-        availableCB.apply(node,[node]);
-    }).on('error', function(e) {
+		try{
+			socket.destroy();
+			availableCB.apply(node,[node]);
+		} catch(e) {
+			node.error("hostAvailable on connect error "+e.message);
+		}
+    })
+    .on('end', function() {
+		debug({label:"hostAvailable end",host:host, port:port, node:node.id});
+    })
+    .on('error', function(e) {
 		debug({label:"hostAvailable error",host:host, port:port, node:node.id,error:e.toString()});
-    	socket.destroy();
-        downCB.apply(node,[e]);
+		try{
+	    	socket.destroy();
+	        downCB.apply(node,[e]);
+		} catch(e) {
+			node.error("hostAvailable on error "+e.message);
+		}
     }).on('timeout', function() {
 		debug({label:"hostAvailable timeout",host:host, port:port, node:node.id});
-    	(downCB||timeoutCB).apply(node,["time out"]);
-    }).connect(port, host);
+		try{
+    		(downCB||timeoutCB).apply(node,["time out"]);
+		} catch(e) {
+			node.error("hostAvailable on error "+e.message);
+		}
+    });
+	socket.setTimeout(2000);
+	socket.connect(port, host);
 };
 function stateChange(list,state){
 	list.forEach((r)=>{
@@ -41,11 +59,23 @@ function stateChange(list,state){
 		r.callback.apply(r.node,[r.args]);
 	})
 };
-function testHost(node) {
-	debug({label:"testHost",host:node.host, port:node.port, node:node.id,available:node.available});
-    hostAvailable(node.host,node.port,node,
+function testHosts(node) {
+	debug({label:"testHosts",node:node.id,available:node.available});
+	testHost(node,0);
+}
+function testHost(node,i) {
+	if(i>=node.hosts.length) {
+   		if(!node.available) return;
+   		node.available=false;
+   		node.error("state change down");
+   		stateChange(node.stateDown,"Down");
+		return;
+	}
+	let host=node.hosts[i];
+	debug({label:"testHost",host:host.host,port:host.port,node:node.id});
+    hostAvailable(host.host,host.port,node,
     	()=>{
-       		if(node.available) return;
+    		if(node.available) return;
        		node.available=true;
        		node.log("state change up, processing "+node.stateUp.length+" node scripts");
        		stateChange(node.stateUp,"Up");
@@ -55,10 +85,7 @@ function testHost(node) {
        		}
        	},
        	(err)=>{
-       		if(!node.available) return;
-       		node.available=false;
-       		node.error("state change down "+err.toString());
-       		stateChange(node.stateDown,"Down");
+   			testHost(node,++i);
        	}
     );
 }
@@ -83,35 +110,28 @@ function setState(node){
 }
 
 function connect(node,type,errCB){
-	debug({label:"connect",type:type,node:node,node:node.id});
-	node.connecting=true;
-	if(!node.brokerNode.host || !node.brokerNode.port) {
+	debug({label:"connect",type:type,node:node,node:node.id,available:node.available});
+	if(node.available) {
+		if(errCB) errCB.apply(node,["connect attempt and not available"]);
+		return;
+	}
+	if(!node.brokerNode.hosts.length) {
 		node.connecting=false;
 		node.log("host and/or port not defined");
 		node.status({ fill: 'red', shape: 'ring', text: "host not defined correctly" });
 		if(errCB) errCB.apply(node,["host/port missing"]);
 		return;
 	}
-	hostAvailable(node.brokerNode.host,node.brokerNode.port,node,
-		()=>{
-			debug({label:"connect hostAvailable",node:node.id,host:node.brokerNode.host,port:node.brokerNode.port});
-			if(node.client) {
-           		node.status({ fill: 'yellow', shape: 'ring', text: "Reconnecting" });
-        		node.log("Trying to reconnect");
-        		node.client.connect();
-        		return;
-			}
-			node.log("Initiating connection");
-	   		node.status({ fill: 'yellow', shape: 'ring', text: "Connecting" });
-			connectKafka(node,type);
-		},
-		(e)=>{
-			debug({label:"connect hostAvailable error",node:node.id,host:node.brokerNode.host,port:node.brokerNode.port,error:e});
-			node.connecting=false;
-			node.status({ fill: 'red', shape: 'ring', text: "Kafka is down or unreachable" });
-			if(errCB) errCB.apply(node,[e]);
-		}
-	);
+	node.connecting=true;
+	if(node.client) {
+   		node.status({ fill: 'yellow', shape: 'ring', text: "Reconnecting" });
+   		node.log("Trying to reconnect");
+   		node.client.connect();
+   		return;
+	}
+	node.log("Initiating connection");
+	node.status({ fill: 'yellow', shape: 'ring', text: "Connecting" });
+	connectKafka(node,type);
 };
 
 function connectKafka(node,type){
@@ -150,7 +170,15 @@ function connectKafka(node,type){
 module.exports = function(RED) {
     function KafkaBrokerNode(n) {
         RED.nodes.createNode(this,n);
-        let node=Object.assign(this,n,{available:false,connect:connect,setState:setState,stateUp:[],stateDown:[],onStateUp:[]});
+        let node=Object.assign(this,{hosts:[]},n,{available:false,connect:connect,setState:setState,stateUp:[],stateDown:[],onStateUp:[]});
+        if(node.hosts.length==0 && node.host ) node.hosts.push({host:node.host,port:node.port});
+    	node.kafkaHost=node.hosts.map((r)=>r.host+":"+r.port).join(" ");
+
+        if (node.usetls && node.tls) {
+            let tlsNode = RED.nodes.getNode(node.tls);
+            if (tlsNode) tlsNode.addTLSOptions(node.TLSOptions);
+        }
+        
         node.getKafkaDriver = (()=> {
         	if(!kafka) {
         		try{
@@ -165,28 +193,20 @@ module.exports = function(RED) {
         
 		node.getKafkaClient = ((o)=> {
 			let options=Object.assign({
-   				kafkaHost: node.host+':'+node.port,
+   				kafkaHost: node.kafkaHost,
    				connectTimeout: node.connectTimeout||10000,
    				requestTimeout: node.requestTimeout||30000,
    				autoConnect: (node.autoConnect||"true")=="true",
    				idleConnection: node.idleConnection||5,
    				reconnectOnIdle: (node.reconnectOnIdle||"true")=="true",
    				maxAsyncRequests: node.maxAsyncRequests||10
-				
-//   			sslOptions: Object, options to be passed to the tls broker sockets, ex. { rejectUnauthorized: false } (Kafka 0.9+)
-/*
-var fs = require("fs");
-var sslOptions = {
-  key : fs.readFileSync("./rootCa.key"),
-  cert : fs.readFileSync("./rootCa.crt")
-};
- */
     		},o)
-    		
+    		if(node.TLSOptions) {
+    			options.sslOptions=node.TLSOptions;
+    		}
     		if(node.credentials.has_password) {
     			options.sasl={ mechanism: 'plain', username: this.credentials.user, password: node.credentials.password };
     		}
-    		
     		debug({label:"getKafkaClient",options:options});
         	return new kafka.KafkaClient(options);
         });
@@ -194,9 +214,17 @@ var sslOptions = {
 			if(err.startsWith("connect ECONNREFUSED")) return "Connection refused, check if Kafka up";
 			return err;
         });
-        testHost(node);
+        testHosts(node);
         if(node.checkInterval && node.checkInterval>0) {
-        	this.runtimeTimer=setInterval(function(){testHost.apply(node,[node]);},node.checkInterval*1000);
+        	this.runtimeTimer=setInterval(function(){
+        			try{
+        				testHosts.apply(node,[node]);
+        			} catch(e) {
+        				node.send("runtimeTimer "+e.message);
+        			}
+        		},
+        		node.checkInterval*1000
+        	);
             this.close = function() {
             	runtimeStop.apply(node);
             };
