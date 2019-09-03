@@ -207,6 +207,7 @@ module.exports = function(RED) {
     		if(node.credentials.has_password) {
     			options.sasl={ mechanism: 'plain', username: this.credentials.user, password: node.credentials.password };
     		}
+    		node.getKafkaDriver();
     		debug({label:"getKafkaClient",options:options});
         	return new kafka.KafkaClient(options);
         });

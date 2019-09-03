@@ -1,19 +1,19 @@
-const label="Kafka Offset";
+const nodeLabel="Kafka Offset";
 const ts=(new Date().toString()).split(' ');
-console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] "+label+" Copyright 2019 Jaroslav Peter Prib");
+console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] "+nodeLabel+" Copyright 2019 Jaroslav Peter Prib");
 
 const debugOff=(()=>false);
 function debugOn(m) {
 	const ts=(new Date().toString()).split(' ');
 	if(!debugCnt--) {
-		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging turn off");
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" debugging turn off");
 		debug=debugOff;
 	}
 	if(debugCnt<0) {
 		debugCnt=100;
-		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging next "+debugCnt+" debug points");
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" debugging next "+debugCnt+" debug points");
 	}
-	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" "+(m instanceof Object?JSON.stringify(m):m));
+	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" "+(m instanceof Object?JSON.stringify(m):m));
 }
 let debug=debugOn,debugCnt=100;
 
@@ -135,10 +135,10 @@ module.exports = function(RED) {
        		done();
    		});
     }
-    RED.nodes.registerType(label,KafkaOffsetNode);
+    RED.nodes.registerType(nodeLabel,KafkaOffsetNode);
     RED.httpAdmin.get("/KafkaOffset/:id/:action/", RED.auth.needsPermission("KafkaOffset.write"),  function(req,res) {
     	var node = RED.nodes.getNode(req.params.id);
-    	if (node && node.type===label) {
+    	if (node && node.type===nodeLabel) {
     		if(!node.connected) {
            		node.brokerNode.connect(node,"Admin",(err)=>{
         	        node.error(err);

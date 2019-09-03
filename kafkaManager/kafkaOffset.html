@@ -1,6 +1,44 @@
 <script type="text/x-red" data-help-name="Kafka Offset">
     <p>Get a connection for the message to be used in following nodes</p>
     <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+    <h3>fetch payload</h3> 
+    <pre>
+[
+    {
+        "topic": "test",
+        "partition": 0,
+        "maxNum": 100
+    }
+]
+    </pre>
+    <h3>fetchEarliestOffset payloads</h3> 
+    <pre>
+[
+    {
+        "topic": "test"
+    }
+]
+    </pre>
+    <h3>fetchLatestOffsets payload</h3> 
+    <pre>
+[
+    {
+        "topic": "test"
+    }
+]
+    </pre>
+    <h3>fetchCommits payload</h3> 
+    <pre>
+{
+    "groupid": "aGroup",
+    "topics": [
+        {
+            "topic": "test"
+        }
+    ]
+}
+    </pre>
+    
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Offset">

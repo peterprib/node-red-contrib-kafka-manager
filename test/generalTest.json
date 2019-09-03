@@ -7,6 +7,13 @@
         "info": ""
     },
     {
+        "id": "b0fe1e4d.2bc61",
+        "type": "tab",
+        "label": "Test Offset",
+        "disabled": false,
+        "info": ""
+    },
+    {
         "id": "b1cf75c9.df5408",
         "type": "tab",
         "label": "scripts",
@@ -195,14 +202,14 @@
         "z": "985354f6.552ed8",
         "name": "Kafka Admin",
         "broker": "abe5b085.ab96b",
-        "x": 370,
-        "y": 260,
+        "x": 390,
+        "y": 380,
         "wires": [
             [
                 "9863cfa7.8acd"
             ],
             [
-                "9863cfa7.8acd"
+                "10f66549.438e7b"
             ]
         ]
     },
@@ -217,8 +224,8 @@
         "tostatus": false,
         "complete": "true",
         "targetType": "full",
-        "x": 570,
-        "y": 260,
+        "x": 610,
+        "y": 320,
         "wires": []
     },
     {
@@ -233,8 +240,8 @@
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "x": 130,
-        "y": 300,
+        "x": 150,
+        "y": 420,
         "wires": [
             [
                 "5c47d596.3c5c8c"
@@ -253,8 +260,8 @@
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "x": 140,
-        "y": 240,
+        "x": 160,
+        "y": 380,
         "wires": [
             [
                 "5c47d596.3c5c8c"
@@ -280,7 +287,7 @@
         "z": "985354f6.552ed8",
         "name": "",
         "x": 470,
-        "y": 140,
+        "y": 200,
         "wires": [
             []
         ]
@@ -458,8 +465,8 @@
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "describeConfigs",
+                "t": "cont",
+                "v": "describe",
                 "vt": "str"
             }
         ],
@@ -510,7 +517,9 @@
         "x": 680,
         "y": 180,
         "wires": [
-            []
+            [
+                "bbaccf34.b804b"
+            ]
         ]
     },
     {
@@ -518,7 +527,7 @@
         "type": "function",
         "z": "d721b82a.0d41d8",
         "name": "extract groups",
-        "func": "if(msg.payload.consumerGroups) {\n    let groups=Object.keys(msg.payload.consumerGroups );\n    if(groups) {\n        msg.payload=groups.map(v=>{return {group:v}});\n    }\n}\nreturn msg;",
+        "func": "let groups=Object.keys(msg.payload );\nif(groups) {\n    msg.payload=groups.map(v=>{return {group:v}});\n}\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 500,
@@ -1071,8 +1080,8 @@
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "x": 100,
-        "y": 360,
+        "x": 120,
+        "y": 140,
         "wires": [
             [
                 "e043889e.2dd7d8"
@@ -1084,8 +1093,8 @@
         "type": "Monitor Flow",
         "z": "985354f6.552ed8",
         "name": "",
-        "x": 330,
-        "y": 360,
+        "x": 350,
+        "y": 140,
         "wires": [
             [
                 "2f341b0a.2072e4"
@@ -1122,7 +1131,7 @@
         "keyEncoding": "utf8",
         "connectionType": "Consumer",
         "x": 140,
-        "y": 140,
+        "y": 200,
         "wires": [
             [
                 "174d0f92.28147"
@@ -1161,8 +1170,8 @@
         "partition": 0,
         "attributes": 0,
         "connectionType": "HighLevelProducer",
-        "x": 570,
-        "y": 360,
+        "x": 590,
+        "y": 140,
         "wires": []
     },
     {
@@ -1178,7 +1187,7 @@
                 "partition": 0
             }
         ],
-        "groupId": "kafka-node-group",
+        "groupId": "groupTopicAtest",
         "autoCommit": "true",
         "autoCommitIntervalMs": 5000,
         "fetchMaxWaitMs": 100,
@@ -1188,11 +1197,240 @@
         "encoding": "utf8",
         "keyEncoding": "utf8",
         "connectionType": "Consumer",
-        "x": 420,
-        "y": 200,
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "d0cf8150.ac195"
+            ]
+        ]
+    },
+    {
+        "id": "10f66549.438e7b",
+        "type": "debug",
+        "z": "985354f6.552ed8",
+        "name": "error",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "8e510a36.b5e038",
+        "type": "Kafka Consumer Group",
+        "z": "985354f6.552ed8",
+        "name": "",
+        "broker": "abe5b085.ab96b",
+        "groupId": "aGroup",
+        "sessionTimeout": 15000,
+        "protocol": [
+            "roundrobin"
+        ],
+        "encoding": "utf8",
+        "fromOffset": "latest",
+        "commitOffsetsOnFirstJoin": "true",
+        "outOfRangeOffset": "earliest",
+        "topics": [
+            "test",
+            "topic2"
+        ],
+        "x": 160,
+        "y": 320,
+        "wires": [
+            [
+                "e1194461.2ae728"
+            ]
+        ]
+    },
+    {
+        "id": "d0cf8150.ac195",
+        "type": "Monitor Flow",
+        "z": "985354f6.552ed8",
+        "name": "",
+        "x": 410,
+        "y": 260,
         "wires": [
             [
                 "9863cfa7.8acd"
+            ]
+        ]
+    },
+    {
+        "id": "e1194461.2ae728",
+        "type": "Monitor Flow",
+        "z": "985354f6.552ed8",
+        "name": "",
+        "x": 390,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b4c9839d.88f26",
+        "type": "inject",
+        "z": "b0fe1e4d.2bc61",
+        "name": "fetch topic test",
+        "topic": "fetch",
+        "payload": "[{\"topic\":\"test\",\"partition\":0,\"maxNum\":100}]",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 60,
+        "wires": [
+            [
+                "4eaa4e17.3b226"
+            ]
+        ]
+    },
+    {
+        "id": "f127091e.9e6a38",
+        "type": "inject",
+        "z": "b0fe1e4d.2bc61",
+        "name": "fetchEarliestOffsets for test",
+        "topic": "fetchEarliestOffsets",
+        "payload": "[{\"topic\":\"test\"}]",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 170,
+        "y": 100,
+        "wires": [
+            [
+                "4eaa4e17.3b226"
+            ]
+        ]
+    },
+    {
+        "id": "4eaa4e17.3b226",
+        "type": "Kafka Offset",
+        "z": "b0fe1e4d.2bc61",
+        "name": "",
+        "broker": "abe5b085.ab96b",
+        "x": 430,
+        "y": 80,
+        "wires": [
+            [
+                "d77ffae4.19de48"
+            ],
+            [
+                "e82d48af.587398"
+            ]
+        ]
+    },
+    {
+        "id": "e82d48af.587398",
+        "type": "debug",
+        "z": "b0fe1e4d.2bc61",
+        "name": "error",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "d77ffae4.19de48",
+        "type": "debug",
+        "z": "b0fe1e4d.2bc61",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "575bfc92.0a8e44",
+        "type": "inject",
+        "z": "b0fe1e4d.2bc61",
+        "name": "fetchLatestOffsets for test",
+        "topic": "fetchLatestOffsets",
+        "payload": "[{\"topic\":\"test\"}]",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 170,
+        "y": 140,
+        "wires": [
+            [
+                "4eaa4e17.3b226"
+            ]
+        ]
+    },
+    {
+        "id": "d3a1de84.710be",
+        "type": "inject",
+        "z": "b0fe1e4d.2bc61",
+        "name": "fetchCommits",
+        "topic": "fetchCommits",
+        "payload": "{\"groupid\":\"aGroup\",\"topics\":[{\"topic\":\"test\"}]}",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 180,
+        "wires": [
+            [
+                "4eaa4e17.3b226"
+            ]
+        ]
+    },
+    {
+        "id": "cc60e919.fa0c98",
+        "type": "inject",
+        "z": "985354f6.552ed8",
+        "name": "describeGroups",
+        "topic": "describeGroups",
+        "payload": "[\"aGroup\"]",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 140,
+        "y": 460,
+        "wires": [
+            [
+                "5c47d596.3c5c8c"
+            ]
+        ]
+    },
+    {
+        "id": "bbaccf34.b804b",
+        "type": "function",
+        "z": "d721b82a.0d41d8",
+        "name": "form group details request",
+        "func": "msg.payload=[msg.payload.group];\nmsg.topic=\"describeGroups\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 590,
+        "y": 60,
+        "wires": [
+            [
+                "2f7ef747.cfbe18"
             ]
         ]
     }

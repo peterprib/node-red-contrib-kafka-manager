@@ -1,21 +1,22 @@
+const nodeLabel="Kafka Producer";
 const ts=(new Date().toString()).split(' ');
-console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] Kafka Producer Copyright 2019 Jaroslav Peter Prib");
+console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [info] "+nodeLabel+" Copyright 2019 Jaroslav Peter Prib");
 
 const debugOff=(()=>false);
 function debugOn(m) {
 	const ts=(new Date().toString()).split(' ');
-	const label="Kafka Producer";
 	if(!debugCnt--) {
-		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging turn off");
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" debugging turn off");
 		debug=debugOff;
 	}
 	if(debugCnt<0) {
 		debugCnt=100;
-		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" debugging next "+debugCnt+" debug points");
+		console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" debugging next "+debugCnt+" debug points");
 	}
-	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+label+" "+(m instanceof Object?JSON.stringify(m):m));
+	console.log([parseInt(ts[2],10),ts[1],ts[4]].join(' ')+" - [debug] "+nodeLabel+" "+(m instanceof Object?JSON.stringify(m):m));
 }
 let debug=debugOn,debugCnt=100;
+
 
 let kafka;
 
@@ -92,6 +93,7 @@ function setInError(node,errmsg) {
 
 function connect(node) {
 	debug({label:"connect",node:node.id});
+	if(!node.client) node.client = node.brokerNode.getKafkaClient();
 	node.producer = new kafka[(node.connectionType||"Producer")](node.client,
 		{
 				// Configuration for when to consider a message as acknowledged, default 1
@@ -126,7 +128,6 @@ module.exports = function(RED) {
    			if(!kafka) {
    				kafka = node.brokerNode.getKafkaDriver();
    			}
-   			node.client = node.brokerNode.getKafkaClient();
    			node.brokerNode.onStateUp.push({node:node,callback:function(){connect(node);}});  //needed due to bug in kafka driver
     	} catch (e) {
 			node.error(e.message);
@@ -149,5 +150,5 @@ module.exports = function(RED) {
        		done();
    		});
     }
-    RED.nodes.registerType("Kafka Producer",KafkaProducerNode);
+    RED.nodes.registerType(nodeLabel,KafkaProducerNode);
 };

@@ -11,6 +11,8 @@ First initial release using [kafka-node][4] .
 
 Has a test GUI which allows topics to be added.
 
+Note: all nodes run in debug mode for 100 messages then turns off.
+
 ------------------------------------------------------------
 
 ## Kafka Broker
@@ -52,7 +54,9 @@ Consumer of topic messages in kafka which are generated into node-red message.
 
 ## Kafka Offset
 
-Dymanically get messages in Kafka
+Get various offsets from Kafka. Which type are set via msg.action or msg.topic.  msg.payload states the types of options.
+
+
 
 ![Kafka Offset](documentation/offset.JPG "Kafka Offset")
 
@@ -107,7 +111,9 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
-0.2.0 Add ndoes consumer group and offset.
+0.2.0 Add nodes consumer group and offset.
+	Another fix to issue with initial no kafka.
+	describe groups implemented
 
 0.1.0 Add in High level producer/consumer.
   	Further fixes to make connection more robust on kafka up/down
