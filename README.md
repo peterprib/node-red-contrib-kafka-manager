@@ -5,17 +5,11 @@ First initial release using [kafka-node][4] .
 * Kafka Broker
 * Kafka Admin
 * Kafka Consumer
+* Kafka ConsumerGroup
+* Kafka Offset
 * Kafka Producer
 
 Has a test GUI which allows topics to be added.
-
-## To Do
-
-* ConsumerGroup
-* ProducerStream
-* ConsumerStream
-* ConsumerGroupStream
-* Offset
 
 ------------------------------------------------------------
 
@@ -45,6 +39,22 @@ Provides types of base and high level.
 ![Kafka Consumer Options](documentation/consumerOptions.JPG "Kafka Consumer Options")
 ![Kafka Consumer Fetch](documentation/consumerFetch.JPG "Kafka Consumer Fetch")
 ![Kafka Consumer Encoding](documentation/consumerEncoding.JPG "Kafka Consumer Encoding")
+------------------------------------------------------------
+
+## Kafka Consumer Group
+
+Consumer of topic messages in kafka which are generated into node-red message. 
+
+![Kafka Consumer Group](documentation/consumerGroup.JPG "Kafka Consumer Group")
+![Kafka Consumer Group Options](documentation/consumerGroupOptions.JPG "Kafka Consumer Options Group")
+
+------------------------------------------------------------
+
+## Kafka Offset
+
+Dymanically get messages in Kafka
+
+![Kafka Offset](documentation/offset.JPG "Kafka Offset")
 
 ------------------------------------------------------------
 
@@ -96,6 +106,8 @@ Includes sample script for start kafka in windows using node-red
 ------------------------------------------------------------
 
 # Version
+
+0.2.0 Add ndoes consumer group and offset.
 
 0.1.0 Add in High level producer/consumer.
   	Further fixes to make connection more robust on kafka up/down

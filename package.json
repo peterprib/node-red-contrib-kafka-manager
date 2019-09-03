@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-kafka-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Node-RED implements Kafka manager with associand associated .",
   "dependencies": {},
   "devDependencies": {},
@@ -13,11 +13,14 @@
   },
   "keywords": [
     "node-red",
+    "admin",
     "adminstration",
     "broker",
     "consumer",
+    "consumerGroup",
     "kafka",
     "manager",
+    "offset",
     "producer",
     "streaming"
   ],
@@ -26,6 +29,8 @@
       "kafkaAdmin": "kafkaManager/kafkaAdmin.js",
       "kafkaBroker": "kafkaManager/kafkaBroker.js",
       "kafkaConsumer": "kafkaManager/kafkaConsumer.js",
+      "kafkaConsumerGroup": "kafkaManager/kafkaConsumerGroup.js",
+      "kafkaOffset": "kafkaManager/kafkaOffset.js",
       "kafkaProducer": "kafkaManager/kafkaProducer.js"
     }
   },

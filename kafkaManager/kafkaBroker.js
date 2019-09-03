@@ -211,7 +211,7 @@ module.exports = function(RED) {
         	return new kafka.KafkaClient(options);
         });
 		node.getRevisedMessage = ((err)=> {
-			if(err.startsWith("connect ECONNREFUSED")) return "Connection refused, check if Kafka up";
+			if(typeof err == "string" && err.startsWith("connect ECONNREFUSED")) return "Connection refused, check if Kafka up";
 			return err;
         });
         testHosts(node);

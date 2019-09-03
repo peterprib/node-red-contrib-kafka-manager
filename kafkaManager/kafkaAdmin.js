@@ -119,32 +119,7 @@ module.exports = function(RED) {
    		try{
    			if(!node.brokerNode) throw Error("Broker not found "+node.broker);
             node.on('input', function (msg) {
-/*            	if(mg.topic=="state") {
-            		let state=0,nodeStates=[];
-        			RED.nodes.eachNode(function(n) {
-        				switch(n.type) {
-        					case "Kafka Consumer":
-        					case "Kafka Producer":
-        					case "Kafka Admin":
-        						if(n.broker==node.broker){
-        							state=node.connected?state1:0;
-        							nodeStates.push({type:node.type,id:node.id,service:node.service,connected:node.connected}
-        						}
-        						return;
-        					case "Kafka Broker":
-        						if(n.broker==node.broker) {
-        							
-        						}
-        						return;
-        				}
-        			}
-        			msq.payload={
-        				state: 1,
-        				states:nodeStates	
-        			};
-            	}
-            	
- */           	if(node.connected){
+           	if(node.connected){
                 	processInput(node,msg);
             	} else {
             		node.waiting.push(msg);

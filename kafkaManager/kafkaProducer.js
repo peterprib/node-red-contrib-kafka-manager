@@ -20,6 +20,7 @@ let debug=debugOn,debugCnt=100;
 let kafka;
 
 function producerSend(node,msg,retry) {
+	debug({label:"producerSend",node:node.id,retry:retry});
 //        node.KeyedMessage = kafka.KeyedMessage
 //  km = new KeyedMessage('key', 'message'),
 //  payloads = [
@@ -90,6 +91,7 @@ function setInError(node,errmsg) {
 }
 
 function connect(node) {
+	debug({label:"connect",node:node.id});
 	node.producer = new kafka[(node.connectionType||"Producer")](node.client,
 		{
 				// Configuration for when to consider a message as acknowledged, default 1
