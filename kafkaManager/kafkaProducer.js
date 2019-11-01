@@ -59,7 +59,7 @@ attributes:
 					if(errmsg.startsWith("Broker not available")) {
 			            node.connected=false;
 			            node.inError=true;
-			            node.waiting.push(msg);
+			            node.queueMsg(msg);
 					    if(retry) {
 					    	setInError(node,"retry failed");
 					    	return;
@@ -68,8 +68,16 @@ attributes:
 						    if (err) {
 						    	setInError(node,errmsg);
 						    	return;
-						    } 
+						    }
+						    if(node.waiting.length) {
+						   		node.status({ fill: 'yellow', shape: 'ring', text: "trying sending "+node.waiting.length+" queued messages"});
+						    }
 						    producerSend(node,node.waiting,(retry||1));
+						    if(node.waiting.length) {
+						   		node.status({ fill: 'red', shape: 'ring', text: "retry send to Kafka failed, "+node.waiting.length+" queued messages"});
+						    } else {
+								node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
+						    }
 						});
 					}
 					setInError(node,errmsg);
@@ -134,13 +142,25 @@ module.exports = function(RED) {
        		node.status({ fill: 'red', shape: 'ring', text: e.message });
        		return;
     	}
-        
+        node.queueMsg = function(msg) {
+            if(!node.waiting.length) {
+            	const warning="Connection down started queuing messages";
+    			node.warn(warning);
+           		node.status({ fill: 'red', shape: 'ring', text: warning});
+            }
+        	node.waiting.push(msg);
+            if(!(node.waiting.length%100)){
+            	const warning="Connection down, queue depth reached "+node.waiting.length;
+    			node.warn(warning);
+           		node.status({ fill: 'red', shape: 'ring', text: warning});
+            }
+        }
         node.on('input', function (msg) {
             if(node.connected) {
             	producerSend(node,msg);
             	return;
             }
-        	node.waiting.push(msg);
+            node.queueMsg(msg);
         });
 		node.on("close", function(removed,done) {
        		node.status({ fill: 'red', shape: 'ring', text: "closed" });

@@ -111,6 +111,8 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
+0.2.1 When messages being queued as producer is waiting on connection or reconnection show producer in problem state.
+
 0.2.0 Add nodes consumer group and offset.
 	Another fix to issue with initial no kafka.
 	describe groups implemented

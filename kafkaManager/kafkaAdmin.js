@@ -16,8 +16,8 @@ function debugOn(m) {
 }
 let debug=debugOn,debugCnt=100;
 
-function msgProcess(node,msg,e,data) {
-	debug({label:"msgProcess",error:e,data:data});
+function msgProcess(node,msg,err,data) {
+	debug({label:"msgProcess",error:err,data:data});
 	if(err) {
 		let err=typeof err !=="string"?e:err.message;
 		if(err.startWith("Broker not available") || err.startWith("Request timed out")) {
