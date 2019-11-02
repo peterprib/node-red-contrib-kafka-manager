@@ -111,6 +111,8 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
+0.2.2 Stopped bug where producer on connection initiates a null message. Fix bug with restart logic on fail and order of messages on failed retry
+
 0.2.1 When messages being queued as producer is waiting on connection or reconnection show producer in problem state.
 
 0.2.0 Add nodes consumer group and offset.

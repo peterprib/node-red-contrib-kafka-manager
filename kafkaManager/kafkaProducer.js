@@ -20,7 +20,7 @@ let debug=debugOn,debugCnt=100;
 
 let kafka;
 
-function producerSend(node,msg,retry) {
+function producerSend(node,msgIn,retry) {
 	debug({label:"producerSend",node:node.id,retry:retry});
 //        node.KeyedMessage = kafka.KeyedMessage
 //  km = new KeyedMessage('key', 'message'),
@@ -45,6 +45,14 @@ attributes:
 2: Compress using snappy
  */
 	try{
+		let msg;
+		if(node.waiting.length) {
+			if(msgIn) node.waiting.push(msgIn);
+			msg=node.waiting.shift();
+		} else {
+			if(!msgIn) return;
+			msg=msgIn;
+		}
 		const topic=[{
 			topic: msg.topic||node.topic||"",
 			messages: msg.payload,
@@ -57,36 +65,40 @@ attributes:
 				if(err) {
 					let errmsg = (typeof err == "string" ?err:err.message);
 					if(errmsg.startsWith("Broker not available")) {
-			            node.connected=false;
 			            node.inError=true;
-			            node.queueMsg(msg);
+			            node.queueMsg(msg,true);
 					    if(retry) {
 					    	setInError(node,"retry failed");
 					    	return;
 					    }
-						node.producer.refreshMetadata(topic, (err) => {
-						    if (err) {
-						    	setInError(node,errmsg);
-						    	return;
-						    }
-						    if(node.waiting.length) {
-						   		node.status({ fill: 'yellow', shape: 'ring', text: "trying sending "+node.waiting.length+" queued messages"});
-						    }
-						    producerSend(node,node.waiting,(retry||1));
-						    if(node.waiting.length) {
-						   		node.status({ fill: 'red', shape: 'ring', text: "retry send to Kafka failed, "+node.waiting.length+" queued messages"});
-						    } else {
-								node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
-						    }
-						});
+					    if(node.producer && node.producer.refreshMetadata) {
+					    	node.log("issuing refreshMetadata as may be issue with caching");
+					    	node.producer.refreshMetadata(topic, (err) => {
+					    		if (err) {
+					    			setInError(node,errmsg);
+					    			return;
+					    		}
+					    		if(node.waiting.length) {
+					    			node.status({ fill: 'yellow', shape: 'ring', text: "trying sending "+node.waiting.length+" queued messages"});
+					    		}
+					    		producerSend(node,undefined,(retry||1));
+					    		if(node.waiting.length) {
+					    			node.status({ fill: 'red', shape: 'ring', text: "retry send to Kafka failed, "+node.waiting.length+" queued messages"});
+					    		} else {
+					    			node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
+					    		}
+					    	});
+					    } else {
+				            node.connected=false;
+				    		producerSend(node,undefined,(retry||1));
+					    }
 					}
 					setInError(node,errmsg);
+				} else if(node.inError) {
+			   		node.inError=false;
+					node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
 				}
 		});
-		if(node.inError) {
-	   		node.inError=false;
-	   		node.status({ fill: 'green', shape: 'ring', text: "Ready" });
-		}
 	} catch(e) {
    		node.inError=true;
 		node.error(e);
@@ -121,7 +133,7 @@ function connect(node) {
 		node.status({ fill: 'green', shape: 'ring', text: "Connected to "+ node.brokerNode.name });
 		node.connected=true;
 		node.log("connected and processing "+node.waiting.length+" messages");
-		producerSend(node,node.waiting);
+		producerSend(node,undefined);
 	});
 }
 
@@ -142,13 +154,17 @@ module.exports = function(RED) {
        		node.status({ fill: 'red', shape: 'ring', text: e.message });
        		return;
     	}
-        node.queueMsg = function(msg) {
+        node.queueMsg = function(msg,retry) {
             if(!node.waiting.length) {
             	const warning="Connection down started queuing messages";
     			node.warn(warning);
            		node.status({ fill: 'red', shape: 'ring', text: warning});
             }
-        	node.waiting.push(msg);
+            if(retry) {
+            	node.waiting.unshift(msg);
+            } else {
+            	node.waiting.push(msg);
+            }
             if(!(node.waiting.length%100)){
             	const warning="Connection down, queue depth reached "+node.waiting.length;
     			node.warn(warning);
