@@ -172,7 +172,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
         let node=Object.assign(this,{hosts:[]},n,{available:false,connect:connect,setState:setState,stateUp:[],stateDown:[],onStateUp:[]});
         if(node.hosts.length==0 && node.host ) node.hosts.push({host:node.host,port:node.port});
-    	node.kafkaHost=node.hosts.map((r)=>r.host+":"+r.port).join(" ");
+    	node.kafkaHost=node.hosts.map((r)=>r.host+":"+r.port).join(",");
 
         if (node.usetls && node.tls) {
             let tlsNode = RED.nodes.getNode(node.tls);
