@@ -111,6 +111,7 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
+0.2.4 Fix for error processing
 0.2.3 Fix for multi nodes on broker
 
 0.2.2 Stopped bug where producer on connection initiates a null message. Fix bug with restart logic on fail and order of messages on failed retry

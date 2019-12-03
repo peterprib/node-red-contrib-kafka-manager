@@ -16,10 +16,10 @@ function debugOn(m) {
 }
 let debug=debugOn,debugCnt=100;
 
-function msgProcess(node,msg,err,data) {
+function msgProcess(node,msg,errObject,data) {
 	debug({label:"msgProcess",error:err,data:data});
-	if(err) {
-		let err=typeof err !=="string"?e:err.message;
+	if(errObject) {
+		let err=typeof err !=="string"?err:err.message;
 		if(err.startWith("Broker not available") || err.startWith("Request timed out")) {
 			node.warn("Broker not available, queue message and retry connection");
 			node.waiting.push(msg);
