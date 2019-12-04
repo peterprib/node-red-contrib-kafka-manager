@@ -111,6 +111,7 @@ Includes sample script for start kafka in windows using node-red
 
 # Version
 
+0.2.5 More fixes for error processing on invalid topic
 0.2.4 Fix for error processing
 0.2.3 Fix for multi nodes on broker
 
