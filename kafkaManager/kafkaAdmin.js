@@ -36,15 +36,16 @@ function msgProcess(node,msg,errObject,data) {
 	}
 	switch (msg.topic) {
 		case 'createTopics':
+		case 'deleteTopics':
 			data.forEach((c,i,a)=>{
 				let t=msg.payload.find((cp)=>cp.topic==c.topic);
-				debug({label:"createTopic topic",topic:c,data:t});
+				debug({label:"msgProcess multi response",topic:c,data:t});
 				if(c.hasOwnProperty('error')) {
-					debug({label:"createTopics topic error",data:{topic:msg.topic,error:c.error,payload:[t]}});
+					debug({label:"createTopics multi response",data:{topic:msg.topic,error:c.error,payload:[t]}});
 					node.send([null,{topic:msg.topic,error:c.error,payload:[t]}]);
 					return;
 				}
-				debug({label:"createTopics topic ok",data:{topic:msg.topic,payload:[c]}});
+				debug({label:"msgProcess multi response ok",data:{topic:msg.topic,payload:[c]}});
 				node.send({topic:msg.topic,payload:[t]});
 			});
 		default:
@@ -68,6 +69,10 @@ function processInput(node,msg){
 				//	msg.payload = [{topic: 'topic1',partitions: 1,replicationFactor: 2}];
 				node.connection.createTopics(msg.payload,(err,data)=>msgProcess(node,msg,err,data));
 				return;
+			case'deleteTopics': 
+				//	msg.payload = ['topic1'];
+				node.connection.deleteTopics(msg.payload,(err,data)=>msgProcess(node,msg,err,data));
+				return;
 			case'describeConfigs':
 				// msg.payload={type:'topic',name:'a-topic'}
 				const resource = {
@@ -84,7 +89,7 @@ function processInput(node,msg){
 			case'refreshMetadata': 
 				node.connection.refreshMetadata();
 				return;
-			default: throw Error("invalid topic");
+			default: throw Error("invalid message topic");
     	}
 	} catch(e) {
 		debug({label:"input catch",error:e,msg:msg,connection:Object.keys(node.connection)});

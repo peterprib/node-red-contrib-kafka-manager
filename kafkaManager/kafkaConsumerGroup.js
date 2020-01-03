@@ -90,9 +90,10 @@ function connect(node) {
        		node.status({ fill: 'red', shape: 'ring', text: err });
 		})
 		node.consumer.on('offsetOutOfRange', function (e) {
-      		debug({label:"consumer.on.offsetOutOfRange",node:node.id,error:e});
-			node.error(e);
-       		node.status({ fill: 'red', shape: 'ring', text: e.message });
+      		debug({label:"consumer.on.offsetOutOfRange",node:node.id,error:e});  
+			node.error("on offsetOutOfRange "+ e);
+       		node.status({ fill: 'red', shape: 'ring', text: e.message + " (PAUSED)" });
+       		node.consumer.pause();
 		})
 }
 module.exports = function(RED) {
