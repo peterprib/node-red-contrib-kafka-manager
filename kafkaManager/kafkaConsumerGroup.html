@@ -208,7 +208,7 @@
                 function sendCommand(element,action) {
                 	const nodeName="Kafka Consumer Group";
                 	$(element).dialog("close");
-                	$.get( "/KafkaConsumer/"+node.id+"/"+action )
+                	$.get( "/KafkaConsumerGroup/"+node.id+"/"+action )
 			        .done(function( json ) {
             			    	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
                 			}).fail(function( jqXHR, textStatus, error ) {

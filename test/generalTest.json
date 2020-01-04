@@ -386,7 +386,7 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 130,
-        "y": 520,
+        "y": 500,
         "wires": [
             [
                 "5c47d596.3c5c8c"
@@ -406,7 +406,7 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 130,
-        "y": 580,
+        "y": 540,
         "wires": [
             [
                 "5c47d596.3c5c8c"

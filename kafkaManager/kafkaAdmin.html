@@ -94,8 +94,17 @@
       				modal: true, title: (node.name||'Kafka Admin'), zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
 					buttons: {
-						"connect": function () {
-							sendCommand(this,"connect");
+						"Describe Cluster": function () {
+							sendCommand(this,"describeCluster");
+						},
+						"Describe Delegation Token": function () {
+							sendCommand(this,"describeDelegationToken");
+						},
+						"Describe Replica Log Dirs": function () {
+							sendCommand(this,"describeReplicaLogDirs");
+						},
+						"List Groups": function () {
+							sendCommand(this,"listConsumerGroups");
 						},
 						"List Groups": function () {
 							sendCommand(this,"listGroups");

@@ -35,64 +35,72 @@ function msgProcess(node,msg,errObject,data) {
 		return;
 	}
 	switch (msg.topic) {
-		case 'createTopics':
-		case 'deleteTopics':
-			data.forEach((c,i,a)=>{
-				let t=msg.payload.find((cp)=>cp.topic==c.topic);
-				debug({label:"msgProcess multi response",topic:c,data:t});
-				if(c.hasOwnProperty('error')) {
-					debug({label:"createTopics multi response",data:{topic:msg.topic,error:c.error,payload:[t]}});
-					node.send([null,{topic:msg.topic,error:c.error,payload:[t]}]);
-					return;
-				}
-				debug({label:"msgProcess multi response ok",data:{topic:msg.topic,payload:[c]}});
-				node.send({topic:msg.topic,payload:[t]});
-			});
-		default:
-			msg.payload=data;
-			node.send(msg);   
+	case 'createAcls': 
+	case 'createTopics':
+	case 'deleteAcls':
+	case 'deleteAcls':
+	case 'deleteTopics':
+	case 'electPreferredLeaders':
+		data.forEach((c,i,a)=>{
+			let t=msg.payload.find((cp)=>cp.topic==c.topic);
+			debug({label:"msgProcess multi response",topic:c,data:t});
+			if(c.hasOwnProperty('error')) {
+				debug({label:"msgProcess multi response",data:{topic:msg.topic,error:c.error,payload:[t]}});
+				node.send([null,{topic:msg.topic,error:c.error,payload:[t]}]);
+				return;
+			}
+			debug({label:"msgProcess multi response ok",data:{topic:msg.topic,payload:[c]}});
+			node.send({topic:msg.topic,payload:[t]});
+		});
+		break;
+	default:
+		msg.payload=data;
+		node.send(msg);   
 	}
 }
+const processInputNoArg=[
+	"describeCluster","describeDelegationToken","describeReplicaLogDirs","listConsumerGroups","listGroups","listTopics"
+];
+const processInputPayloadArg=[
+	"alterConfigs","alterReplicaLogDirs","createAcls","","createDelegationToken",
+	"createPartitions","createTopics","deleteAcls","deleteConsumerGroups","deleteRecords",
+	"deleteTopics","describeAcls","describeConsumerGroups",
+	"describeGroups","describeLogDirs","describeTopics","electPreferredLeaders",
+	"expireDelegationToken","incrementalAlterConfigs","listConsumerGroupOffsets",
+	"renewDelegationToken"
+];
+
 function processInput(node,msg){
+	debug({label:"processInput",msg});
 	try{
+		if(processInputNoArg.includes(msg.topic)) {
+			debug({label:"processInput processInputNoArg",msg});
+			node.connection[msg.topic]((err,data)=>msgProcess(node,msg,err,data));
+			return;
+		}
+		if(processInputPayloadArg.includes(msg.topic)) {
+			debug({label:"processInput processInputPayloadArg",msg});
+			node.connection[msg.topic](msg.payload,(err,data)=>msgProcess(node,msg,err,data));
+			return;
+		}
     	switch(msg.topic) {
-			case'listGroups': 
-				node.connection.listGroups((err,data)=>msgProcess(node,msg,err,data));
-				return;
-			case'describeGroups': 
-				node.connection.describeGroups(msg.payload,(err,data)=>msgProcess(node,msg,err,data));
-				return;
-			case'listTopics': 
-				node.connection.listTopics((err,data)=>msgProcess(node,msg,err,data));
-				return;
-			case'createTopics': 
-				//	msg.payload = [{topic: 'topic1',partitions: 1,replicationFactor: 2}];
-				node.connection.createTopics(msg.payload,(err,data)=>msgProcess(node,msg,err,data));
-				return;
-			case'deleteTopics': 
-				//	msg.payload = ['topic1'];
-				node.connection.deleteTopics(msg.payload,(err,data)=>msgProcess(node,msg,err,data));
-				return;
-			case'describeConfigs':
-				// msg.payload={type:'topic',name:'a-topic'}
-				const resource = {
-					  resourceType: node.connection.RESOURCE_TYPES[msg.payload.type||'topic'],   // 'broker' or 'topic'
-					  resourceName: msg.payload.name,
-					  configNames: []           // specific config names, or empty array to return all,
-					}
-				const payload = {
-					  resources: [resource],
-					  includeSynonyms: false   // requires kafka 2.0+
-					};
-				node.connection.describeConfigs(payload, (err,data)=>msgProcess(node,msg,err,data));
-   				return;
-			case'refreshMetadata': 
-				node.connection.refreshMetadata();
-				return;
-			default: throw Error("invalid message topic");
+		case 'describeConfigs':
+			// msg.payload={type:'topic',name:'a-topic'}
+			const resource = {
+				  resourceType: node.connection.RESOURCE_TYPES[msg.payload.type||'topic'],   // 'broker' or 'topic'
+				  resourceName: msg.payload.name,
+				  configNames: []           // specific config names, or empty array to return all,
+				}
+			const payload = {
+				  resources: [resource],
+				  includeSynonyms: false   // requires kafka 2.0+
+				};
+			node.connection.describeConfigs(payload, (err,data)=>msgProcess(node,msg,err,data));
+			return;
+		default: throw Error("invalid message topic");
     	}
 	} catch(e) {
-		debug({label:"input catch",error:e,msg:msg,connection:Object.keys(node.connection)});
+		debug({label:"processInput catch",error:e,msg:msg,connection:Object.keys(node.connection)});
 		msg.error=e.toString();
 		node.send([null,msg]);
 	}
@@ -163,23 +171,11 @@ module.exports = function(RED) {
            		return;
     		}
     	    try {
-    	    	switch (req.params.action) {
-    	    		case 'listGroups':
-        				node.connection.listGroups((err,data)=>adminRequest(node,res,err,data));
-    	       	     	break;
-        			case 'describeGroups': 
-        				node.connection.describeGroups(msg.payload,(err,data)=>adminRequest(node,res,err,data));
-        				return;
-        			case 'listTopics': 
-        				node.connection.listTopics((err,data)=>adminRequest(node,res,err,data));
-        				return;
-        			case 'connect': 
-        				debug({label:"httpadmin connect",connection:Object.keys(node.connection)});
-        				node.connection.connect((err,data)=>adminRequest(node,res,err,data));
-        				return;
-    	       	     default:
-    	       	    	 throw Error("unknown action: "+req.params.action);
-    	    	}
+    	    	if(processInputNoArg.includes(req.params.action)) {
+    				node.connection[req.params.action]((err,data)=>adminRequest(node,res,err,data));
+    				return;
+    			}
+    	    	throw Error("unknown action: "+req.params.action);
     	    } catch(err) {
     			debug({label:"httpAdmin",error:err,request:req.params,connection:Object.keys(node.connection)});
     	    	var reason1='Internal Server Error, '+req.params.action+' failed '+err.toString();
