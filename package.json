@@ -2,10 +2,21 @@
   "name": "node-red-contrib-kafka-manager",
   "version": "0.2.8",
   "description": "Node-RED implements Kafka manager with associand associated .",
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "kafka-node": "*"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1"
+  },
   "scripts": {
-    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+    "test": "echo \\\"Error: no test specified\\\" && exit 1",
+    "lint": "eslint --ext .js kafkaManager",
+    "lint-fix": "eslint --fix --ext .js kafkaManager"
   },
   "repository": {
     "type": "git",
