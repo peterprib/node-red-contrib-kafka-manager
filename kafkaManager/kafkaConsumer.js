@@ -1,23 +1,7 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Consumer Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
-
+const nodeLabel = 'Kafka Consumer'
+const d = require('./lib/debugOn')
+d.debugInit(100, nodeLabel)
+const debug = d.debugOn
 let kafka
 
 function sendMsg (node, message) {
@@ -268,7 +252,7 @@ module.exports = function (RED) {
       })
     }
   }
-  RED.nodes.registerType('Kafka Consumer', KafkaConsumerNode)
+  RED.nodes.registerType(nodeLabel, KafkaConsumerNode)
   RED.httpAdmin.get('/KafkaConsumer/:id/:action/', RED.auth.needsPermission('KafkaConsumer.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
     if (node && node.type === 'Kafka Consumer') {

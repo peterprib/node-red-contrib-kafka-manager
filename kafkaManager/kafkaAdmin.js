@@ -1,22 +1,7 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Admin Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
+const nodeLabel = 'Kafka Admin'
+const d = require('./lib/debugOn')
+d.debugInit(100, nodeLabel)
+const debug = d.debugOn
 
 function msgProcess (node, msg, errObject, data) {
   debug({
@@ -223,7 +208,7 @@ module.exports = function (RED) {
       done()
     })
   }
-  RED.nodes.registerType('Kafka Admin', KafkaAdminNode)
+  RED.nodes.registerType(nodeLabel, KafkaAdminNode)
   RED.httpAdmin.get('/KafkaAdmin/:id/:action/', RED.auth.needsPermission('KafkaAdmin.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
     if (node && node.type === 'Kafka Admin') {

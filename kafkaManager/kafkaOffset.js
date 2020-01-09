@@ -1,23 +1,7 @@
 const nodeLabel = 'Kafka Offset'
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] ' + nodeLabel + ' Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
+const d = require('./lib/debugOn')
+d.debugInit(100, nodeLabel)
+const debug = d.debugOn
 
 function msgProcess (node, msg, err, data) {
   debug({

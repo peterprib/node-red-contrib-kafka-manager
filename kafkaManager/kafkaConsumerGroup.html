@@ -110,39 +110,69 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Consumer Group',{
-    	category: 'input',
+    RED.nodes.registerType('Kafka Consumer Group', {
+        category: 'input',
         defaults: {
-            name: {value:"",required:false},
-            broker: {type:"Kafka Broker",required:true},
- //           batch: {required:false},  // put client batch settings if you need them - to be implemented
- 			groupId: {value:"aGroup", required:false},
-  			sessionTimeout: {value:15000,required:false},
-  			protocol: {value:['roundrobin'],required:false},	// An array of partition assignment protocols ordered by preference.
-  																// 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol)
- 
-            encoding: {value:'utf8',required:false},
-            fromOffset: {value:'latest',required:true}, // use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
-			commitOffsetsOnFirstJoin: {value:'true',required:true}, 	// on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
-											 						// how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
-  			outOfRangeOffset: {value:'earliest',required:false}, // default
-            topics: {value:["topic1"],required:true}
+            name: {
+                value: "",
+                required: false
+            },
+            broker: {
+                type: "Kafka Broker",
+                required: true
+            },
+            //           batch: {required:false},  // put client batch settings if you need them - to be implemented
+            groupId: {
+                value: "aGroup",
+                required: false
+            },
+            sessionTimeout: {
+                value: 15000,
+                required: false
+            },
+            protocol: {
+                value: ['roundrobin'],
+                required: false
+            }, // An array of partition assignment protocols ordered by preference.
+            // 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol)
+
+            encoding: {
+                value: 'utf8',
+                required: false
+            },
+            fromOffset: {
+                value: 'latest',
+                required: true
+            }, // use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
+            commitOffsetsOnFirstJoin: {
+                value: 'true',
+                required: true
+            }, // on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
+            // how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
+            outOfRangeOffset: {
+                value: 'earliest',
+                required: false
+            }, // default
+            topics: {
+                value: ["topic1"],
+                required: true
+            }
         },
-	    inputs:0,
+        inputs: 0,
         inputLabels: "",
-        outputs:1,
+        outputs: 1,
         outputLabels: ["Message"],
         icon: "message.png",
-        label: function() {
-            return this.name||this._("Kafka Consumer Group");
+        label: function () {
+            return this.name || this._("Kafka Consumer Group");
         },
-        labelStyle: function() {
+        labelStyle: function () {
             return "node_label_italic";
         },
-        oneditprepare: function() {
-        	let tabs = RED.tabs.create({
+        oneditprepare: function () {
+            let tabs = RED.tabs.create({
                 id: "node-config-kafkaConsumer-tabs",
-                onchange: function(tab) {
+                onchange: function (tab) {
                     $("#node-config-kafkaConsumer-tabs-content").children().hide();
                     $("#" + tab.id).show();
                 }
@@ -155,92 +185,109 @@
                 id: "kafkaConsumer-tab-options",
                 label: "Options"
             });
-        	
-        	let node=this;
-  	    	if(!node.topics.length) {
-  	    		node.topics.push("topic0");
-  	    	}
-  	    	
-  	    	node.topics.forEach((r)=>addTopic(r));
-            $("#node-input-add-topic").click(function() {
-               addTopic("topic"+$("#node-input-topics-tbody").children().length);
-            });
-            function addTopic(topic) {
-  	        	let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
-  	        	if($("#node-input-topics-tbody").children().length>2){
-	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
-    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
-        	        deleteButton.click(function() {
-            	    	$(this).parent().remove();
-                	});
-  	        	} else {
-  	        		$('<a/>').appendTo(row);
-  	        	}
-                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
+
+            let node = this;
+            if (!node.topics.length) {
+                node.topics.push("topic0");
             }
-        	
+
+            node.topics.forEach((r) => addTopic(r));
+            $("#node-input-add-topic").click(function () {
+                addTopic("topic" + $("#node-input-topics-tbody").children().length);
+            });
+
+            function addTopic(topic) {
+                let row = $('<tr/>').appendTo($("#node-input-topics-tbody"));
+                if ($("#node-input-topics-tbody").children().length > 2) {
+                    let deleteButton = $('<a/>', {
+                        href: "#",
+                        class: "editor-button editor-button-medium"
+                    }).appendTo(row);
+                    $('<i/>', {
+                        class: "fa fa-remove"
+                    }).appendTo(deleteButton);
+                    deleteButton.click(function () {
+                        $(this).parent().remove();
+                    });
+                } else {
+                    $('<a/>').appendTo(row);
+                }
+                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr(
+                    'value', topic)).appendTo(row); // Topic
+            }
+
         },
-        oneditsave: function() {
-           	let inputs,node=this;
-        	node.topics=[];
-        	$('#node-input-topics-tbody tr:gt(0)').each(function () {
-            	inputs=$(this).find("input");
-            	node.topics.push(inputs[0].value);
-			});
+        oneditsave: function () {
+            let inputs, node = this;
+            node.topics = [];
+            $('#node-input-topics-tbody tr:gt(0)').each(function () {
+                inputs = $(this).find("input");
+                node.topics.push(inputs[0].value);
+            });
         },
-        oneditresize: function(size) {
-        },
+        oneditresize: function (size) {},
         button: {
-            enabled: function() {
+            enabled: function () {
                 return !this.changed;
             },
-            onclick: function() {
+            onclick: function () {
                 if (this.changed) {
-                    return RED.notify(RED._("Queue undeployed changes"),"warning");
+                    return RED.notify(RED._("Queue undeployed changes"), "warning");
                 }
                 var label = this._def.label.call(this);
                 if (label.length > 30) {
-                    label = label.substring(0,50)+"...";
+                    label = label.substring(0, 50) + "...";
                 }
-                label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+                label = label.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 var node = this;
-                
-                function sendCommand(element,action) {
-                	const nodeName="Kafka Consumer Group";
-                	$(element).dialog("close");
-                	$.get( "/KafkaConsumerGroup/"+node.id+"/"+action )
-			        .done(function( json ) {
-            			    	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-                			}).fail(function( jqXHR, textStatus, error ) {
-                   				if (jqXHR.status === 404) {
-     			                	RED.notify(node._(nodeName+" signal not deployed"),"error");
-                				} else if (jqXHR.status === 500) {
-   				                	RED.notify(node._(nodeName+" signal inject failed with error "+textStatus||""),"error");
-                				} else if (jqXHR.status === 0) {
- 									RED.notify(node._(nodeName+" signal no response"),"error");
-                   				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
-								}
-							});
+
+                function sendCommand(element, action) {
+                    const nodeName = "Kafka Consumer Group";
+                    $(element).dialog("close");
+                    $.get("/KafkaConsumerGroup/" + node.id + "/" + action)
+                        .done(function (json) {
+                            RED.notify(node._(nodeName + " signal success", {
+                                label: label
+                            }), {
+                                type: "success",
+                                id: "Load Injector"
+                            });
+                        }).fail(function (jqXHR, textStatus, error) {
+                            if (jqXHR.status === 404) {
+                                RED.notify(node._(nodeName + " signal not deployed"), "error");
+                            } else if (jqXHR.status === 500) {
+                                RED.notify(node._(nodeName + " signal inject failed with error " +
+                                    textStatus || ""), "error");
+                            } else if (jqXHR.status === 0) {
+                                RED.notify(node._(nodeName + " signal no response"), "error");
+                            } else {
+                                RED.notify(node._(nodeName + " signal unexpected status:" + jqXHR
+                                    .status + " message:" + textStatus + " " + error), "error");
+                            }
+                        });
                 }
                 $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
-  				.dialog({
-      				modal: true, title: (node.name||'Kafka Consumer Group'), zIndex: 10000, autoOpen: true,
-   					width: 'auto', resizable: false,
-					buttons: {
-						pause: function () {
-							sendCommand(this,"pause");
-						},
-						resume: function () {
-							sendCommand(this,"resume");
-						}
-					},
-					close: function (event, ui) {
-				    	$(this).remove();
-					}
-				});
+                    .dialog({
+                        modal: true,
+                        title: (node.name || 'Kafka Consumer Group'),
+                        zIndex: 10000,
+                        autoOpen: true,
+                        width: 'auto',
+                        resizable: false,
+                        buttons: {
+                            pause: function () {
+                                sendCommand(this, "pause");
+                            },
+                            resume: function () {
+                                sendCommand(this, "resume");
+                            }
+                        },
+                        close: function (event, ui) {
+                            $(this).remove();
+                        }
+                    });
             }
         }
- 
+
     });
 </script>

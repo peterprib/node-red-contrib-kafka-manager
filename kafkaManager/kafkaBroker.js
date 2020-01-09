@@ -1,24 +1,7 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Broker Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  const label = 'Kafka Broker'
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
-
+const nodeLabel = 'Kafka Broker'
+const d = require('./lib/debugOn')
+d.debugInit(100, nodeLabel)
+const debug = d.debugOn
 let kafka
 
 function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
@@ -351,7 +334,7 @@ module.exports = function (RED) {
   KafkaBrokerNode.prototype.close = function () {
     runtimeStop.apply(this)
   }
-  RED.nodes.registerType('Kafka Broker', KafkaBrokerNode, {
+  RED.nodes.registerType(nodeLabel, KafkaBrokerNode, {
     credentials: {
       user: {
         type: 'text'
