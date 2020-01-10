@@ -11,6 +11,11 @@
     </div>
 
     <div class="form-row">
+        <label for="node-input-debug"><i class="fa fa-tag"></i> Debug </label>
+        <input type="number" min="0" max="1000" id="node-input-debug" placeholder="Debug">
+    </div>
+
+    <div class="form-row">
         <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
          <select id="node-input-connectionType">
          	<option value="Producer">Producer</option>
@@ -71,39 +76,69 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Producer',{
-    	category: 'output',
+    RED.nodes.registerType('Kafka Producer', {
+        category: 'output',
         defaults: {
-            name: {value:"",required:false},
-            broker: {type:"Kafka Broker"},
-            topic: {value:"",required:true},
-            requireAcks: {value:1,required:true},
-            ackTimeoutMs: {value:100,required:true},
-            partitionerType: {value:0,required:true},
-            key: {required:false},
-            partition: {value:0,required:true},
-            attributes: {value:0,required:true},
-            connectionType: {value:"Producer",required:true}
+            name: {
+                value: "",
+                required: false
+            },
+            broker: {
+                type: "Kafka Broker"
+            },
+            topic: {
+                value: "",
+                required: true
+            },
+            debug: {
+                value: 0,
+                required: true
+            },
+            requireAcks: {
+                value: 1,
+                required: true
+            },
+            ackTimeoutMs: {
+                value: 100,
+                required: true
+            },
+            partitionerType: {
+                value: 0,
+                required: true
+            },
+            key: {
+                required: false
+            },
+            partition: {
+                value: 0,
+                required: true
+            },
+            attributes: {
+                value: 0,
+                required: true
+            },
+            connectionType: {
+                value: "Producer",
+                required: true
+            }
         },
-	    inputs:1,
+        inputs: 1,
         inputLabels: "",
-        outputs:0,
+        outputs: 0,
         outputLabels: [],
         icon: "publish.png",
-        label: function() {
-            return this.name||this._("Kafka Producer");
+        label: function () {
+            return this.name || this._("Kafka Producer");
         },
-        labelStyle: function() {
+        labelStyle: function () {
             return "node_label_italic";
         },
-        oneditprepare: function() {
-        	if(!this.connectionType) {
-        		this.connectionType="Producer";
-        	}
+        oneditprepare: function () {
+            if (!this.connectionType) {
+                this.connectionType = "Producer";
+            }
         },
-        oneditsave: function() {
-        },
-        oneditresize: function(size) {
-        }
-});
+        oneditsave: function () {},
+        oneditresize: function (size) {}
+    });
 </script>

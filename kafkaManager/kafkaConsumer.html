@@ -11,6 +11,11 @@
     </div>
 
     <div class="form-row">
+        <label for="node-input-debug"><i class="fa fa-tag"></i> Debug </label>
+        <input type="number" min="0" max="1000" id="node-input-debug" placeholder="Debug">
+    </div>
+
+    <div class="form-row">
         <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
          <select id="node-input-type">
          	<option value="Consumer">Base</option>
@@ -122,39 +127,92 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Consumer',{
-    	category: 'input',
+    RED.nodes.registerType('Kafka Consumer', {
+        category: 'input',
         defaults: {
-            name: {value:"",required:false},
-            broker: {type:"Kafka Broker"},
-            topic: {required:false},    // legacy can be removed in future
-            topics: {value:[{topic:"topic1",offset:0,partition:0}],required:true},
-            groupId: {value:"kafka-node-group",required:true},
-            autoCommit: {value:"true",required:true},
-            autoCommitIntervalMs: {value:5000,required:true,validate:RED.validators.number()},
-            fetchMaxWaitMs: {value:100,required:true,validate:RED.validators.number()},
-            fetchMinBytes: {value:1,required:true,validate:RED.validators.number()},
-            fetchMaxBytes: {value:1024 * 1024,required:true,validate:RED.validators.number()},
-            fromOffset: {value:0,required:true,validate:RED.validators.number()},
-            encoding: {value:'utf8',required:true},
-            keyEncoding: {value:'utf8',required:true},
-            connectionType: {value:"",required:true}
+            name: {
+                value: "",
+                required: false
+            },
+            debug: {
+                value: 0,
+                required: true
+            },
+            broker: {
+                type: "Kafka Broker"
+            },
+            topic: {
+                required: false
+            }, // legacy can be removed in future
+            topics: {
+                value: [{
+                    topic: "topic1",
+                    offset: 0,
+                    partition: 0
+                }],
+                required: true
+            },
+            groupId: {
+                value: "kafka-node-group",
+                required: true
+            },
+            autoCommit: {
+                value: "true",
+                required: true
+            },
+            autoCommitIntervalMs: {
+                value: 5000,
+                required: true,
+                validate: RED.validators.number()
+            },
+            fetchMaxWaitMs: {
+                value: 100,
+                required: true,
+                validate: RED.validators.number()
+            },
+            fetchMinBytes: {
+                value: 1,
+                required: true,
+                validate: RED.validators.number()
+            },
+            fetchMaxBytes: {
+                value: 1024 * 1024,
+                required: true,
+                validate: RED.validators.number()
+            },
+            fromOffset: {
+                value: 0,
+                required: true,
+                validate: RED.validators.number()
+            },
+            encoding: {
+                value: 'utf8',
+                required: true
+            },
+            keyEncoding: {
+                value: 'utf8',
+                required: true
+            },
+            connectionType: {
+                value: "",
+                required: true
+            }
         },
-	    inputs:0,
+        inputs: 0,
         inputLabels: "",
-        outputs:1,
+        outputs: 1,
         outputLabels: ["Message"],
         icon: "message.png",
-        label: function() {
-            return this.name||this._("Kafka Consumer");
+        label: function () {
+            return this.name || this._("Kafka Consumer");
         },
-        labelStyle: function() {
+        labelStyle: function () {
             return "node_label_italic";
         },
-        oneditprepare: function() {
-        	let tabs = RED.tabs.create({
+        oneditprepare: function () {
+            let tabs = RED.tabs.create({
                 id: "node-config-kafkaConsumer-tabs",
-                onchange: function(tab) {
+                onchange: function (tab) {
                     $("#node-config-kafkaConsumer-tabs-content").children().hide();
                     $("#" + tab.id).show();
                 }
@@ -175,101 +233,134 @@
                 id: "kafkaConsumer-tab-encoding",
                 label: "Encoding"
             });
-        
-            if(!this.connectionType) {
-        		this.connectionType="Consumer";
-        	}
-        	
-        	let node=this;
-  	    	if(!node.topics) {   // due to legacy
-  	    	 	node.topics=node.topic?[{topic:node.topic,offset:0,partition:0}]:[];
-  	    	 	node.topic=null;
-  	    	}
-  	    	if(!node.topics.length) {
-  	    		node.topics.push({topic:"topic0",offset:0,partition:0});
-  	    	}
-  	    	node.topics.forEach((r)=>addTopic(r.topic,r.offset,r.partition));
-            $("#node-input-add-topic").click(function() {
-               addTopic("topic"+$("#node-input-topics-tbody").children().length, 0,0);
-            });
-            function addTopic(topic,offset,partition) {
-  	        	let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
-  	        	if($("#node-input-topics-tbody").children().length>2){
-	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
-    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
-        	        deleteButton.click(function() {
-            	    	$(this).parent().remove();
-                	});
-  	        	} else {
-  	        		$('<a/>').appendTo(row);
-  	        	}
-                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
-				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', offset)).appendTo(row); // offset
-				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', partition)).appendTo(row); // partition
+
+            if (!this.connectionType) {
+                this.connectionType = "Consumer";
             }
-        	
+
+            let node = this;
+            if (!node.topics) { // due to legacy
+                node.topics = node.topic ? [{
+                    topic: node.topic,
+                    offset: 0,
+                    partition: 0
+                }] : [];
+                node.topic = null;
+            }
+            if (!node.topics.length) {
+                node.topics.push({
+                    topic: "topic0",
+                    offset: 0,
+                    partition: 0
+                });
+            }
+            node.topics.forEach((r) => addTopic(r.topic, r.offset, r.partition));
+            $("#node-input-add-topic").click(function () {
+                addTopic("topic" + $("#node-input-topics-tbody").children().length, 0, 0);
+            });
+
+            function addTopic(topic, offset, partition) {
+                let row = $('<tr/>').appendTo($("#node-input-topics-tbody"));
+                if ($("#node-input-topics-tbody").children().length > 2) {
+                    let deleteButton = $('<a/>', {
+                        href: "#",
+                        class: "editor-button editor-button-medium"
+                    }).appendTo(row);
+                    $('<i/>', {
+                        class: "fa fa-remove"
+                    }).appendTo(deleteButton);
+                    deleteButton.click(function () {
+                        $(this).parent().remove();
+                    });
+                } else {
+                    $('<a/>').appendTo(row);
+                }
+                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr(
+                    'value', topic)).appendTo(row); // Topic
+                $('<td/>').append($(
+                    '<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />'
+                    ).attr('value', offset)).appendTo(row); // offset
+                $('<td/>').append($(
+                    '<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />'
+                    ).attr('value', partition)).appendTo(row); // partition
+            }
+
         },
-        oneditsave: function() {
-           	let inputs,node=this;
-        	node.topics=[];
-        	$('#node-input-topics-tbody tr:gt(0)').each(function () {
-            	inputs=$(this).find("input");
-            	node.topics.push({topic:inputs[0].value,offset:parseInt(inputs[1].value,10),partition:parseInt(inputs[2].value,10)});
-			});
+        oneditsave: function () {
+            let inputs, node = this;
+            node.topics = [];
+            $('#node-input-topics-tbody tr:gt(0)').each(function () {
+                inputs = $(this).find("input");
+                node.topics.push({
+                    topic: inputs[0].value,
+                    offset: parseInt(inputs[1].value, 10),
+                    partition: parseInt(inputs[2].value, 10)
+                });
+            });
         },
-        oneditresize: function(size) {
-        },
+        oneditresize: function (size) {},
         button: {
-            enabled: function() {
+            enabled: function () {
                 return !this.changed;
             },
-            onclick: function() {
+            onclick: function () {
                 if (this.changed) {
-                    return RED.notify(RED._("Queue undeployed changes"),"warning");
+                    return RED.notify(RED._("Queue undeployed changes"), "warning");
                 }
                 var label = this._def.label.call(this);
                 if (label.length > 30) {
-                    label = label.substring(0,50)+"...";
+                    label = label.substring(0, 50) + "...";
                 }
-                label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+                label = label.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 var node = this;
-                
-                function sendCommand(element,action) {
-                	const nodeName="Kafka Consumer";
-                	$(element).dialog("close");
-                	$.get( "/KafkaConsumer/"+node.id+"/"+action )
-			        .done(function( json ) {
-            			    	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-                			}).fail(function( jqXHR, textStatus, error ) {
-                   				if (jqXHR.status === 404) {
-     			                	RED.notify(node._(nodeName+" signal not deployed"),"error");
-                				} else if (jqXHR.status === 500) {
-   				                	RED.notify(node._(nodeName+" signal inject failed with error "+textStatus||""),"error");
-                				} else if (jqXHR.status === 0) {
- 									RED.notify(node._(nodeName+" signal no response"),"error");
-                   				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
-								}
-							});
+
+                function sendCommand(element, action) {
+                    const nodeName = "Kafka Consumer";
+                    $(element).dialog("close");
+                    $.get("/KafkaConsumer/" + node.id + "/" + action)
+                        .done(function (json) {
+                            RED.notify(node._(nodeName + " signal success", {
+                                label: label
+                            }), {
+                                type: "success",
+                                id: "Load Injector"
+                            });
+                        }).fail(function (jqXHR, textStatus, error) {
+                            if (jqXHR.status === 404) {
+                                RED.notify(node._(nodeName + " signal not deployed"), "error");
+                            } else if (jqXHR.status === 500) {
+                                RED.notify(node._(nodeName + " signal inject failed with error " +
+                                    textStatus || ""), "error");
+                            } else if (jqXHR.status === 0) {
+                                RED.notify(node._(nodeName + " signal no response"), "error");
+                            } else {
+                                RED.notify(node._(nodeName + " signal unexpected status:" + jqXHR
+                                    .status + " message:" + textStatus + " " + error), "error");
+                            }
+                        });
                 }
                 $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
-  				.dialog({
-      				modal: true, title: (node.name||'Kafka Consumer'), zIndex: 10000, autoOpen: true,
-   					width: 'auto', resizable: false,
-					buttons: {
-						pause: function () {
-							sendCommand(this,"pause");
-						},
-						resume: function () {
-							sendCommand(this,"resume");
-						}
-					},
-					close: function (event, ui) {
-				    	$(this).remove();
-					}
-				});
+                    .dialog({
+                        modal: true,
+                        title: (node.name || 'Kafka Consumer'),
+                        zIndex: 10000,
+                        autoOpen: true,
+                        width: 'auto',
+                        resizable: false,
+                        buttons: {
+                            pause: function () {
+                                sendCommand(this, "pause");
+                            },
+                            resume: function () {
+                                sendCommand(this, "resume");
+                            }
+                        },
+                        close: function (event, ui) {
+                            $(this).remove();
+                        }
+                    });
             }
         }
- 
+
     });
 </script>

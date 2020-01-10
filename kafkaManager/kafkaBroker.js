@@ -1,11 +1,10 @@
 const nodeLabel = 'Kafka Broker'
-const d = require('./lib/debugOn')
-d.debugInit(100, nodeLabel)
-const debug = d.debugOn
+const Debug = require('./lib/debugOn')
+const debug = new Debug(nodeLabel)
 let kafka
 
 function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
-  debug({
+  debug.debuglog({
     label: 'hostAvailable',
     host: host,
     port: port,
@@ -14,7 +13,7 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
   const net = require('net')
   const socket = new net.Socket()
   socket.on('connect', function () {
-    debug({
+    debug.debuglog({
       label: 'hostAvailable connect',
       host: host,
       port: port,
@@ -24,11 +23,12 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
       socket.destroy()
       availableCB.apply(node, [node])
     } catch (e) {
+      console.log(e)
       node.error('hostAvailable on connect error ' + e.message)
     }
   })
     .on('end', function () {
-      debug({
+      debug.debuglog({
         label: 'hostAvailable end',
         host: host,
         port: port,
@@ -36,7 +36,7 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
       })
     })
     .on('error', function (e) {
-      debug({
+      debug.debuglog({
         label: 'hostAvailable error',
         host: host,
         port: port,
@@ -50,7 +50,7 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
         node.error('hostAvailable on error ' + e.message)
       }
     }).on('timeout', function () {
-      debug({
+      debug.debuglog({
         label: 'hostAvailable timeout',
         host: host,
         port: port,
@@ -74,7 +74,7 @@ function stateChange (list, state) {
 };
 
 function testHosts (node) {
-  debug({
+  debug.debuglog({
     label: 'testHosts',
     node: node.id,
     available: node.available
@@ -91,7 +91,7 @@ function testHost (node, i) {
     return
   }
   const host = node.hosts[i]
-  debug({
+  debug.debuglog({
     label: 'testHost',
     host: host.host,
     port: host.port,
@@ -151,7 +151,7 @@ function setState (node) {
 }
 
 function connect (node, type, errCB) {
-  debug({
+  debug.debuglog({
     label: 'connect',
     type: type,
     node: node.id,
@@ -193,7 +193,7 @@ function connect (node, type, errCB) {
 };
 
 function connectKafka (node, type) {
-  debug({
+  debug.debuglog({
     label: 'connectKafka',
     type: type,
     node: node.id,
@@ -204,7 +204,7 @@ function connectKafka (node, type) {
   node.connection = new kafka[type](node.client)
   node.connecting = true
   node.connection.on('error', function (e) {
-    debug({
+    debug.debuglog({
       label: 'connectKafka on error',
       node: node.id,
       error: e
@@ -225,13 +225,13 @@ function connectKafka (node, type) {
     }
   })
   node.connection.on('connect', function () {
-    debug({
+    debug.debuglog({
       label: 'connectKafka on connect',
       node: node.id
     })
     node.connected = true
     node.connecting = false
-    debug('connected')
+    debug.debuglog('connected')
     node.status({
       fill: 'green',
       shape: 'ring',
@@ -259,6 +259,7 @@ module.exports = function (RED) {
       stateDown: [],
       onStateUp: []
     })
+    node.debug > 0 ? debug.setOn(node.debug) : debug.setOff()
     if (node.hosts.length === 0 && node.host) {
       node.hosts.push({
         host: node.host,
@@ -305,7 +306,7 @@ module.exports = function (RED) {
         }
       }
       node.getKafkaDriver()
-      debug({
+      debug.debuglog({
         label: 'getKafkaClient',
         options: options
       })

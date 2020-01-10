@@ -1,11 +1,10 @@
 const nodeLabel = 'Kafka Producer'
-const d = require('./lib/debugOn')
-d.debugInit(100, nodeLabel)
-const debug = d.debugOn
+const Debug = require('./lib/debugOn')
+const debug = new Debug(nodeLabel)
 let kafka
 
 function producerSend (node, msgIn, retry) {
-  debug({
+  debug.debuglog({
     label: 'producerSend',
     node: node.id,
     retry: retry
@@ -125,7 +124,7 @@ function setInError (node, errmsg) {
 }
 
 function connect (node) {
-  debug({
+  debug.debuglog({
     label: 'connect',
     node: node.id
   })
@@ -171,6 +170,7 @@ module.exports = function (RED) {
       connected: false,
       waiting: []
     })
+    node.debug > 0 ? debug.setOn(node.debug) : debug.setOff()
     node.brokerNode = RED.nodes.getNode(node.broker)
     node.status({
       fill: 'yellow',
@@ -182,12 +182,7 @@ module.exports = function (RED) {
       if (!kafka) {
         kafka = node.brokerNode.getKafkaDriver()
       }
-      node.brokerNode.onStateUp.push({
-        node: node,
-        callback: function () {
-          connect(node)
-        }
-      }) // needed due to bug in kafka driver
+      connect(node)
     } catch (e) {
       node.error(e.message)
       node.status({
@@ -229,16 +224,15 @@ module.exports = function (RED) {
       }
       node.queueMsg(msg)
     })
-    node.on('close', function (removed, done) {
+    node.on('close', function () {
       node.status({
         fill: 'red',
         shape: 'ring',
         text: 'closed'
       })
-      node.producer.close(false, () => {
+      node.producer.close(() => {
         node.log('closed')
       })
-      done()
     })
   }
   RED.nodes.registerType(nodeLabel, KafkaProducerNode)
