@@ -1,11 +1,10 @@
 const nodeLabel = 'Kafka Consumer'
-const d = require('./lib/debugOn')
-d.debugInit(100, nodeLabel)
-const debug = d.debugOn
+const Debug = require('./lib/debugOn')
+const debug = new Debug(nodeLabel)
 let kafka
 
 function sendMsg (node, message) {
-  debug({
+  debug.debuglog({
     label: 'sendMsg',
     node: node.id,
     message: message
@@ -23,7 +22,7 @@ function sendMsg (node, message) {
 }
 
 function connect (node) {
-  debug({
+  debug.debuglog({
     label: 'connect',
     node: node.id
   })
@@ -40,7 +39,7 @@ function connect (node) {
     keyEncoding: node.keyEncoding || 'utf8'
   })
   node.consumer.on('message', (message) => {
-    debug({
+    debug.debuglog({
       label: 'consumer.on.message',
       node: node.id,
       message: message
@@ -70,7 +69,7 @@ function connect (node) {
   })
 
   node.consumer.on('error', function (e) {
-    debug({
+    debug.debuglog({
       label: 'consumer.on.error',
       node: node.id,
       error: e
@@ -95,7 +94,7 @@ function connect (node) {
     })
   })
   node.consumer.on('offsetOutOfRange', function (e) {
-    debug({
+    debug.debuglog({
       label: 'consumer.on.offsetOutOfRange',
       node: node.id,
       error: e
@@ -117,6 +116,7 @@ module.exports = function (RED) {
       paused: false,
       timedout: false
     })
+    node.debug > 0 ? debug.setOn(node.debug) : debug.setOff()
     node.brokerNode = RED.nodes.getNode(node.broker)
     node.status({
       fill: 'yellow',
@@ -137,7 +137,7 @@ module.exports = function (RED) {
       node.brokerNode.onStateUp.push({
         node: node,
         callback: function () {
-          debug({
+          debug.debuglog({
             label: 'brokerNode.stateUp',
             node: node.id
           })
@@ -147,7 +147,7 @@ module.exports = function (RED) {
       node.brokerNode.stateUp.push({
         node: node,
         callback: function () {
-          debug({
+          debug.debuglog({
             label: 'brokerNode.stateUp',
             node: node.id
           })
@@ -164,7 +164,7 @@ module.exports = function (RED) {
         }
       })
       node.on('close', function (removed, done) {
-        debug({
+        debug.debuglog({
           label: 'close',
           node: node.id
         })
@@ -179,7 +179,7 @@ module.exports = function (RED) {
         done()
       })
       node.pause = () => {
-        debug({
+        debug.debuglog({
           label: 'pause',
           node: node.id
         })
@@ -192,7 +192,7 @@ module.exports = function (RED) {
         })
       }
       node.resume = () => {
-        debug({
+        debug.debuglog({
           label: 'resume',
           node: node.id
         })
@@ -207,7 +207,7 @@ module.exports = function (RED) {
       node.addTopics = (topics, fromOffset) => {
         node.consumer.addTopics(topics,
           (err, added) => {
-            debug({
+            debug.debuglog({
               label: 'consumer.addTopics',
               node: node.id,
               topics: topics,
@@ -221,7 +221,7 @@ module.exports = function (RED) {
       }
       node.removeTopics = (topics) => {
         node.consumer.removeTopics(topics, (err, removed) => {
-          debug({
+          debug.debuglog({
             label: 'consumer.addTopics',
             node: node.id,
             topics: topics,
@@ -232,7 +232,7 @@ module.exports = function (RED) {
       }
       node.commit = () => {
         node.consumer.commit((err, data) => {
-          debug({
+          debug.debuglog({
             label: 'commit',
             node: node.id,
             error: err,

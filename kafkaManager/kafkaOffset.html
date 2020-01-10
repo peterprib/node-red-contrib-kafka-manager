@@ -49,6 +49,11 @@
     </div>
 
     <div class="form-row">
+        <label for="node-input-debug"><i class="fa fa-tag"></i> Debug </label>
+        <input type="number" min="0" max="1000" id="node-input-debug" placeholder="Debug">
+    </div>
+    
+    <div class="form-row">
     	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
     	<input type="text" id="node-input-broker">
   	</div>
@@ -56,92 +61,109 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Offset',{
-    	category: 'function',
+    RED.nodes.registerType('Kafka Offset', {
+        category: 'function',
         defaults: {
-            name: {value:"",required:false},
-            broker: {type:"Kafka Broker"}
+            name: {
+                value: "",
+                required: false
+            },
+            debug: {
+                value: 0,
+                required: true
+            },
+            broker: {
+                type: "Kafka Broker"
+            }
         },
-	    inputs:1,
+        inputs: 1,
         inputLabels: "",
-        outputs:2,
-        outputLabels: ["OK","Error"],
+        outputs: 2,
+        outputLabels: ["OK", "Error"],
         icon: "setting.png",
-        label: function() {
-            return this.name||this._("Kafka Offset");
+        label: function () {
+            return this.name || this._("Kafka Offset");
         },
-        labelStyle: function() {
+        labelStyle: function () {
             return "node_label_italic";
         },
-        oneditprepare: function() {
-        },
-        oneditsave: function() {
-        },
-        oneditresize: function(size) {
-        },
+        oneditprepare: function () {},
+        oneditsave: function () {},
+        oneditresize: function (size) {},
         button: {
-            enabled: function() {
+            enabled: function () {
                 return !this.changed;
             },
-           	onclick: function() {
+            onclick: function () {
                 if (this.changed) {
-                    return RED.notify(RED._("Kafka Offset undeployed changes"),"warning");
+                    return RED.notify(RED._("Kafka Offset undeployed changes"), "warning");
                 }
                 var label = this._def.label.call(this);
                 if (label.length > 30) {
-                    label = label.substring(0,50)+"...";
+                    label = label.substring(0, 50) + "...";
                 }
-                label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+                label = label.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 var node = this;
-                
-                function sendCommand(element,action) {
-                	const nodeName="Kafka Offset";
-                	$(element).dialog("close");
-                	$.get( "/KafkaAdmin/"+node.id+"/"+action )
-			        .done(function(json) {
-			        console.log(JSON.stringify(json));
-            		   	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-            		   	$('<div></div>').appendTo('body').html(JSON.stringify(json))
-            		   	.dialog({
-      						modal: true,
-      						title: (node.name||'Kafka Offset')+" "+action,
-      						zIndex: 10000,
-      						autoOpen: true,
-   							width: 'auto',
-   							resizable: false,
-							buttons: {
-								close: function (event, ui) {
-					    			$(this).remove();
-								}
-							}
-						});
-                	}).fail(function( jqXHR, textStatus, error ) {
-                   				if (jqXHR.status === 404) {
-     			                	RED.notify(node._(nodeName+" signal not deployed"),"error");
-                				} else if (jqXHR.status === 500) {
-   				                	RED.notify(node._(nodeName+" signal inject failed with error "+textStatus||error||""),"error");
-                				} else if (jqXHR.status === 0) {
- 									RED.notify(node._(nodeName+" signal no response"),"error");
-                   				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
-								}
-					});
+
+                function sendCommand(element, action) {
+                    const nodeName = "Kafka Offset";
+                    $(element).dialog("close");
+                    $.get("/KafkaAdmin/" + node.id + "/" + action)
+                        .done(function (json) {
+                            console.log(JSON.stringify(json));
+                            RED.notify(node._(nodeName + " signal success", {
+                                label: label
+                            }), {
+                                type: "success",
+                                id: "Load Injector"
+                            });
+                            $('<div></div>').appendTo('body').html(JSON.stringify(json))
+                                .dialog({
+                                    modal: true,
+                                    title: (node.name || 'Kafka Offset') + " " + action,
+                                    zIndex: 10000,
+                                    autoOpen: true,
+                                    width: 'auto',
+                                    resizable: false,
+                                    buttons: {
+                                        close: function (event, ui) {
+                                            $(this).remove();
+                                        }
+                                    }
+                                });
+                        }).fail(function (jqXHR, textStatus, error) {
+                            if (jqXHR.status === 404) {
+                                RED.notify(node._(nodeName + " signal not deployed"), "error");
+                            } else if (jqXHR.status === 500) {
+                                RED.notify(node._(nodeName + " signal inject failed with error " +
+                                    textStatus || error || ""), "error");
+                            } else if (jqXHR.status === 0) {
+                                RED.notify(node._(nodeName + " signal no response"), "error");
+                            } else {
+                                RED.notify(node._(nodeName + " signal unexpected status:" + jqXHR
+                                    .status + " message:" + textStatus + " " + error), "error");
+                            }
+                        });
                 }
                 $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
-  				.dialog({
-      				modal: true, title: (node.name||'Kafka Offset'), zIndex: 10000, autoOpen: true,
-   					width: 'auto', resizable: false,
-					buttons: {
-						"connect": function () {
-							sendCommand(this,"connect");
-						}
-					},
-					close: function (event, ui) {
-				    	$(this).remove();
-					}
-				});
+                    .dialog({
+                        modal: true,
+                        title: (node.name || 'Kafka Offset'),
+                        zIndex: 10000,
+                        autoOpen: true,
+                        width: 'auto',
+                        resizable: false,
+                        buttons: {
+                            "connect": function () {
+                                sendCommand(this, "connect");
+                            }
+                        },
+                        close: function (event, ui) {
+                            $(this).remove();
+                        }
+                    });
             }
         }
- 
+
     });
 </script>

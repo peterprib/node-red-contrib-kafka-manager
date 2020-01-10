@@ -1,10 +1,9 @@
 const nodeLabel = 'Kafka Admin'
-const d = require('./lib/debugOn')
-d.debugInit(100, nodeLabel)
-const debug = d.debugOn
+const Debug = require('./lib/debugOn')
+const debug = new Debug(nodeLabel)
 
 function msgProcess (node, msg, errObject, data) {
-  debug({
+  debug.debuglog({
     label: 'msgProcess',
     error: errObject,
     data: data
@@ -33,13 +32,13 @@ function msgProcess (node, msg, errObject, data) {
     case 'electPreferredLeaders':
       data.forEach((c, i, a) => {
         const t = msg.payload.find((cp) => cp.topic === c.topic)
-        debug({
+        debug.debuglog({
           label: 'msgProcess multi response',
           topic: c,
           data: t
         })
         if (c.hasOwnProperty('error')) {
-          debug({
+          debug.debuglog({
             label: 'msgProcess multi response',
             data: {
               topic: msg.topic,
@@ -54,7 +53,7 @@ function msgProcess (node, msg, errObject, data) {
           }])
           return
         }
-        debug({
+        debug.debuglog({
           label: 'msgProcess multi response ok',
           data: {
             topic: msg.topic,
@@ -85,13 +84,13 @@ const processInputPayloadArg = [
 ]
 
 function processInput (node, msg) {
-  debug({
+  debug.debuglog({
     label: 'processInput',
     msg
   })
   try {
     if (processInputNoArg.includes(msg.topic)) {
-      debug({
+      debug.debuglog({
         label: 'processInput processInputNoArg',
         msg
       })
@@ -99,7 +98,7 @@ function processInput (node, msg) {
       return
     }
     if (processInputPayloadArg.includes(msg.topic)) {
-      debug({
+      debug.debuglog({
         label: 'processInput processInputPayloadArg',
         msg
       })
@@ -126,7 +125,7 @@ function processInput (node, msg) {
         throw Error('invalid message topic')
     }
   } catch (e) {
-    debug({
+    debug.debuglog({
       label: 'processInput catch',
       error: e,
       msg: msg,
@@ -163,6 +162,7 @@ module.exports = function (RED) {
       connecting: false,
       processInput: processInput
     })
+    node.debug > 0 ? debug.setOn(node.debug) : debug.setOff()
     node.brokerNode = RED.nodes.getNode(node.broker)
     node.brokerNode.setState(node)
     node.status({
@@ -226,7 +226,7 @@ module.exports = function (RED) {
         }
         throw Error('unknown action: ' + req.params.action)
       } catch (err) {
-        debug({
+        debug.debuglog({
           label: 'httpAdmin',
           error: err,
           request: req.params,

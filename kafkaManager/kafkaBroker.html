@@ -1,12 +1,17 @@
 <script type="text/x-red" data-help-name="Kafka Broker">
-    <p>Define a Kafka Broker. </p>
+	<p>Define a Kafka Broker. </p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Broker">
 
-    <div class="form-row">
+	<div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         <input  id="node-config-input-name" type="text" >
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-debug"><i class="fa fa-tag"></i> Debug </label>
+        <input type="number" min="0" max="1000" id="node-input-debug" placeholder="Debug">
     </div>
 
     <div class="form-row">
@@ -106,111 +111,181 @@
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Broker',{
-        category: 'config',
-        icon: "setting.png",
-        defaults: {
-        	name: {required:false},
-        	host: {required:false},   // legacy can be removed in future
-        	port: {required:false},   // legacy can be removed in future
-        	hosts: {value:[{host:"127.0.0.1",port:9092}] ,required:true},
-			connectTimeout: {value:10000, required:false,validate:RED.validators.number()},
-			requestTimeout: {value:30000, required:false,validate:RED.validators.number()},
-			autoConnect: {value:"true", required:false},
-			idleConnection: {value:5, required:false,validate:RED.validators.number()},
-			reconnectOnIdle: {value:"true", required:false},
-			maxAsyncRequests: {value:10, required:false,validate:RED.validators.number()},
-			checkInterval: {value:10, required:false,validate:RED.validators.number()},
-			tls: {type:"tls-config",required: false},
-			usetls: {value: false}
-	    },
-        credentials: {
-            user: {type:'text'},
-            password: {type:'password'}
-        },
-        label: function() {
-        	if(this.name) {
-        	   	this.service=this.name
-        	} else {
-	        	this.service=node.hosts.map((r)=>r.host+":"+r.port).join(" ");
-        	}
-            return this.service;
-        },
-        labelStyle: function() {
-            return "node_label_italic";
-        },
-  	    oneditprepare: function() {
-  	    	let tabs = RED.tabs.create({
-                id: "node-config-kafkaBroker-tabs",
-                onchange: function(tab) {
-                    $("#node-config-kafkaBroker-tabs-content").children().hide();
-                    $("#" + tab.id).show();
-                }
-            });
-            tabs.addTab({
-                id: "kafkaBroker-tab-connection",
-                label: "Connection"
-            });
-            tabs.addTab({
-                id: "kafkaBroker-tab-options",
-                label: "Options"
-            });
-  	    	
-  	    	if(typeof this.usetls === 'undefined') {
-                this.usetls = false;
-                $("#node-config-input-usetls").prop("checked",false);
-            }
-            function updateTLSOptions() {
-                if ($("#node-config-input-usetls").is(':checked')) {
-                    $("#node-config-row-tls").show();
-                } else {
-                    $("#node-config-row-tls").hide();
-                }
-            }
-            updateTLSOptions();
-            $("#node-config-input-usetls").on("click",function() {
-                updateTLSOptions();
-            });
-            
-  	    	let node=this;
-  	    	if(!node.hosts) {   // due to legacy
-  	    	 	node.hosts=node.host?[{host:node.host,port:node.port}]:[];
-  	    	 	node.host=null;
-  	    	}
-  	    	if(!node.hosts.length) {
-  	    		node.hosts.push({host:"127.0.0.1",port:9092});
-  	    	}
-  	    	node.hosts.forEach((r)=>addHost(r.host,r.port));
-            $("#node-input-add-host").click(function() {
-               addHost("localhost", 9091+$("#node-input-hosts-tbody").children().length);
-            });
-            function addHost(host,port) {
-  	        	let row=$('<tr/>').appendTo($("#node-input-hosts-tbody"));
-  	        	if($("#node-input-hosts-tbody").children().length>2){
-	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
-    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
-        	        deleteButton.click(function() {
-            	    	$(this).parent().remove();
-                	});
-  	        	} else {
-  	        		$('<a/>').appendTo(row);
-  	        	}
-
-                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', host)).appendTo(row); // host
-				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', port)).appendTo(row); // port
-            }
-            
-  		},
-  		oneditsave: function() {
-            if (!$("#node-config-input-usetls").is(':checked')) {
-                $("#node-config-input-tls").val("");
-            }
-           	let inputs,node=this;
-        	node.hosts=[];
-        	$('#node-input-hosts-tbody tr:gt(0)').each(function () {
-            	inputs=$(this).find("input");
-            	node.hosts.push({host:inputs[0].value,port:parseInt(inputs[1].value,10)});
+	RED.nodes.registerType('Kafka Broker', {
+		category: 'config',
+		icon: "setting.png",
+		defaults: {
+			name: {
+				required: false
+			},
+			host: {
+				required: false
+			}, // legacy can be removed in future
+			port: {
+				required: false
+			}, // legacy can be removed in future
+			hosts: {
+				value: [{
+					host: "127.0.0.1",
+					port: 9092
+				}],
+				required: true
+			},
+			debug: {
+				value: 0,
+				required: true
+			},
+			connectTimeout: {
+				value: 10000,
+				required: false,
+				validate: RED.validators.number()
+			},
+			requestTimeout: {
+				value: 30000,
+				required: false,
+				validate: RED.validators.number()
+			},
+			autoConnect: {
+				value: "true",
+				required: false
+			},
+			idleConnection: {
+				value: 5,
+				required: false,
+				validate: RED.validators.number()
+			},
+			reconnectOnIdle: {
+				value: "true",
+				required: false
+			},
+			maxAsyncRequests: {
+				value: 10,
+				required: false,
+				validate: RED.validators.number()
+			},
+			checkInterval: {
+				value: 10,
+				required: false,
+				validate: RED.validators.number()
+			},
+			tls: {
+				type: "tls-config",
+				required: false
+			},
+			usetls: {
+				value: false
+			}
+		},
+		credentials: {
+			user: {
+				type: 'text'
+			},
+			password: {
+				type: 'password'
+			}
+		},
+		label: function () {
+			if (this.name) {
+				this.service = this.name
+			} else {
+				this.service = node.hosts.map((r) => r.host + ":" + r.port).join(" ");
+			}
+			return this.service;
+		},
+		labelStyle: function () {
+			return "node_label_italic";
+		},
+		oneditprepare: function () {
+			let tabs = RED.tabs.create({
+				id: "node-config-kafkaBroker-tabs",
+				onchange: function (tab) {
+					$("#node-config-kafkaBroker-tabs-content").children().hide();
+					$("#" + tab.id).show();
+				}
 			});
-        }
-    });
+			tabs.addTab({
+				id: "kafkaBroker-tab-connection",
+				label: "Connection"
+			});
+			tabs.addTab({
+				id: "kafkaBroker-tab-options",
+				label: "Options"
+			});
+
+			if (typeof this.usetls === 'undefined') {
+				this.usetls = false;
+				$("#node-config-input-usetls").prop("checked", false);
+			}
+
+			function updateTLSOptions() {
+				if ($("#node-config-input-usetls").is(':checked')) {
+					$("#node-config-row-tls").show();
+				} else {
+					$("#node-config-row-tls").hide();
+				}
+			}
+			updateTLSOptions();
+			$("#node-config-input-usetls").on("click", function () {
+				updateTLSOptions();
+			});
+
+			let node = this;
+			if (!node.hosts) { // due to legacy
+				node.hosts = node.host ? [{
+					host: node.host,
+					port: node.port
+				}] : [];
+				node.host = null;
+			}
+			if (!node.hosts.length) {
+				node.hosts.push({
+					host: "127.0.0.1",
+					port: 9092
+				});
+			}
+			node.hosts.forEach((r) => addHost(r.host, r.port));
+			$("#node-input-add-host").click(function () {
+				addHost("localhost", 9091 + $("#node-input-hosts-tbody").children().length);
+			});
+
+			function addHost(host, port) {
+				let row = $('<tr/>').appendTo($("#node-input-hosts-tbody"));
+				if ($("#node-input-hosts-tbody").children().length > 2) {
+					let deleteButton = $('<a/>', {
+						href: "#",
+						class: "editor-button editor-button-medium"
+					}).appendTo(row);
+					$('<i/>', {
+						class: "fa fa-remove"
+					}).appendTo(deleteButton);
+					deleteButton.click(function () {
+						$(this).parent().remove();
+					});
+				} else {
+					$('<a/>').appendTo(row);
+				}
+
+				$('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr(
+					'value', host)).appendTo(row); // host
+				$('<td/>').append($(
+					'<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />'
+					).attr('value', port)).appendTo(row); // port
+			}
+
+		},
+		oneditsave: function () {
+			if (!$("#node-config-input-usetls").is(':checked')) {
+				$("#node-config-input-tls").val("");
+			}
+			let inputs, node = this;
+			node.hosts = [];
+			$('#node-input-hosts-tbody tr:gt(0)').each(function () {
+				inputs = $(this).find("input");
+				node.hosts.push({
+					host: inputs[0].value,
+					port: parseInt(inputs[1].value, 10)
+				});
+			});
+		}
+	});
 </script>

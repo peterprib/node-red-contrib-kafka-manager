@@ -1,10 +1,9 @@
 const nodeLabel = 'Kafka Offset'
-const d = require('./lib/debugOn')
-d.debugInit(100, nodeLabel)
-const debug = d.debugOn
+const Debug = require('./lib/debugOn')
+const debug = new Debug(nodeLabel)
 
 function msgProcess (node, msg, err, data) {
-  debug({
+  debug.debuglog({
     label: 'msgProcess',
     error: err,
     data: data
@@ -67,7 +66,7 @@ maxNum: 1 //default 1
         throw Error("invalid msg action or topic, e.g msg.action='fetch'")
     }
   } catch (e) {
-    debug({
+    debug.debuglog({
       label: 'input catch',
       error: e,
       msg: msg,
@@ -104,6 +103,7 @@ module.exports = function (RED) {
       connecting: false,
       processInput: processInput
     })
+    node.debug > 0 ? debug.setOn(node.debug) : debug.setOff()
     node.brokerNode = RED.nodes.getNode(node.broker)
     node.status({
       fill: 'yellow',
@@ -163,7 +163,7 @@ module.exports = function (RED) {
       try {
         switch (req.params.action) {
           case 'connect':
-            debug({
+            debug.debuglog({
               label: 'httpadmin connect',
               connection: Object.keys(node.connection)
             })
@@ -173,7 +173,7 @@ module.exports = function (RED) {
             throw Error('unknown action: ' + req.params.action)
         }
       } catch (err) {
-        debug({
+        debug.debuglog({
           label: 'httpAdmin',
           error: err,
           request: req.params,
