@@ -90,12 +90,6 @@ Run the following command in the root directory of your Node-RED install or via 
 
     npm install node-red-contrib-kafka-manager
 
-## Dependencies
-
-Run the following command to install [kafka-node][4]
-
-    npm install kafka-node
-
 
 # Tests
 
@@ -110,6 +104,7 @@ Includes sample script for start kafka in windows using node-red
 ------------------------------------------------------------
 
 # Version
+0.2.9 Change debugging mechanism and add kafka-node to dependencies
 0.2.8 Added all admin api's per Kafka 2.3 but dependent on [kafka-node][4] update.
 Remove refresh metadata, automated if problem.  Fix consumer group errors.  Add tests for admin calls.
 0.2.7 If offsetOutOfRange pause consumer.  Added in deleteTopics but dependant on [kafka-node][4] update.

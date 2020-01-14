@@ -1,27 +1,12 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Consumer Copyright 2019 Jaroslav Peter Prib')
+const nodeName="Kafka Consumer";
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Consumer ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
-
-let kafka
+let kafka;
 
 function sendMsg (node, message) {
-  debug({
+  if(logger.active) logger.send({
     label: 'sendMsg',
     node: node.id,
     message: message
@@ -39,7 +24,7 @@ function sendMsg (node, message) {
 }
 
 function connect (node) {
-  debug({
+  if(logger.active) logger.send({
     label: 'connect',
     node: node.id
   })
@@ -56,7 +41,7 @@ function connect (node) {
     keyEncoding: node.keyEncoding || 'utf8'
   })
   node.consumer.on('message', (message) => {
-    debug({
+    if(logger.active) logger.send({
       label: 'consumer.on.message',
       node: node.id,
       message: message
@@ -86,7 +71,7 @@ function connect (node) {
   })
 
   node.consumer.on('error', function (e) {
-    debug({
+    if(logger.active) logger.send({
       label: 'consumer.on.error',
       node: node.id,
       error: e
@@ -111,7 +96,7 @@ function connect (node) {
     })
   })
   node.consumer.on('offsetOutOfRange', function (e) {
-    debug({
+    if(logger.active) logger.send({
       label: 'consumer.on.offsetOutOfRange',
       node: node.id,
       error: e
@@ -153,7 +138,7 @@ module.exports = function (RED) {
       node.brokerNode.onStateUp.push({
         node: node,
         callback: function () {
-          debug({
+          if(logger.active) logger.send({
             label: 'brokerNode.stateUp',
             node: node.id
           })
@@ -163,7 +148,7 @@ module.exports = function (RED) {
       node.brokerNode.stateUp.push({
         node: node,
         callback: function () {
-          debug({
+          if(logger.active) logger.send({
             label: 'brokerNode.stateUp',
             node: node.id
           })
@@ -180,7 +165,7 @@ module.exports = function (RED) {
         }
       })
       node.on('close', function (removed, done) {
-        debug({
+        if(logger.active) logger.send({
           label: 'close',
           node: node.id
         })
@@ -195,7 +180,7 @@ module.exports = function (RED) {
         done()
       })
       node.pause = () => {
-        debug({
+        if(logger.active) logger.send({
           label: 'pause',
           node: node.id
         })
@@ -208,7 +193,7 @@ module.exports = function (RED) {
         })
       }
       node.resume = () => {
-        debug({
+        if(logger.active) logger.send({
           label: 'resume',
           node: node.id
         })
@@ -223,7 +208,7 @@ module.exports = function (RED) {
       node.addTopics = (topics, fromOffset) => {
         node.consumer.addTopics(topics,
           (err, added) => {
-            debug({
+            if(logger.active) logger.send({
               label: 'consumer.addTopics',
               node: node.id,
               topics: topics,
@@ -237,7 +222,7 @@ module.exports = function (RED) {
       }
       node.removeTopics = (topics) => {
         node.consumer.removeTopics(topics, (err, removed) => {
-          debug({
+          if(logger.active) logger.send({
             label: 'consumer.addTopics',
             node: node.id,
             topics: topics,
@@ -248,7 +233,7 @@ module.exports = function (RED) {
       }
       node.commit = () => {
         node.consumer.commit((err, data) => {
-          debug({
+          if(logger.active) logger.send({
             label: 'commit',
             node: node.id,
             error: err,

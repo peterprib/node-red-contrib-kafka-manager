@@ -1,28 +1,12 @@
-const nodeLabel = 'Kafka Producer'
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] ' + nodeLabel + ' Copyright 2019 Jaroslav Peter Prib')
+const nodeName='Kafka Producer';
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
-
-let kafka
+let kafka;
 
 function producerSend (node, msgIn, retry) {
-  debug({
+  if(logger.active) logger.send({
     label: 'producerSend',
     node: node.id,
     retry: retry
@@ -142,7 +126,7 @@ function setInError (node, errmsg) {
 }
 
 function connect (node) {
-  debug({
+  if(logger.active) logger.send({
     label: 'connect',
     node: node.id
   })
@@ -258,5 +242,5 @@ module.exports = function (RED) {
       done()
     })
   }
-  RED.nodes.registerType(nodeLabel, KafkaProducerNode)
+  RED.nodes.registerType(nodeName, KafkaProducerNode)
 }

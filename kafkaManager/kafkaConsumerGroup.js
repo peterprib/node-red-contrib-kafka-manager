@@ -1,26 +1,12 @@
-const label = 'Kafka Consumer Group'
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] ' + label + ' Copyright 2019 Jaroslav Peter Prib')
+const nodeName='Kafka Consumer Group';
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
-const debugOff = () => false
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn; let debugCnt = 100
-
-let kafka
+let kafka;
 
 function sendMsg (node, message) {
-  debug({ label: 'sendMsg', node: node.id, message: message })
+  if(logger.active) logger.send({ label: 'sendMsg', node: node.id, message: message })
   node.send({
     topic: message.topic || node.topic,
     payload: message.value,
@@ -33,7 +19,7 @@ function sendMsg (node, message) {
   })
 }
 function connect (node) {
-  debug({ label: 'connect', node: node.id })
+  if(logger.active) logger.send({ label: 'connect', node: node.id })
 
   node.options = {
     kafkaHost: node.brokerNode.kafkaHost, // connect directly to kafka broker (instantiates a KafkaClient)
@@ -54,7 +40,7 @@ function connect (node) {
   }
   node.consumer = new kafka.ConsumerGroup(node.options, node.topics)
   node.consumer.on('message', (message) => {
-    debug({ label: 'consumer.on.message', node: node.id, message: message })
+    if(logger.active) logger.send({ label: 'consumer.on.message', node: node.id, message: message })
     if (!node.ready) {
       node.ready = true
       node.status({ fill: 'green', shape: 'ring', text: 'Ready with ' + node.brokerNode.name })
@@ -72,7 +58,7 @@ function connect (node) {
   })
 
   node.consumer.on('error', function (e) {
-    debug({ label: 'consumer.on.error', node: node.id, error: e })
+    if(logger.active) logger.send({ label: 'consumer.on.error', node: node.id, error: e })
     if (e.message.startsWith('Request timed out')) {
       node.status({ fill: 'yellow', shape: 'ring', text: e.message })
       node.log('on error ' + e.message)
@@ -85,7 +71,7 @@ function connect (node) {
     node.status({ fill: 'red', shape: 'ring', text: err })
   })
   node.consumer.on('offsetOutOfRange', function (e) {
-    debug({ label: 'consumer.on.offsetOutOfRange', node: node.id, error: e })
+    if(logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node: node.id, error: e })
     node.error('on offsetOutOfRange ' + e)
     node.status({ fill: 'red', shape: 'ring', text: e.message + ' (PAUSED)' })
     node.consumer.pause()
@@ -105,14 +91,14 @@ module.exports = function (RED) {
       node.brokerNode.onStateUp.push({
         node: node,
         callback: function () {
-          debug({ label: 'brokerNode.stateUp', node: node.id })
+          if(logger.active) logger.send({ label: 'brokerNode.stateUp', node: node.id })
           connect(node)
         }
       }) // needed due to bug in kafka driver
       node.brokerNode.stateUp.push({
         node: node,
         callback: function () {
-          debug({ label: 'brokerNode.stateUp', node: node.id })
+          if(logger.active) logger.send({ label: 'brokerNode.stateUp', node: node.id })
           if (this.paused) {
             this.log('state changed to up and in paused state')
             return
@@ -126,7 +112,7 @@ module.exports = function (RED) {
         }
       })
       node.on('close', function (removed, done) {
-        debug({ label: 'close', node: node.id })
+        if(logger.active) logger.send({ label: 'close', node: node.id })
         node.status({ fill: 'red', shape: 'ring', text: 'closed' })
         node.consumer.close(false, () => {
           node.log('closed')
@@ -134,20 +120,20 @@ module.exports = function (RED) {
         done()
       })
       node.pause = () => {
-        debug({ label: 'pause', node: node.id })
+        if(logger.active) logger.send({ label: 'pause', node: node.id })
         node.paused = true
         node.consumer.pause()
         node.status({ fill: 'red', shape: 'ring', text: 'paused' })
       }
       node.resume = () => {
-        debug({ label: 'resume', node: node.id })
+        if(logger.active) logger.send({ label: 'resume', node: node.id })
         node.resumed = true
         node.consumer.resume()
         node.status({ fill: 'green', shape: 'ring', text: 'Ready with ' + node.brokerNode.name })
       }
       node.commit = () => {
         node.consumer.commit((err, data) => {
-          debug({ label: 'commit', node: node.id, error: err, data: data })
+          if(logger.active) logger.send({ label: 'commit', node: node.id, error: err, data: data })
         })
       }
     } catch (e) {
@@ -155,10 +141,10 @@ module.exports = function (RED) {
       node.status({ fill: 'red', shape: 'ring', text: e.toString() })
     }
   }
-  RED.nodes.registerType(label, KafkaConsumerGroupNode)
+  RED.nodes.registerType(nodeName, KafkaConsumerGroupNode)
   RED.httpAdmin.get('/KafkaConsumerGroup/:id/:action/', RED.auth.needsPermission('KafkaConsumerGroup.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
-    if (node && node.type === label) {
+    if (node && node.type === nodeName) {
       try {
         switch (req.params.action) {
           case 'pause':

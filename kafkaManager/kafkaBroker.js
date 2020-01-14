@@ -1,37 +1,21 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Broker Copyright 2019 Jaroslav Peter Prib')
+const nodeName="Kafka Broker";
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  const label = 'Kafka Broker'
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + label + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
-
-let kafka
+let kafka;
 
 function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
-  debug({
+  if(logger.active) logger.send({
     label: 'hostAvailable',
     host: host,
     port: port,
     node: node.id
-  })
+  });
   const net = require('net')
   const socket = new net.Socket()
   socket.on('connect', function () {
-    debug({
+	if(logger.active) logger.send({
       label: 'hostAvailable connect',
       host: host,
       port: port,
@@ -45,21 +29,21 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
     }
   })
     .on('end', function () {
-      debug({
+      if(logger.active) logger.send({
         label: 'hostAvailable end',
         host: host,
         port: port,
         node: node.id
-      })
+      });
     })
     .on('error', function (e) {
-      debug({
+      if(logger.active) logger.send({
         label: 'hostAvailable error',
         host: host,
         port: port,
         node: node.id,
         error: e.toString()
-      })
+      });
       try {
         socket.destroy()
         downCB.apply(node, [e])
@@ -67,12 +51,12 @@ function hostAvailable (host, port, node, availableCB, downCB, timeoutCB) {
         node.error('hostAvailable on error ' + e.message)
       }
     }).on('timeout', function () {
-      debug({
+      if(logger.active) logger.send({
         label: 'hostAvailable timeout',
         host: host,
         port: port,
         node: node.id
-      })
+      });
       try {
         (downCB || timeoutCB).apply(node, ['time out'])
       } catch (e) {
@@ -91,11 +75,11 @@ function stateChange (list, state) {
 };
 
 function testHosts (node) {
-  debug({
+  if(logger.active) logger.send({
     label: 'testHosts',
     node: node.id,
     available: node.available
-  })
+  });
   testHost(node, 0)
 }
 
@@ -108,12 +92,12 @@ function testHost (node, i) {
     return
   }
   const host = node.hosts[i]
-  debug({
+  if(logger.active) logger.send({
     label: 'testHost',
     host: host.host,
     port: host.port,
     node: node.id
-  })
+  });
   hostAvailable(host.host, host.port, node,
     () => {
       if (node.available) return
@@ -168,12 +152,12 @@ function setState (node) {
 }
 
 function connect (node, type, errCB) {
-  debug({
+  if(logger.active) logger.send({
     label: 'connect',
     type: type,
     node: node.id,
     available: node.available
-  })
+  });
   if (node.available) {
     if (errCB) errCB.apply(node, ['connect attempt and not available'])
     return
@@ -210,22 +194,22 @@ function connect (node, type, errCB) {
 };
 
 function connectKafka (node, type) {
-  debug({
+  if(logger.active) logger.send({
     label: 'connectKafka',
     type: type,
     node: node.id,
     host: node.host,
     port: node.port
-  })
+  });
   node.client = node.brokerNode.getKafkaClient()
   node.connection = new kafka[type](node.client)
   node.connecting = true
   node.connection.on('error', function (e) {
-    debug({
+	if(logger.active) logger.send({
       label: 'connectKafka on error',
       node: node.id,
       error: e
-    })
+    });
     node.connected = false
     node.connecting = false
     const err = node.brokerNode.getRevisedMessage(e.message)
@@ -242,13 +226,13 @@ function connectKafka (node, type) {
     }
   })
   node.connection.on('connect', function () {
-    debug({
+	if(logger.active) logger.send({
       label: 'connectKafka on connect',
       node: node.id
-    })
+    });
     node.connected = true
     node.connecting = false
-    debug('connected')
+    if(logger.active) logger.send('connected');
     node.status({
       fill: 'green',
       shape: 'ring',
@@ -322,10 +306,10 @@ module.exports = function (RED) {
         }
       }
       node.getKafkaDriver()
-      debug({
+      if(logger.active) logger.send({
         label: 'getKafkaClient',
         options: options
-      })
+      });
       return new kafka.KafkaClient(options)
     }
     node.getRevisedMessage = (err) => {

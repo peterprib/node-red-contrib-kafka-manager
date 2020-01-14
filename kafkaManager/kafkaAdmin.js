@@ -1,28 +1,13 @@
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] Kafka Admin Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] Kafka Admin ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
+const nodeName="Kafka Admin";
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
 function msgProcess (node, msg, errObject, data) {
-  debug({
-    label: 'msgProcess',
-    error: errObject,
-    data: data
+  if(logger.active) logger.send({
+		label: 'msgProcess',
+		error: errObject,
+		data: data
   })
   if (errObject) {
     const err = typeof errObject !== 'string' ? errObject.toString() : errObject.message.toString()
@@ -48,20 +33,20 @@ function msgProcess (node, msg, errObject, data) {
     case 'electPreferredLeaders':
       data.forEach((c, i, a) => {
         const t = msg.payload.find((cp) => cp.topic === c.topic)
-        debug({
-          label: 'msgProcess multi response',
-          topic: c,
-          data: t
-        })
+        if(logger.active) logger.send({
+        	label: 'msgProcess multi response',
+        	topic: c,
+        	data: t
+        	});
         if (c.hasOwnProperty('error')) {
-          debug({
-            label: 'msgProcess multi response',
-            data: {
-              topic: msg.topic,
-              error: c.error,
-              payload: [t]
-            }
-          })
+        	if(logger.active) logger.send({
+        		label: 'msgProcess multi response',
+        		data: {
+        			topic: msg.topic,
+        			error: c.error,
+        			payload: [t]
+        		}
+          });
           node.send([null, {
             topic: msg.topic,
             error: c.error,
@@ -69,13 +54,13 @@ function msgProcess (node, msg, errObject, data) {
           }])
           return
         }
-        debug({
-          label: 'msgProcess multi response ok',
-          data: {
-            topic: msg.topic,
-            payload: [c]
-          }
-        })
+        if(logger.active) logger.send({
+        	label: 'msgProcess multi response ok',
+        	data: {
+        		topic: msg.topic,
+        		payload: [c]
+        	}
+          });
         node.send({
           topic: msg.topic,
           payload: [t]
@@ -100,24 +85,24 @@ const processInputPayloadArg = [
 ]
 
 function processInput (node, msg) {
-  debug({
-    label: 'processInput',
-    msg
-  })
+  if(logger.active) logger.send({
+	  label: 'processInput',
+	  msg
+  	})
   try {
     if (processInputNoArg.includes(msg.topic)) {
-      debug({
-        label: 'processInput processInputNoArg',
-        msg
-      })
+      if(logger.active) logger.send({
+          label: 'processInput processInputNoArg',
+          msg
+        });
       node.connection[msg.topic]((err, data) => msgProcess(node, msg, err, data))
       return
     }
     if (processInputPayloadArg.includes(msg.topic)) {
-      debug({
-        label: 'processInput processInputPayloadArg',
-        msg
-      })
+      if(logger.active) logger.send({
+          label: 'processInput processInputPayloadArg',
+          msg
+        });
       node.connection[msg.topic](msg.payload, (err, data) => msgProcess(node, msg, err, data))
       return
     }
@@ -141,12 +126,12 @@ function processInput (node, msg) {
         throw Error('invalid message topic')
     }
   } catch (e) {
-    debug({
-      label: 'processInput catch',
-      error: e,
-      msg: msg,
-      connection: Object.keys(node.connection)
-    })
+	if(logger.active) logger.send({
+          label: 'processInput catch',
+          error: e,
+          msg: msg,
+          connection: Object.keys(node.connection)
+      });
     msg.error = e.toString()
     node.send([null, msg])
   }
@@ -223,7 +208,7 @@ module.exports = function (RED) {
       done()
     })
   }
-  RED.nodes.registerType('Kafka Admin', KafkaAdminNode)
+  RED.nodes.registerType(nodeName, KafkaAdminNode)
   RED.httpAdmin.get('/KafkaAdmin/:id/:action/', RED.auth.needsPermission('KafkaAdmin.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
     if (node && node.type === 'Kafka Admin') {
@@ -241,12 +226,12 @@ module.exports = function (RED) {
         }
         throw Error('unknown action: ' + req.params.action)
       } catch (err) {
-        debug({
-          label: 'httpAdmin',
-          error: err,
-          request: req.params,
-          connection: Object.keys(node.connection)
-        })
+    	if(logger.active) logger.send({
+            label: 'httpAdmin',
+            error: err,
+            request: req.params,
+            connection: Object.keys(node.connection)
+          });
         var reason1 = 'Internal Server Error, ' + req.params.action + ' failed ' + err.toString()
         node.error(reason1)
         res.status(500).send(reason1)

@@ -1,26 +1,10 @@
-const nodeLabel = 'Kafka Offset'
-const ts = (new Date().toString()).split(' ')
-console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [info] ' + nodeLabel + ' Copyright 2019 Jaroslav Peter Prib')
-
-const debugOff = () => false
-
-function debugOn (m) {
-  const ts = (new Date().toString()).split(' ')
-  if (!debugCnt--) {
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging turn off')
-    debug = debugOff
-  }
-  if (debugCnt < 0) {
-    debugCnt = 100
-    console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' debugging next ' + debugCnt + ' debug points')
-  }
-  console.log([parseInt(ts[2], 10), ts[1], ts[4]].join(' ') + ' - [debug] ' + nodeLabel + ' ' + (m instanceof Object ? JSON.stringify(m) : m))
-}
-let debug = debugOn
-let debugCnt = 100
+const nodeName='Kafka Offset';
+const Logger = require("logger");
+const logger = new Logger(nodeName);
+logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
 function msgProcess (node, msg, err, data) {
-  debug({
+  if(logger.active) logger.send({
     label: 'msgProcess',
     error: err,
     data: data
@@ -83,7 +67,7 @@ maxNum: 1 //default 1
         throw Error("invalid msg action or topic, e.g msg.action='fetch'")
     }
   } catch (e) {
-    debug({
+    if(logger.active) logger.send({
       label: 'input catch',
       error: e,
       msg: msg,
@@ -165,10 +149,10 @@ module.exports = function (RED) {
       done()
     })
   }
-  RED.nodes.registerType(nodeLabel, KafkaOffsetNode)
+  RED.nodes.registerType(nodeName, KafkaOffsetNode)
   RED.httpAdmin.get('/KafkaOffset/:id/:action/', RED.auth.needsPermission('KafkaOffset.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
-    if (node && node.type === nodeLabel) {
+    if (node && node.type === nodeName) {
       if (!node.connected) {
         node.brokerNode.connect(node, 'Admin', (err) => {
           node.error(err)
@@ -179,7 +163,7 @@ module.exports = function (RED) {
       try {
         switch (req.params.action) {
           case 'connect':
-            debug({
+            if(logger.active) logger.send({
               label: 'httpadmin connect',
               connection: Object.keys(node.connection)
             })
@@ -189,7 +173,7 @@ module.exports = function (RED) {
             throw Error('unknown action: ' + req.params.action)
         }
       } catch (err) {
-        debug({
+        if(logger.active) logger.send({
           label: 'httpAdmin',
           error: err,
           request: req.params,
