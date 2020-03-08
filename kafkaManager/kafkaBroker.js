@@ -268,11 +268,6 @@ module.exports = function (RED) {
     }
     node.kafkaHost = node.hosts.map((r) => r.host + ':' + r.port).join(',')
 
-    if (node.usetls && node.tls) {
-      const tlsNode = RED.nodes.getNode(node.tls)
-      if (tlsNode) tlsNode.addTLSOptions(node.TLSOptions)
-    }
-
     node.getKafkaDriver = () => {
       if (!kafka) {
         try {
@@ -295,10 +290,24 @@ module.exports = function (RED) {
         reconnectOnIdle: (node.reconnectOnIdle || 'true') === 'true',
         maxAsyncRequests: node.maxAsyncRequests || 10
       }, o)
-      if (node.TLSOptions) {
-        options.sslOptions = node.TLSOptions
+   	  if(logger.active) logger.send({label:'getKafkaClient',usetls:node.usetls,options:options});
+      if(node.usetls) {
+    	  options.sslOptions = {rejectUnauthorized:node.selfSign};
+      	  if(logger.active) logger.send({label:'getKafkaClient tls use',selfSign:node.selfSign});
+    	  try {
+    		  if(!(node.selfServe||node.tls)) throw Error("not self serve or no tls configuration selected");
+    		  if(node.tls) {
+        		  node.tlsNode = RED.nodes.getNode(node.tls);
+     	  	      if (!node.tlsNode) throw Error("tls configuration not found");
+      	  	      Object.assign(options.sslOptions,node.tlsNode.credentials);
+     	      	  if(logger.active) logger.send({label:'getKafkaClient sslOptions',properties:options.sslOptions.keys()});
+    		  }
+    	  } catch(e) {
+    		  node.error("get node tls "+node.tls+" failed, error:"+e);
+    	  }
       }
       if (node.credentials.has_password) {
+    	if(logger.active) logger.send({label:'getKafkaClient node credentials has password, note sasl mechanism is plain'});
         options.sasl = {
           mechanism: 'plain',
           username: this.credentials.user,
@@ -334,7 +343,7 @@ module.exports = function (RED) {
   }
   KafkaBrokerNode.prototype.close = function () {
     runtimeStop.apply(this)
-  }
+  };
   RED.nodes.registerType('Kafka Broker', KafkaBrokerNode, {
     credentials: {
       user: {
@@ -344,5 +353,5 @@ module.exports = function (RED) {
         type: 'password'
       }
     }
-  })
+  });
 }

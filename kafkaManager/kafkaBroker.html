@@ -35,15 +35,24 @@
 		</div>
     </div>
 
-
 			<div class="form-row">
 				<input type="checkbox" id="node-config-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
 				<label for="node-config-input-usetls" style="width: auto">Use TLS</label>
 				<div id="node-config-row-tls" class="hide">
-					<label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls"><span data-i18n="mqtt.label.tls-config"></span></label><input style="width: 300px;" type="text" id="node-config-input-tls">
+					<label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-tls"><span data-i18n="mqtt.label.tls-config"></span></label>
+					<input style="width: 300px;" type="text" id="node-config-input-tls">
  		        </div>
 		 	</div>
  	
+			<div class="form-row">
+				<input type="checkbox" id="node-config-input-selfSign" style="display: inline-block; width: auto; vertical-align: top;">
+				<label for="node-config-input-selfSign" style="width: auto">Self Sign</label>
+				<div id="node-config-row-selfSign" class="hide">
+					<label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-config-input-selfSign"><span data-i18n="mqtt.label.tls-config"></span></label>
+					<input style="width: 300px;" type="text" id="node-config-input-selfSign">
+ 		        </div>
+		 	</div>
+
 		    <div class="form-row">
 		        <label for="node-config-input-user"><i class="icon-bookmark"></i> User</label>
 		        <input type="text" id="node-config-input-user">
@@ -122,6 +131,7 @@
 			maxAsyncRequests: {value:10, required:false,validate:RED.validators.number()},
 			checkInterval: {value:10, required:false,validate:RED.validators.number()},
 			tls: {type:"tls-config",required: false},
+			selfSign: {value: false,required: false},
 			usetls: {value: false}
 	    },
         credentials: {
@@ -155,16 +165,21 @@
                 id: "kafkaBroker-tab-options",
                 label: "Options"
             });
-  	    	
   	    	if(typeof this.usetls === 'undefined') {
                 this.usetls = false;
                 $("#node-config-input-usetls").prop("checked",false);
             }
+  	    	if(typeof this.selfSign === 'undefined') {
+                this.usetls = true;
+                $("#node-config-input-selfSign").prop("checked",true);
+            }
             function updateTLSOptions() {
                 if ($("#node-config-input-usetls").is(':checked')) {
                     $("#node-config-row-tls").show();
+                    $("#node-config-input-selfSign").show();
                 } else {
                     $("#node-config-row-tls").hide();
+                    $("#node-config-input-selfSign").hide();
                 }
             }
             updateTLSOptions();
