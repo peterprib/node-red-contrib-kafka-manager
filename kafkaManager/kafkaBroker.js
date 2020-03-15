@@ -300,7 +300,7 @@ module.exports = function (RED) {
         		  node.tlsNode = RED.nodes.getNode(node.tls);
      	  	      if (!node.tlsNode) throw Error("tls configuration not found");
       	  	      Object.assign(options.sslOptions,node.tlsNode.credentials);
-     	      	  if(logger.active) logger.send({label:'getKafkaClient sslOptions',properties:options.sslOptions.keys()});
+      	  	      if(logger.active) logger.send({label:'getKafkaClient sslOptions',properties:Object.keys(options.sslOptions)});
     		  }
     	  } catch(e) {
     		  node.error("get node tls "+node.tls+" failed, error:"+e);
@@ -317,7 +317,7 @@ module.exports = function (RED) {
       node.getKafkaDriver()
       if(logger.active) logger.send({
         label: 'getKafkaClient',
-        options: options
+        options: Object.assign({},options,options.sslOptions?{sslOptions:"***masked***"}:null)
       });
       return new kafka.KafkaClient(options)
     }

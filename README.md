@@ -104,7 +104,7 @@ Includes sample script for start kafka in windows using node-red
 ------------------------------------------------------------
 
 # Version
-0.2.12 Add self serve TLS and fix bug
+0.2.14 Add self serve TLS and fix bug plus mask ssl info when debug logging
 0.2.9 Change debugging mechanism and add kafka-node to dependencies
 0.2.8 Added all admin api's per Kafka 2.3 but dependent on [kafka-node][4] update.
 Remove refresh metadata, automated if problem.  Fix consumer group errors.  Add tests for admin calls.
