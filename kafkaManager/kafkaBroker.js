@@ -84,14 +84,14 @@ function testHosts (node) {
 }
 
 function testHost (node, i) {
-  if (i >= node.hosts.length) {
+  if (i >= node.hostsCombined.length) {
     if (!node.available) return
     node.available = false
     node.error('state change down')
     stateChange(node.stateDown, 'Down')
     return
   }
-  const host = node.hosts[i]
+  const host = node.hostsCombined[i]
   if(logger.active) logger.send({
     label: 'testHost',
     host: host.host,
@@ -162,7 +162,7 @@ function connect (node, type, errCB) {
     if (errCB) errCB.apply(node, ['connect attempt and not available'])
     return
   }
-  if (!node.brokerNode.hosts.length) {
+  if (!node.brokerNode.hostsCombined.length) {
     node.connecting = false
     node.log('host and/or port not defined')
     node.status({
@@ -260,13 +260,43 @@ module.exports = function (RED) {
       stateDown: [],
       onStateUp: []
     })
+    node.hostsCombined=[];
+    if(node.hostsEnvVar) {
+        if(node.hostsEnvVar in process.env) {
+        	try{
+            	const hosts=JSON.parse(process.env[node.hostsEnvVar]);
+            	if(hosts) {
+            		logger.send({label:"test",hosts:hosts});
+            		if(hosts instanceof Array) {
+            			node.hostsCombined=node.hostsCombined.concat(hosts);
+            		} else {
+            			throw Error("not array value: "+process.env[node.hostsEnvVar]);
+            		}
+            	}
+        	} catch(e) {
+    			const error="process.env variable "+node.hostsEnvVar+e.toString();
+//    			node.error(error);
+    			throw Error(error);
+        	}
+        } else {
+        	const error="process.env."+node.hostsEnvVar+" not found ";
+        	node.warn(error);
+            node.status({
+                fill: 'red',
+                shape: 'ring',
+                text: error
+              });
+        }
+    }
     if (node.hosts.length === 0 && node.host) {
       node.hosts.push({
         host: node.host,
         port: node.port
       })
     }
-    node.kafkaHost = node.hosts.map((r) => r.host + ':' + r.port).join(',')
+    node.hostsCombined=node.hostsCombined.concat(node.hosts);
+    logger.send({hosts:node.hostsCombined});
+    node.kafkaHost = node.hostsCombined.map((r) => r.host + ':' + r.port).join(',')
 
     node.getKafkaDriver = () => {
       if (!kafka) {

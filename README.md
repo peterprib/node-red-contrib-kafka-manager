@@ -17,7 +17,11 @@ Note: all nodes run in debug mode for 100 messages then turns off.
 
 ## Kafka Broker
 
-Defines the client interface to kafka. 
+Defines the client interface to kafka. One can add process.env for hosts with 
+
+	process.env.atesthosts='[{"host":"atesthost1","port":1234},{"host":"atesthost2","port":4321}]';
+
+in settitngs.js
 
 ![Kafka Broker](documentation/broker.JPG "Kafka Broker")
 ![Kafka Broker Options](documentation/brokerOptions.JPG "Kafka Broker Options")
@@ -104,6 +108,7 @@ Includes sample script for start kafka in windows using node-red
 ------------------------------------------------------------
 
 # Version
+0.3.0 Add hosts list by process.env
 0.2.14 Add self serve TLS and fix bug plus mask ssl info when debug logging
 0.2.9 Change debugging mechanism and add kafka-node to dependencies
 0.2.8 Added all admin api's per Kafka 2.3 but dependent on [kafka-node][4] update.

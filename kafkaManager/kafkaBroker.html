@@ -1,5 +1,8 @@
 <script type="text/x-red" data-help-name="Kafka Broker">
     <p>Define a Kafka Broker. </p>
+    <p>"Hosts process.env name" can contain a process.env property name that contained hosts as JSON string,e.g.</p>
+    <textarea>process.env.atesthosts='[{"host":"atesthost1","port":1234},{"host":"atesthost2","port":4321}]';</textarea>
+    <p>Note, minimal data quality checks performed.</p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Broker">
@@ -16,24 +19,28 @@
     <div id="node-config-kafkaBroker-tabs-content" style="min-height: 170px;">
 		<div id="kafkaBroker-tab-connection" style="display:none">
 
-
-   <div class="form-row node-input-hosts-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
-		<label style="vertical-align:top;">
-			<i class="fa fa-list-alt"></i> Hosts 
-        	<a href="#" class="editor-button editor-button-small" id="node-input-add-host" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
-		</label>
-		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
-				<table>
- 	              	<tbody id="node-input-hosts-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
-                		<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
-                			<td style="min-width: 10px;">Delete</td>
-                			<td style="min-width: 200px;">Name</td>
-                			<td style="min-width: 60px;">Port </td>
-                		</tr>
-                	</tbody>
-			</table>
-		</div>
-    </div>
+			<div class="form-row node-input-hosts-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
+				<label style="vertical-align:top;">
+					<i class="fa fa-list-alt"></i> Hosts 
+        			<a href="#" class="editor-button editor-button-small" id="node-input-add-host" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+				</label>
+				<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
+					<table>
+ 	              		<tbody id="node-input-hosts-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+                			<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+                				<td style="min-width: 10px;">Delete</td>
+                				<td style="min-width: 200px;">Name</td>
+                				<td style="min-width: 60px;">Port </td>
+                			</tr>
+                		</tbody>
+					</table>
+				</div>
+ 			</div>
+ 			
+ 			<div class="form-row">
+        		<label for="node-config-input-hostsEnvVar"><i class="fa fa-tag"></i>Hosts process.env name</label>
+        		<input id="node-config-input-hostsEnvVar" type="text" >
+    		</div>
 
 			<div class="form-row">
 				<input type="checkbox" id="node-config-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
@@ -122,7 +129,8 @@
         	name: {required:false},
         	host: {required:false},   // legacy can be removed in future
         	port: {required:false},   // legacy can be removed in future
-        	hosts: {value:[{host:"127.0.0.1",port:9092}] ,required:true},
+        	hosts: {value:[{host:"127.0.0.1",port:9092}] ,required:true}, 
+        	hostsEnvVar: {value:"",required:false},
 			connectTimeout: {value:10000, required:false,validate:RED.validators.number()},
 			requestTimeout: {value:30000, required:false,validate:RED.validators.number()},
 			autoConnect: {value:"true", required:false},
