@@ -200,7 +200,7 @@
   	    	 	node.hosts=node.host?[{host:node.host,port:node.port}]:[];
   	    	 	node.host=null;
   	    	}
-  	    	if(!node.hosts.length) {
+  	    	if(!node.hosts.length && !node.hostsEnvVar) {
   	    		node.hosts.push({host:"127.0.0.1",port:9092});
   	    	}
   	    	node.hosts.forEach((r)=>addHost(r.host,r.port));
@@ -209,20 +209,14 @@
             });
             function addHost(host,port) {
   	        	let row=$('<tr/>').appendTo($("#node-input-hosts-tbody"));
-  	        	if($("#node-input-hosts-tbody").children().length>2){
-	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
-    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
-        	        deleteButton.click(function() {
-            	    	$(this).parent().remove();
-                	});
-  	        	} else {
-  	        		$('<a/>').appendTo(row);
-  	        	}
-
+                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+   	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
+       	        deleteButton.click(function() {
+           	    	$(this).parent().remove();
+               	});
                 $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', host)).appendTo(row); // host
 				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', port)).appendTo(row); // port
             }
-            
   		},
   		oneditsave: function() {
             if (!$("#node-config-input-usetls").is(':checked')) {
