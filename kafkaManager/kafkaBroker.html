@@ -60,6 +60,10 @@
  		        </div>
 		 	</div>
 
+            <div class="form-row">
+                <input type="checkbox" id="node-config-input-useCredentials" style="display: inline-block; width: auto; vertical-align: top;">
+                <label for="node-config-input-useCredentials" style="width: auto">Use Credentials (SASL plain)</label>
+            </div>
 		    <div class="form-row">
 		        <label for="node-config-input-user"><i class="icon-bookmark"></i> User</label>
 		        <input type="text" id="node-config-input-user">
@@ -140,7 +144,8 @@
 			checkInterval: {value:10, required:false,validate:RED.validators.number()},
 			tls: {type:"tls-config",required: false},
 			selfSign: {value: false,required: false},
-			usetls: {value: false}
+			usetls: {value: false},
+            useCredentials: {value: false}
 	    },
         credentials: {
             user: {type:'text'},
@@ -221,6 +226,10 @@
   		oneditsave: function() {
             if (!$("#node-config-input-usetls").is(':checked')) {
                 $("#node-config-input-tls").val("");
+            }
+            if (!$("#node-config-input-useCredentials").is(':checked')) {
+                $("#node-config-input-user").val("");
+                $("#node-config-input-password").val("");
             }
            	let inputs,node=this;
         	node.hosts=[];

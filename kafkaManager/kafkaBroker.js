@@ -318,7 +318,8 @@ module.exports = function (RED) {
         autoConnect: (node.autoConnect || 'true') === 'true',
         idleConnection: node.idleConnection || 5,
         reconnectOnIdle: (node.reconnectOnIdle || 'true') === 'true',
-        maxAsyncRequests: node.maxAsyncRequests || 10
+        maxAsyncRequests: node.maxAsyncRequests || 10,
+        useCredentials: node.useCredentials || false
       }, o)
    	  if(logger.active) logger.send({label:'getKafkaClient',usetls:node.usetls,options:options});
       if(node.usetls) {
@@ -336,8 +337,8 @@ module.exports = function (RED) {
     		  node.error("get node tls "+node.tls+" failed, error:"+e);
     	  }
       }
-      if (node.credentials.has_password) {
-    	if(logger.active) logger.send({label:'getKafkaClient node credentials has password, note sasl mechanism is plain'});
+      if (options.useCredentials) {
+    	if(logger.active) logger.send({label:'getKafkaClient node has configured credentials, note sasl mechanism is plain'});
         options.sasl = {
           mechanism: 'plain',
           username: this.credentials.user,
