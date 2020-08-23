@@ -1,6 +1,6 @@
 <script type="text/x-red" data-help-name="Kafka Offset">
-    <p>Get a connection for the message to be used in following nodes</p>
-    <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+    <p>Get offset details</p>
+    <p>On successfully getting details message sent OK out otherwise send to failed connector</p>
     <h3>fetch payload</h3> 
     <pre>
 [
@@ -66,7 +66,7 @@
         inputLabels: "",
         outputs:2,
         outputLabels: ["OK","Error"],
-        icon: "setting.png",
+        icon: "font-awesome/fa-info",
         label: function() {
             return this.name||this._("Kafka Offset");
         },

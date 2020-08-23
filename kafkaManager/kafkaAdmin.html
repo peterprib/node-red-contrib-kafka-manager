@@ -1,6 +1,7 @@
 <script type="text/x-red" data-help-name="Kafka Admin">
-    <p>Get a connection for the message to be used in following nodes</p>
-    <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+    <p>
+	Administer Kafka	
+	</p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Admin">
@@ -28,7 +29,7 @@
         inputLabels: "",
         outputs:2,
         outputLabels: ["OK","Error"],
-        icon: "setting.png",
+        icon: "font-awesome/fa-cogs",
         label: function() {
             return this.name||this._("Kafka Admin");
         },

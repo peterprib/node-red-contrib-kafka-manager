@@ -1,0 +1,40 @@
+<script type="text/x-red" data-help-name="Kafka Rollback">
+	<p>
+	Rollback message and close consumer associated with message without autocommit.
+	</p>
+</script>
+
+<script type="text/x-red" data-template-name="Kafka Rollback">
+
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
+
+</script>
+
+<script type="text/javascript">
+	RED.nodes.registerType('Kafka Rollback',{
+		category: 'input',
+		defaults: {
+			name: {value:"",required:false}
+		},
+		inputs:1,
+		inputLabels: "",
+		outputs:2,
+		outputLabels: ["OK","Error"],
+		icon: "font-awesome/fa-thumbs-down",
+		label: function() {
+			return this.name||this._("Kafka Rollback");
+		},
+		labelStyle: function() {
+			return "node_label_italic";
+		},
+		oneditprepare: function() {
+		},
+		oneditsave: function() {
+		},
+		oneditresize: function(size) {
+		},
+	});
+</script>

@@ -1,233 +1,239 @@
 <script type="text/x-red" data-help-name="Kafka Consumer Group">
-    <p>
-    Get a connection to kafka getting messages to send to out port based on kafka consumer group concept
-    </p>
+	<p>
+	Get a connection to kafka getting messages to send to out port based on kafka consumer group concept
+	</p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Consumer Group">
 
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
+		<input type="text" id="node-input-name" placeholder="Name">
+	</div>
 
-    <div class="form-row">
-        <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
-         <select id="node-input-type">
-         	<option value="Consumer">Base</option>
-         </select>
-    </div>
+	<div class="form-row">
+		<label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
+		 <select id="node-input-type">
+		 	<option value="Consumer">Base</option>
+		 </select>
+	</div>
  
-    <div class="form-row">
-    	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
-    	<input type="text" id="node-input-broker">
+	<div class="form-row">
+		<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
+		<input type="text" id="node-input-broker">
   	</div>
-    
-    <div class="form-row">
-        <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaConsumer-tabs"></ul>
-    </div>
+	
+	<div class="form-row">
+		<ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaConsumer-tabs"></ul>
+	</div>
 
-    <div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
+	<div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
 		<div id="kafkaConsumer-tab-topics" style="display:none">
 		
    <div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
 		<label style="vertical-align:top;">
 			<i class="fa fa-list-alt"></i> Topic 
-        	<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+			<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
 		</label>
 		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
 				<table>
- 	              	<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
-                		<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
-                			<td style="min-width: 10px;">Delete</td>
-                			<td style="min-width: 200px;">Name</td>
-                		</tr>
-                	</tbody>
+ 				  	<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+						<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+							<td style="min-width: 10px;">Delete</td>
+							<td style="min-width: 200px;">Name</td>
+						</tr>
+					</tbody>
 			</table>
 		</div>
-    </div>		
+	</div>		
 		
-	    </div>
+		</div>
 
 		<div id="kafkaConsumer-tab-options" style="display:none">
 
-    <div class="form-row">
-        <label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
-        <input type="text" id="node-input-groupId" placeholder="groupId">
-    </div>
-
-    <div class="form-row">
-        <label for="node-input-sessionTimeout"><i class="icon-bookmark"></i>Session Timeout (ms)</label>
-        <input type="number" id="node-input-sessionTimeout" step=100 min=100 max=1000000  >
-    </div>
-
-    <div class="form-row">
-        <label for="node-input-protocol"><i class="fa fa-list-ul"></i> Protocol </label>
-        <select id="node-input-protocol">
-            <option value="roundrobin">Round Robin</option>
-            <option value="range">Range</option>
-        </select>
-    </div>
-
-    <div class="form-row">
-        <label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
-        <select id="node-input-encoding">
-            <option value="utf8">utf8</option>
-            <option value="buffer">raw</option>
-        </select>
-    </div>
-
-    <div class="form-row">
-        <label for="node-input-fromOffset"><i class="fa fa-list-ul"></i> From Offset </label>
-        <select id="node-input-fromOffset">
-            <option value="latest">latest</option>
-            <option value="earliest">earliest</option>
-            <option value="none">none</option>
-        </select>
-    </div>
+	<div class="form-row">
+		<label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
+		<input type="text" id="node-input-groupId" placeholder="groupId">
+	</div>
 
 	<div class="form-row">
-        <label for="node-input-commitOffsetsOnFirstJoin"><i class="fa fa-list-ul"></i> Commit Offsets On First Join </label>
-        <select id="node-input-commitOffsetsOnFirstJoin">
-            <option value="true">True</option>
-            <option value="false">False</option>
-        </select>
-    </div>
+		<label for="node-input-sessionTimeout"><i class="icon-bookmark"></i>Session Timeout (ms)</label>
+		<input type="number" id="node-input-sessionTimeout" step=100 min=100 max=1000000  >
+	</div>
+
+	<div class="form-row">
+		<label for="node-input-protocol"><i class="fa fa-list-ul"></i> Protocol </label>
+		<select id="node-input-protocol">
+			<option value="roundrobin">Round Robin</option>
+			<option value="range">Range</option>
+		</select>
+	</div>
+
+	<div class="form-row">
+		<label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
+		<select id="node-input-encoding">
+			<option value="utf8">utf8</option>
+			<option value="buffer">raw</option>
+		</select>
+	</div>
+
+	<div class="form-row">
+		<label for="node-input-fromOffset"><i class="fa fa-list-ul"></i> From Offset </label>
+		<select id="node-input-fromOffset">
+			<option value="latest">latest</option>
+			<option value="earliest">earliest</option>
+			<option value="none">none</option>
+		</select>
+	</div>
+
+	<div class="form-row">
+		<label for="node-input-commitOffsetsOnFirstJoin"><i class="fa fa-list-ul"></i> Commit Offsets On First Join </label>
+		<select id="node-input-commitOffsetsOnFirstJoin">
+			<option value="true">True</option>
+			<option value="false">False</option>
+		</select>
+	</div>
 	
-    <div class="form-row">
-        <label for="node-input-outOfRangeOffset"><i class="fa fa-list-ul"></i> Out Of Range Offset </label>
-        <select id="node-input-outOfRangeOffset">
-            <option value="latest">latest</option>
-            <option value="earliest">earliest</option>
-            <option value="none">none</option>
-        </select>
-    </div>
+	<div class="form-row">
+		<label for="node-input-outOfRangeOffset"><i class="fa fa-list-ul"></i> Out Of Range Offset </label>
+		<select id="node-input-outOfRangeOffset">
+			<option value="latest">latest</option>
+			<option value="earliest">earliest</option>
+			<option value="none">none</option>
+		</select>
+	</div>
 
-	    </div>
+		</div>
 
-    </div>
+	</div>
 
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('Kafka Consumer Group',{
-    	category: 'input',
-        defaults: {
-            name: {value:"",required:false},
-            broker: {type:"Kafka Broker",required:true},
- //           batch: {required:false},  // put client batch settings if you need them - to be implemented
+	RED.nodes.registerType('Kafka Consumer Group',{
+		category: 'input',
+		defaults: {
+			name: {value:"",required:false},
+			broker: {type:"Kafka Broker",required:true},
+ //		   batch: {required:false},  // put client batch settings if you need them - to be implemented
  			groupId: {value:"aGroup", required:false},
   			sessionTimeout: {value:15000,required:false},
   			protocol: {value:['roundrobin'],required:false},	// An array of partition assignment protocols ordered by preference.
   																// 'roundrobin' or 'range' string for built ins (see below to pass in custom assignment protocol)
  
-            encoding: {value:'utf8',required:false},
-            fromOffset: {value:'latest',required:true}, // use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
+			encoding: {value:'utf8',required:false},
+			fromOffset: {value:'latest',required:true}, // use for new groups other options could be 'earliest' or 'none' (none will emit an error if no offsets were saved)
 			commitOffsetsOnFirstJoin: {value:'true',required:true}, 	// on the very first time this consumer group subscribes to a topic, record the offset returned in fromOffset (latest/earliest)
 											 						// how to recover from OutOfRangeOffset error (where save offset is past server retention) accepts same value as fromOffset
   			outOfRangeOffset: {value:'earliest',required:false}, // default
-            topics: {value:["topic1"],required:true}
-        },
-	    inputs:0,
-        inputLabels: "",
-        outputs:1,
-        outputLabels: ["Message"],
-        icon: "message.png",
-        label: function() {
-            return this.name||this._("Kafka Consumer Group");
-        },
-        labelStyle: function() {
-            return "node_label_italic";
-        },
-        oneditprepare: function() {
-        	let tabs = RED.tabs.create({
-                id: "node-config-kafkaConsumer-tabs",
-                onchange: function(tab) {
-                    $("#node-config-kafkaConsumer-tabs-content").children().hide();
-                    $("#" + tab.id).show();
-                }
-            });
-            tabs.addTab({
-                id: "kafkaConsumer-tab-topics",
-                label: "Topics"
-            });
-            tabs.addTab({
-                id: "kafkaConsumer-tab-options",
-                label: "Options"
-            });
-        	
-        	let node=this;
-  	    	if(!node.topics.length) {
-  	    		node.topics.push("topic0");
-  	    	}
-  	    	
-  	    	node.topics.forEach((r)=>addTopic(r));
-            $("#node-input-add-topic").click(function() {
-               addTopic("topic"+$("#node-input-topics-tbody").children().length);
-            });
-            function addTopic(topic) {
-  	        	let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
-  	        	if($("#node-input-topics-tbody").children().length>2){
-	                let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
-    	            $('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
-        	        deleteButton.click(function() {
-            	    	$(this).parent().remove();
-                	});
-  	        	} else {
-  	        		$('<a/>').appendTo(row);
-  	        	}
-                $('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
-            }
-        	
-        },
-        oneditsave: function() {
-           	let inputs,node=this;
-        	node.topics=[];
-        	$('#node-input-topics-tbody tr:gt(0)').each(function () {
-            	inputs=$(this).find("input");
-            	node.topics.push(inputs[0].value);
+			topics: {value:["topic1"],required:true}
+		},
+		inputs:0,
+		inputLabels: "",
+		outputs:1,
+		outputLabels: ["Message"],
+		icon: "font-awesome/fa-shopping-basket",
+		label: function() {
+			return this.name||this._("Kafka Consumer Group");
+		},
+		labelStyle: function() {
+			return "node_label_italic";
+		},
+		oneditprepare: function() {
+			let tabs = RED.tabs.create({
+				id: "node-config-kafkaConsumer-tabs",
+				onchange: function(tab) {
+					$("#node-config-kafkaConsumer-tabs-content").children().hide();
+					$("#" + tab.id).show();
+				}
 			});
-        },
-        oneditresize: function(size) {
-        },
-        button: {
-            enabled: function() {
-                return !this.changed;
-            },
-            onclick: function() {
-                if (this.changed) {
-                    return RED.notify(RED._("Queue undeployed changes"),"warning");
-                }
-                var label = this._def.label.call(this);
-                if (label.length > 30) {
-                    label = label.substring(0,50)+"...";
-                }
-                label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-                var node = this;
-                
-                function sendCommand(element,action) {
-                	const nodeName="Kafka Consumer Group";
-                	$(element).dialog("close");
-                	$.get( "/KafkaConsumerGroup/"+node.id+"/"+action )
-			        .done(function( json ) {
-            			    	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-                			}).fail(function( jqXHR, textStatus, error ) {
-                   				if (jqXHR.status === 404) {
-     			                	RED.notify(node._(nodeName+" signal not deployed"),"error");
-                				} else if (jqXHR.status === 500) {
-   				                	RED.notify(node._(nodeName+" signal inject failed with error "+textStatus||""),"error");
-                				} else if (jqXHR.status === 0) {
+			tabs.addTab({
+				id: "kafkaConsumer-tab-topics",
+				label: "Topics"
+			});
+			tabs.addTab({
+				id: "kafkaConsumer-tab-options",
+				label: "Options"
+			});
+			
+			let node=this;
+  			if(!node.topics.length) {
+  				node.topics.push("topic0");
+  			}
+  			
+  			node.topics.forEach((r)=>addTopic(r));
+			$("#node-input-add-topic").click(function() {
+			   addTopic("topic"+$("#node-input-topics-tbody").children().length);
+			});
+			function addTopic(topic) {
+  				let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
+  				if($("#node-input-topics-tbody").children().length>2){
+					let deleteButton = $('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+					$('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
+					deleteButton.click(function() {
+						$(this).parent().remove();
+					});
+  				} else {
+  					$('<a/>').appendTo(row);
+  				}
+				$('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
+			}
+			
+		},
+		oneditsave: function() {
+		   	let inputs,node=this;
+			node.topics=[];
+			$('#node-input-topics-tbody tr:gt(0)').each(function () {
+				inputs=$(this).find("input");
+				node.topics.push(inputs[0].value);
+			});
+		},
+		oneditresize: function(size) {
+		},
+		button: {
+			enabled: function() {
+				return !this.changed;
+			},
+			onclick: function() {
+				if(this.changed) {
+					return RED.notify(RED._("Queue undeployed changes"),"warning");
+				}
+				var label = this._def.label.call(this);
+				if(label.length > 30) {
+					label = label.substring(0,50)+"...";
+				}
+				label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+				var node = this;
+				
+				function sendCommand(element,action) {
+					const nodeName="Kafka Consumer Group";
+					$(element).dialog("close");
+					$.get( "/KafkaConsumerGroup/"+node.id+"/"+action )
+					.done(function( json ) {
+								RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
+							}).fail(function( jqXHR, textStatus, error ) {
+				   				if(jqXHR.status === 404) {
+	 								RED.notify(node._(nodeName+" signal not deployed"),"error");
+								} else if(jqXHR.status === 500) {
+		   							RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
+								} else if(jqXHR.status === 0) {
  									RED.notify(node._(nodeName+" signal no response"),"error");
-                   				} else {
+				   				} else {
 									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
 								}
 							});
-                }
-                $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
+				}
+				$('<div></div>').appendTo('body').html('<div>Choose Action</div>')
   				.dialog({
-      				modal: true, title: (node.name||'Kafka Consumer Group'), zIndex: 10000, autoOpen: true,
+	  				modal: true, title: (node.name||'Kafka Consumer Group'), zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
 					buttons: {
+						close: function () {
+							sendCommand(this,"close");
+						},
+						open: function () {
+							sendCommand(this,"open");
+						},
 						pause: function () {
 							sendCommand(this,"pause");
 						},
@@ -236,11 +242,11 @@
 						}
 					},
 					close: function (event, ui) {
-				    	$(this).remove();
+						$(this).remove();
 					}
 				});
-            }
-        }
+			}
+		}
  
-    });
+	});
 </script>

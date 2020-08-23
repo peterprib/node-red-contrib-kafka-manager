@@ -1,6 +1,7 @@
 <script type="text/x-red" data-help-name="Kafka Producer">
-    <p>Get a connection for the message to be used in following nodes</p>
-    <p>On successfully getting connection message sent OK out otherwise send to failed connector</p>
+    <p>
+	Send message to kafka.
+	</p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Producer">
@@ -89,7 +90,7 @@
         inputLabels: "",
         outputs:0,
         outputLabels: [],
-        icon: "publish.png",
+        icon: "font-awesome/fa-paper-plane",
         label: function() {
             return this.name||this._("Kafka Producer");
         },

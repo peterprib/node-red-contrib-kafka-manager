@@ -1,6 +1,4 @@
-const nodeName='Kafka Offset';
-const Logger = require("node-red-contrib-logger");
-const logger = new Logger(nodeName);
+const logger = new (require("node-red-contrib-logger"))("Kafka Offset");
 logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
 function msgProcess (node, msg, err, data) {
@@ -149,10 +147,10 @@ module.exports = function (RED) {
       done()
     })
   }
-  RED.nodes.registerType(nodeName, KafkaOffsetNode)
+  RED.nodes.registerType(logger.label, KafkaOffsetNode)
   RED.httpAdmin.get('/KafkaOffset/:id/:action/', RED.auth.needsPermission('KafkaOffset.write'), function (req, res) {
     var node = RED.nodes.getNode(req.params.id)
-    if (node && node.type === nodeName) {
+    if (node && node.type === logger.label) {
       if (!node.connected) {
         node.brokerNode.connect(node, 'Admin', (err) => {
           node.error(err)

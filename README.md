@@ -4,10 +4,12 @@ First initial release using [kafka-node][4] .
 
 * Kafka Broker
 * Kafka Admin
+* Kafka Commit
 * Kafka Consumer
 * Kafka ConsumerGroup
 * Kafka Offset
 * Kafka Producer
+* Kafka Rollback
 
 Has a test GUI which allows topics to be added.
 
@@ -32,7 +34,29 @@ in settitngs.js
 
 Provide the ability to process administration tasks such as create and list topic. 
 
+Following topics commnads or via GUI allowed:
+
+*   describeCluster
+*   describeDelegationToken
+*   describeReplicaLogDirs
+*   listConsumerGroups
+*   listGroups
+*   listTopics
+
+Plus following topics commands allowed where paramaters are payload:
+*   alterConfigs, alterReplicaLogDirs, createAcls,createDelegationToke
+*   createPartitions, createTopics, deleteAcls, deleteConsumerGroups, deleteRecords
+*   deleteTopics, describeAcls, describeConsumerGroups, describeGroups, describeLogDirs, describeTopics   *   electPreferredLeaders, expireDelegationToken, incrementalAlterConfigs, listConsumerGroupOffsets, renewDelegationToken
+
+
 ![Admin](documentation/admin.JPG "Admin")
+
+------------------------------------------------------------
+
+## Kafka Commit
+
+If msg._kafka exists and the consumer associated with the message is not on autocommit, it issues commit for the consumer that had produced the message.  Sends to OK or Error port depending on state.
+Note, as Kakfa keeps giving messages to consumer regardless if commit being outstanding, the commit may commit many in-flight messages.  Haven't identified a method of readily preventing this behavour without complications.
 
 ------------------------------------------------------------
 
@@ -73,6 +97,13 @@ Provides types of base and high level.
 
 ![Kafka Producer](documentation/producer.JPG "Kafka Producer")
 
+
+------------------------------------------------------------
+
+## Kafka Rollback
+
+If msg._kafka exists and the consumer associated with the message is not on autocommit, it closes the consumer.  This effectively rolls back the message in Kafka plus ensures the message cannot be automatically handed to the the consumer.  It is expected that the message or problem is fixed and the consumer opened again for processing.
+
 ------------------------------------------------------------
 
 ## Simple Web Admin Panel
@@ -80,10 +111,6 @@ Provides types of base and high level.
 Simple Web page monitor and admin panel 
 
 ![Web](documentation/webAdmin.JPG "Web")
-
-Producing flow can be found in test flow
-
-![Web Flow](documentation/gui.JPG "Web Flow")
 
 
 ------------------------------------------------------------
@@ -101,21 +128,28 @@ Test/example flow in test/generalTest.json
 
 ![Tests](documentation/tests.JPG "Tests")
 
-Includes sample script for start kafka in windows using node-red
-
-![Scripts](documentation/scripts.JPG "Scripts")
 
 ------------------------------------------------------------
 
 # Version
+
+0.4.0 Add commit and rollback with ability to close and start consumer.
+
 0.3.1 Add hosts list by process.env
+
 0.2.14 Add self serve TLS and fix bug plus mask ssl info when debug logging
+
 0.2.9 Change debugging mechanism and add kafka-node to dependencies
+
 0.2.8 Added all admin api's per Kafka 2.3 but dependent on [kafka-node][4] update.
 Remove refresh metadata, automated if problem.  Fix consumer group errors.  Add tests for admin calls.
+
 0.2.7 If offsetOutOfRange pause consumer.  Added in deleteTopics but dependant on [kafka-node][4] update.
+
 0.2.6 More fixes for error processing on invalid topic
+
 0.2.4 Fix for error processing
+
 0.2.3 Fix for multi nodes on broker
 
 0.2.2 Stopped bug where producer on connection initiates a null message. Fix bug with restart logic on fail and order of messages on failed retry

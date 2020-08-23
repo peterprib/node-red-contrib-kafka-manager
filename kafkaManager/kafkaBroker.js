@@ -1,6 +1,4 @@
-const nodeName="Kafka Broker";
-const Logger = require("node-red-contrib-logger");
-const logger = new Logger(nodeName);
+const logger = new (require("node-red-contrib-logger"))("Kafka Broker");
 logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
 let kafka;
@@ -128,6 +126,40 @@ function runtimeStop () {
   this.log('Monitor Stopped')
 }
 
+function sendMsg (node, message) {
+	if(logger.active) logger.send({
+		label: 'sendMsg',
+		node: node.id,
+		message: message
+	})
+	const kafka={
+		offset: message.offset,
+		partition: message.partition,
+		highWaterOffset: message.highWaterOffset,
+		key: message.key,
+		commit:(node.autoCommitBoolean?(callback)=>callback():
+			(callback,callbackError)=>{
+				node.consumer.commit((err, data)=>{
+					if(err){
+						callbackError(err)
+					}else{
+						callback();
+					}
+				})
+			}),
+		rollback:(node.autoCommitBoolean?(callback)=>callback():
+			(callback,callbackError)=>{
+				logger.sendWarning("rollback close");
+				node.close(callback,callbackError);
+			})
+	};
+	node.send({
+		topic: message.topic || node.topic,
+		payload: message.value,
+		_kafka: kafka
+	})
+}
+
 function setState (node) {
   node.brokerNode.stateUp.push({
     node: node,
@@ -247,6 +279,38 @@ function connectKafka (node, type) {
   })
 }
 
+function closeNode(node,okCallback,errCallback) {
+	if(logger.active) logger.send({
+		label: 'close',
+		node: node.id,
+		name: node.name
+	})
+	try{
+		if(node.consumer==null) throw Error('attempted close but already closed');
+		if(node.closing) throw Error('attempted close but already closing');
+		node.status({
+			fill: 'red',
+			shape: 'ring',
+			text: 'Closing'
+		})
+		node.consumer.close(false, () => {
+			node.opening=false
+			delete node.closing
+			delete node.consumer
+			node.log('closed')
+			node.status({
+				fill: 'red',
+				shape: 'ring',
+				text: 'Closed'
+			})
+		})
+	} catch(ex) {
+		if(errCallback) errCallback(ex);
+		return
+	}
+	if(okCallback) okCallback();
+}
+
 module.exports = function (RED) {
   function KafkaBrokerNode (n) {
     RED.nodes.createNode(this, n)
@@ -255,6 +319,7 @@ module.exports = function (RED) {
     }, n, {
       available: false,
       connect: connect,
+      sendMsg:sendMsg,
       setState: setState,
       stateUp: [],
       stateDown: [],
@@ -375,7 +440,7 @@ module.exports = function (RED) {
   KafkaBrokerNode.prototype.close = function () {
     runtimeStop.apply(this)
   };
-  RED.nodes.registerType('Kafka Broker', KafkaBrokerNode, {
+  RED.nodes.registerType(logger.label, KafkaBrokerNode, {
     credentials: {
       user: {
         type: 'text'

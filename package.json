@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-kafka-manager",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Node-RED implements Kafka manager with associand associated .",
   "dependencies": {
     "kafka-node": "*",
@@ -13,8 +13,8 @@
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "mocha": "*",
-    "node-red": "*",
+    "mocha": "^8.1.1",
+    "node-red": "^1.1.3",
     "node-red-node-test-helper": "*"
   },
   "scripts": {
@@ -44,10 +44,12 @@
     "nodes": {
       "kafkaAdmin": "kafkaManager/kafkaAdmin.js",
       "kafkaBroker": "kafkaManager/kafkaBroker.js",
+      "kafkaCommit": "kafkaManager/kafkaCommit.js",
       "kafkaConsumer": "kafkaManager/kafkaConsumer.js",
       "kafkaConsumerGroup": "kafkaManager/kafkaConsumerGroup.js",
       "kafkaOffset": "kafkaManager/kafkaOffset.js",
-      "kafkaProducer": "kafkaManager/kafkaProducer.js"
+      "kafkaProducer": "kafkaManager/kafkaProducer.js",
+      "kafkaRollback": "kafkaManager/kafkaRollback.js"
     }
   },
   "author": "Peter Prib",
