@@ -89,7 +89,7 @@ function connect (node) {
 			node: node.id,
 			error: ex
 		})
-		node.error('on offsetOutOfRange ' + e)
+		node.error('on offsetOutOfRange ' + ex)
 		node.status({
 			fill: 'red',
 			shape: 'ring',
