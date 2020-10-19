@@ -321,6 +321,7 @@ module.exports = function (RED) {
       connect: connect,
       sendMsg:sendMsg,
       setState: setState,
+      closeNode: closeNode,
       stateUp: [],
       stateDown: [],
       onStateUp: []
