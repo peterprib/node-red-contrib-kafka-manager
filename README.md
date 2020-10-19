@@ -133,6 +133,8 @@ Test/example flow in test/generalTest.json
 
 # Version
 
+0.4.1 minor fixes
+
 0.4.0 Add commit and rollback with ability to close and start consumer.
 
 0.3.1 Add hosts list by process.env
@@ -164,9 +166,6 @@ Remove refresh metadata, automated if problem.  Fix consumer group errors.  Add 
   	Further fixes to make connection more robust on kafka up/down
   	Multi host per broker
   	Multi Topic for consumer
-
-0.0.2 Add in High level producer. 
-  	Make connection more robust on kafka up/down due to bugs and problem points in in [kafka-node][4] 
 
 0.0.1 base
 
