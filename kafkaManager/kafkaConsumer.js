@@ -50,10 +50,17 @@ function connect (node) {
 				text: 'Ready with ' + node.brokerNode.name
 			})
 		}
-		if (Array.isArray(message)) {
-			message.forEach((r) => node.brokerNode.sendMsg(node, r))
-		} else {
+
+		const sendMessage = function(node, message) {
+			if(node.convertToJson){
+				message.value = JSON.parse(message.value);
+			} 
 			node.brokerNode.sendMsg(node, message)
+		}
+		if (Array.isArray(message)) {
+			message.forEach((r) => sendMessage(node, r))
+		} else {
+			sendMessage(node, message)
 		}
 	})
 
