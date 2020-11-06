@@ -68,6 +68,10 @@
          	<option value="2">Compress using snappy</option>
          </select>
     </div>
+    <div class="form-row">
+		<label for="node-input-convertFromJson"><i class="fa fa-list-ul"></i> Convert message from JSON </label>
+		<input id="node-input-convertToJson" type="checkbox" style="width: auto"></input>
+	</div>
 
 </script>
 
@@ -84,7 +88,8 @@
             key: {required:false},
             partition: {value:0,required:true},
             attributes: {value:0,required:true},
-            connectionType: {value:"Producer",required:true}
+            connectionType: {value:"Producer",required:true},
+            convertFromJson: {value: false, required: true}
         },
 	    inputs:1,
         inputLabels: "",

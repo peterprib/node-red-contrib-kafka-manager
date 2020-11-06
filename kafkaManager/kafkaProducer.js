@@ -223,6 +223,9 @@ module.exports = function (RED) {
 		}
 		node.on('input', function (msg) {
 			if (node.connected) {
+				if(node.convertFromJson) {
+					msg.payload = JSON.stringify(msg.payload)
+				}
 				producerSend(node, msg)
 				return
 			}
