@@ -133,6 +133,8 @@ Test/example flow in test/generalTest.json
 
 # Version
 
+0.4.3 add convert message payload to/from json and add some basic tests
+
 0.4.1 minor fixes
 
 0.4.0 Add commit and rollback with ability to close and start consumer.
