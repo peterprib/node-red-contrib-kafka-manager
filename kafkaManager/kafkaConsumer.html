@@ -28,6 +28,12 @@
 
 	<div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
 		<div id="kafkaConsumer-tab-topics" style="display:none">
+
+	<div class="form-row">
+		<label for="node-input-regex"><i class="fa fa-filter"></i> wildcard</label>
+		<input id="node-input-regex" type="checkbox" style="width: auto"></input>
+		<a> (regex)</a>
+	</div>
 		
    <div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
 		<label style="vertical-align:top;">
@@ -92,7 +98,6 @@
 		</div>
 
 		<div id="kafkaConsumer-tab-encoding" style="display:none">
-		
 	
 	<div class="form-row">
 		<label for="node-input-fromOffset"><i class="icon-bookmark"></i>From Offset</label>
@@ -126,11 +131,40 @@
 </script>
 
 <script type="text/javascript">
+function json2html(obj){
+	if(obj==="undefined" || obj === null) return "";
+	const objType=(typeof obj);
+	if(objType!=="object") return obj;
+	let elementValue ="";
+	if(obj.constructor === Array) {
+		for(let i=0;i<obj.length;i++) {
+			const objI=obj[i],objTypeI=typeof objI;
+			if(objTypeI!== 'object'||objI.constructor==Object) {
+				elementValue+="<tr><td>"+i+"</td><td>"+json2html(objI)+"</td></tr>";
+				continue;
+			}
+			throw new Error(objTypeI+" is not supported.");
+		}
+		return "<table>"+elementValue+"</table>";
+	}
+	if(obj.constructor!==Object) return obj;
+	const objText=obj['#text'],objTypeText=(typeof objText);
+	if(objTypeText!=='undefined') {
+		if(objTypeText=='object') throw new Error(objTypeText+' which is #text, not supported.');
+		return objText;
+	}
+	for(let name in obj) {
+		elementValue+="<tr><td>"+name+"</td><td>"+json2html(obj[name])+"</td></tr>";	
+	}
+	return "<table>"+elementValue+"</table>";
+}
+
 	RED.nodes.registerType('Kafka Consumer',{
 		category: 'function',
 		defaults: {
 			name: {value:"",required:false},
 			broker: {type:"Kafka Broker"},
+			regex: {value:false},
 			topic: {required:false},	// legacy can be removed in future
 			topics: {value:[{topic:"topic1",offset:0,partition:0}],required:true},
 			groupId: {value:"kafka-node-group",required:true},
@@ -225,56 +259,96 @@
 		oneditresize: function(size) {
 		},
 		button: {
-			enabled: function() {
-				return !this.changed;
-			},
+			enabled: function() {return !this.changed;},
 			onclick: function() {
-				if (this.changed) {
-					return RED.notify(RED._("Queue undeployed changes"),"warning");
+				if(this.changed) return RED.notify(RED._("Queue undeployed changes"),"warning");
+				let label=this._def.label.call(this);
+				if(label.length>30) label=label.substring(0,50)+"...";
+				label=label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+				const node=this;
+				function listTopic(node,topics,float,add) {
+					float.html("<table id='activeTopics'><tr><th>Action</th><th>Topic</th><th>partition</th>"+(add?"<th>offset</th>":"")+"<tr></table>");
+					const activeTopicsElements=$('#activeTopics')
+					topics.forEach((r)=>addTopic(float,activeTopicsElements,r.topic,r.partition,r.offset||0,add));
 				}
-				var label = this._def.label.call(this);
-				if (label.length > 30) {
-					label = label.substring(0,50)+"...";
+				function addTopic(float,activeTopicsElements,topic,partition,offset=0,add) {
+					const row=$('<tr/>').appendTo(activeTopicsElements);
+					if(add) {
+						const addButton=$('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+						$('<i/>',{class:"fa fa-plus"}).appendTo(addButton);
+						addButton.click(function() {
+							sendCommand(float,"addTopic",{topics:[{topic:topic,partition:partition,offset:offset}]});
+						});
+					} else {
+						const deleteButton=$('<a/>',{href:"#",class:"editor-button editor-button-medium"}).appendTo(row);
+						$('<i/>',{class:"fa fa-remove"}).appendTo(deleteButton);
+						deleteButton.click(function() {
+							sendCommand(float,"removeTopic",{topics:[{topic:topic,partition:partition}]});				
+						});
+					}
+					$('<td/>').append($('<input type="text" size="30" style="width:100%; border:0;" />').attr('value', topic)).appendTo(row); // Topic
+					$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', partition)).appendTo(row); // partition
+					if(add) $('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', offset)).appendTo(row); // offset
 				}
-				label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-				var node = this;
+				function confirm(element,action,titleSuffix,data) {
+					$(element).remove();
+					constfloat=float(titleSuffix||action,"<input id='inputTopics' type='text' size='100'/>",
+						{
+							OK: ()=>sendCommand(this,action,data),
+							Cancel: ()=>$(this).remove()
+						}
+					)
+				}
 				
-				function sendCommand(element,action) {
+				function float(titleSuffix="",html="",buttons) {
+					const title=(node.name||'Consumer')+' '+titleSuffix;
+					const float=$('<div></div>');
+					float.appendTo('body')
+					.html(html)
+					.dialog({
+ 						modal: true, title: title, zIndex: 10000, autoOpen: true,
+						width: 'auto', resizable: true,"min-width": (title.length+5) + "px",
+						close: function (event, ui) {$(this).remove();},
+						buttons:buttons
+					});
+					return float;
+				}
+				
+				function sendCommand(element,action,data) {
 					const nodeName="Kafka Consumer";
 					$(element).dialog("close");
-					$.get( "KafkaConsumer/"+node.id+"/"+action )
-					.done(function( json ) {
+					$[data?"post":"get"]( "KafkaConsumer/"+node.id+"/"+action,data)
+					.done(function(json) {
 					  	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-					}).fail(function( jqXHR, textStatus, error ) {
-						if (jqXHR.status === 404) {
-	 						RED.notify(node._(nodeName+" signal not deployed"),"error");
-						} else if (jqXHR.status === 500) {
-   							RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
-						} else if (jqXHR.status === 0) {
- 							RED.notify(node._(nodeName+" signal no response"),"error");
-				   		} else {
-							RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
+					  	if(action=="activeTopics"){
+					  		listTopic(node,json,float("Topics"))
+						} else if(action=="allTopics"){
+					  		listTopic(node,json,float("Topics"),true)
 						}
+					}).fail(function( jqXHR, textStatus, error ) {
+						if(jqXHR.status === 404) RED.notify(node._(nodeName+" signal not deployed"),"error");
+						else if(jqXHR.status === 500) RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
+						else if(jqXHR.status === 0)	RED.notify(node._(nodeName+" signal no response"),"error");
+				   		else RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
 					});
+				}
+				const buttons={
+						"active topics":function(){sendCommand(this,"activeTopics")},
+						close:function(){sendCommand(this,"close")},
+						open:function(){sendCommand(this,"open")},
+						pause:function(){sendCommand(this,"pause")},
+						refresh:function(){sendCommand(this,"refresh")},
+						resume:function(){sendCommand(this,"resume")}
+				}
+				if(!node.regex) {
+					buttons["topic add"]=function(){sendCommand(this,"allTopics")};
+					buttons["topic remove"]=function(){sendCommand(this,"activeTopics")};
 				}
 				$('<div></div>').appendTo('body').html('<div>Choose Action</div>')
   				.dialog({
-	  				modal: true, title: (node.name||'Kafka Consumer'), zIndex: 10000, autoOpen: true,
+	  				modal: true, title: (node.name||'Kafka Consumer') + '    ', zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
-					buttons: {
-						close: function () {
-							sendCommand(this,"close");
-						},
-						open: function () {
-							sendCommand(this,"open");
-						},
-						pause: function () {
-							sendCommand(this,"pause");
-						},
-						resume: function () {
-							sendCommand(this,"resume");
-						}
-					},
+					buttons: buttons,
 					close: function (event, ui) {
 						$(this).remove();
 					}

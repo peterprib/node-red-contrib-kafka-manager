@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-kafka-manager",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Node-RED implements Kafka manager with associand associated .",
   "dependencies": {
     "kafka-node": "*",
@@ -40,6 +40,7 @@
     "offset",
     "producer",
     "topic",
+    "wildcard",
     "streaming"
   ],
   "node-red": {

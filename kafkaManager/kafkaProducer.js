@@ -4,11 +4,7 @@ logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 let kafka;
 
 function producerSend (node, msgIn, retry) {
-	if(logger.active) logger.send({
-		label: 'producerSend',
-		node: node.id,
-		retry: retry
-	});
+	if(logger.active) logger.send({label:'producerSend',node:node.id,retry:retry});
 /*
 	//				node.KeyedMessage = kafka.KeyedMessage
 	//	km = new KeyedMessage('key', 'message'),
@@ -66,25 +62,13 @@ attributes:
 									return
 								}
 								if (node.waiting.length) {
-									node.status({
-										fill: 'yellow',
-										shape: 'ring',
-										text: 'trying sending ' + node.waiting.length + ' queued messages'
-									})
+									node.status({fill:'yellow',shape:'ring',text:'trying sending ' + node.waiting.length + ' queued messages'})
 								}
 								producerSend(node, undefined, (retry || 1))
 								if (node.waiting.length) {
-									node.status({
-										fill: 'red',
-										shape: 'ring',
-										text: 'retry send to Kafka failed, ' + node.waiting.length + ' queued messages'
-									})
+									node.status({fill:'red',shape:'ring',text:'retry send to Kafka failed, ' + node.waiting.length + ' queued messages'})
 								} else {
-									node.status({
-										fill: 'green',
-										shape: 'ring',
-										text: 'Connected to ' + node.brokerNode.name
-									})
+									node.status({fill:'green',shape:'ring',text: 'Connected to ' + node.brokerNode.name})
 								}
 							})
 						} else {
@@ -95,39 +79,24 @@ attributes:
 					setInError(node, errmsg)
 				} else if (node.inError) {
 					node.inError = false
-					node.status({
-						fill: 'green',
-						shape: 'ring',
-						text: 'Connected to ' + node.brokerNode.name
-					})
+					node.status({	fill:'green',shape: 'ring',text: 'Connected to ' + node.brokerNode.name})
 				}
 			})
 	} catch (e) {
 		node.inError = true
 		node.error(e)
-		node.status({
-			fill: 'yellow',
-			shape: 'ring',
-			text: 'send error ' + e.toString()
-		})
+		node.status({fill:'yellow',shape:'ring',text:'send error ' + e.toString()})
 	}
 }
 
 function setInError (node, errmsg) {
 	node.error(errmsg)
-	node.status({
-		fill: 'yellow',
-		shape: 'ring',
-		text: 'send error ' + errmsg
-	})
+	node.status({fill:'yellow',shape: 'ring',text: 'send error ' + errmsg	})
 	node.inError = true
 }
 
 function connect (node) {
-	if(logger.active) logger.send({
-		label: 'connect',
-		node: node.id
-	})
+	if(logger.active) logger.send({label: 'connect',node: node.id})
 	if (!node.client) node.client = node.brokerNode.getKafkaClient()
 	node.producer = new kafka[(node.connectionType || 'Producer')](node.client, {
 		// Configuration for when to consider a message as acknowledged, default 1
@@ -137,26 +106,14 @@ function connect (node) {
 		// Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
 		partitionerType: node.partitionerType || 0
 	})
-	node.status({
-		fill: 'yellow',
-		shape: 'ring',
-		text: 'Waiting on ' + node.brokerNode.name
-	})
+	node.status({fill:'yellow',	shape:'ring',text:'Waiting on ' + node.brokerNode.name})
 	node.producer.on('error', function (e) {
 		node.error('on error ' + e.message)
 		const err = node.brokerNode.getRevisedMessage(e.message)
-		node.status({
-			fill: 'red',
-			shape: 'ring',
-			text: err
-		})
+		node.status({fill: 'red',shape: 'ring',text: err})
 	})
 	node.producer.on('ready', function () {
-		node.status({
-			fill: 'green',
-			shape: 'ring',
-			text: 'Connected to ' + node.brokerNode.name
-		})
+		node.status({fill:'green',shape:'ring',text:'Connected to ' + node.brokerNode.name})
 		node.connected = true
 		node.log('connected and processing ' + node.waiting.length + ' messages')
 		producerSend(node, undefined)
@@ -171,16 +128,11 @@ module.exports = function (RED) {
 			waiting: []
 		})
 		node.brokerNode = RED.nodes.getNode(node.broker)
-		node.status({
-			fill: 'yellow',
-			shape: 'ring',
-			text: 'Initialising'
-		})
+		node.status({fill: 'yellow',shape: 'ring',text: 'Initialising'	})
 		try {
 			if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-			if (!kafka) {
-				kafka = node.brokerNode.getKafkaDriver()
-			}
+			if (!kafka) kafka = node.brokerNode.getKafkaDriver()
+
 			node.brokerNode.onStateUp.push({
 				node: node,
 				callback: function () {
@@ -189,22 +141,14 @@ module.exports = function (RED) {
 			}) // needed due to bug in kafka driver
 		} catch (e) {
 			node.error(e.message)
-			node.status({
-				fill: 'red',
-				shape: 'ring',
-				text: e.message
-			})
+			node.status({fill: 'red',shape: 'ring',text: e.message	})
 			return
 		}
 		node.queueMsg = function (msg, retry) {
 			if (!node.waiting.length) {
 				const warning = 'Connection down started queuing messages'
 				node.warn(warning)
-				node.status({
-					fill: 'red',
-					shape: 'ring',
-					text: warning
-				})
+				node.status({fill: 'red',shape: 'ring',text: warning	})
 			}
 			if (retry) {
 				node.waiting.unshift(msg)
@@ -214,29 +158,20 @@ module.exports = function (RED) {
 			if (!(node.waiting.length % 100)) {
 				const warning = 'Connection down, queue depth reached ' + node.waiting.length
 				node.warn(warning)
-				node.status({
-					fill: 'red',
-					shape: 'ring',
-					text: warning
-				})
+				node.status({fill: 'red',shape: 'ring',text: warning	})
 			}
 		}
 		node.on('input', function (msg) {
+			if(node.topicSlash2dot && msg.topic) msg.topic= msg.topic.replace("/",".")
+			if(node.convertFromJson) 	msg.payload = JSON.stringify(msg.payload)
 			if (node.connected) {
-				if(node.convertFromJson) {
-					msg.payload = JSON.stringify(msg.payload)
-				}
 				producerSend(node, msg)
 				return
 			}
 			node.queueMsg(msg)
 		})
 		node.on('close', function (removed, done) {
-			node.status({
-				fill: 'red',
-				shape: 'ring',
-				text: 'closed'
-			})
+			node.status({fill: 'red',shape: 'ring',text: 'closed'})
 			node.producer.close(false, () => {
 				node.log('closed')
 			})

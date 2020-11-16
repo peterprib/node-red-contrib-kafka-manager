@@ -25,12 +25,12 @@ const broker={
 	"type" : "Kafka Broker",
 	"name" : "Kafta",
 	"hosts" : [ {
-		"host" : "127.0.0.1",
+		"host" : "dummy127.0.0.1",
 		"port" : 9092
 	} ],
 	"hostsEnvVar" : "",
-	"connectTimeout" : "10000",
-	"requestTimeout" : "30000",
+	"connectTimeout" : "100",
+	"requestTimeout" : "300",
 	"autoConnect" : "true",
 	"idleConnection" : "5",
 	"reconnectOnIdle" : "true",
@@ -64,7 +64,7 @@ const consumer_test={
 	} ],
 	"groupId" : "kafka-node-group",
 	"autoCommit" : "true",
-	"autoCommitIntervalMs" : 5000,
+	"autoCommitIntervalMs" : 500,
 	"fetchMaxWaitMs" : 100,
 	"fetchMinBytes" : 1,
 	"fetchMaxBytes" : 1048576,
@@ -114,7 +114,7 @@ const consumer_atest={
 	} ],
 	"groupId" : "groupTopicAtest",
 	"autoCommit" : "true",
-	"autoCommitIntervalMs" : 5000,
+	"autoCommitIntervalMs" : 500,
 	"fetchMaxWaitMs" : 100,
 	"fetchMinBytes" : 1,
 	"fetchMaxBytes" : 1048576,
@@ -130,7 +130,7 @@ const consumerGroup={
 	"name" : "consumerGroup",
 	"broker" : broker.id,
 	"groupId" : "aGroup",
-	"sessionTimeout" : 15000,
+	"sessionTimeout" : 150,
 	"protocol" : [ "roundrobin" ],
 	"encoding" : "utf8",
 	"fromOffset" : "latest",
@@ -168,10 +168,12 @@ function testFlow(done,data,result) {
 		const outHelper = helper.getNode("outHelper");
 		const errorHelper = helper.getNode("errorHelper");
 		outHelper.on("input", function(msg) {
-			done();
+			console.log(" outHelper.on input"+JSON.stringify(msg))
+//			done();
 		});
 		errorHelper.on("input", function(msg) {
-			done("error  check log output");
+			console.log(" errorHelper.on input"+JSON.stringify(msg))
+//			done("error  check log output");
 		});
 		adminNode.receive(createTopics);
 		done();

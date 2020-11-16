@@ -13,7 +13,12 @@ First initial release using [kafka-node][4] .
 
 Has a test GUI which allows topics to be added.
 
-Note: all nodes run in debug mode for 100 messages then turns off.
+Special features:
+* Generic topic(s) for a consumer using regex which dynamically adds new topics as they are defined
+* For consumer add/remove topics (not persisted)
+* Convert "/" to "." to assist with interfaces to other queueing technologies
+
+Note: all nodes run in debug mode for 111 messages then turns off.
 
 ------------------------------------------------------------
 
@@ -64,6 +69,8 @@ Note, as Kakfa keeps giving messages to consumer regardless if commit being outs
 
 Consumer of topic messages in kafka which are generated into node-red message. 
 Provides types of base and high level.
+If wildcard selected then topics are regex patterns which are dynamically made active (or removed) when available.
+A check is performed once every minute for chanaes to topics.
 
 ![Kafka Consumer](documentation/consumer.JPG "Kafka Consumer")
 ![Kafka Consumer Options](documentation/consumerOptions.JPG "Kafka Consumer Options")
@@ -132,6 +139,8 @@ Test/example flow in test/generalTest.json
 ------------------------------------------------------------
 
 # Version
+
+0.5.0 add consumer wildcard topics + topics / to . along with fix on to/from/json
 
 0.4.3 add convert message payload to/from json and add some basic tests
 

@@ -2,11 +2,7 @@ const logger = new (require("node-red-contrib-logger"))("Kafka Admin");
 logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
 
 function msgProcess (node, msg, errObject, data) {
-	if(logger.active) logger.send({
-		label: 'msgProcess',
-		error: errObject,
-		data: data
-	});
+	if(logger.active) logger.send({label:'msgProcess',error:errObject,data:data});
 	if (errObject) {
 		const err = typeof errObject !== 'string' ? errObject.toString() : errObject.message.toString()
 		if (err.startsWith('Broker not available') || err.startsWith('Request timed out')) {
@@ -31,20 +27,9 @@ function msgProcess (node, msg, errObject, data) {
 		case 'electPreferredLeaders':
 			data.forEach((c, i, a) => {
 				const t = msg.payload.find((cp) => cp.topic === c.topic)
-				if(logger.active) logger.send({
-					label: 'msgProcess multi response',
-					topic: c,
-					data: t
-					});
+				if(logger.active) logger.send({label:'msgProcess multi response',topic:c,data:t});
 				if (c.hasOwnProperty('error')) {
-					if(logger.active) logger.send({
-						label: 'msgProcess multi response',
-						data: {
-							topic: msg.topic,
-							error: formatError(c.error),
-							payload: [t]
-						}
-					});
+					if(logger.active) logger.send({label:'msgProcess multi response',data: {topic:msg.topic,error:formatError(c.error),payload:[t]}});
 					node.send([null, {
 						topic: msg.topic,
 						error: formatError(c.error),
@@ -52,13 +37,7 @@ function msgProcess (node, msg, errObject, data) {
 					}])
 					return
 				}
-				if(logger.active) logger.send({
-					label: 'msgProcess multi response ok',
-					data: {
-						topic: msg.topic,
-						payload: [c]
-					}
-				});
+				if(logger.active) logger.send({label: 'msgProcess multi response ok',data:{topic:msg.topic,payload:[c]}});
 				node.send({
 					topic: msg.topic,
 					payload: [t]
@@ -115,12 +94,7 @@ function processInput (node, msg) {
 				throw Error('invalid message topic')
 		}
 	} catch (e) {
-		if(logger.active) logger.send({
-					label: 'processInput catch',
-					error: e,
-					msg: msg,
-					connection: Object.keys(node.connection)
-			});
+		if(logger.active) logger.send({label:'processInput catch',error:e,msg:msg,connection:Object.keys(node.connection)});
 		msg.error = e.toString()
 		node.send([null, msg])
 	}
@@ -146,7 +120,7 @@ function errorWaiting (node, err) {
 module.exports = function (RED) {
 	function KafkaAdminNode (n) {
 		RED.nodes.createNode(this, n)
-		var node = Object.assign(this, n, {
+		const node = Object.assign(this, n, {
 			connected: false,
 			waiting: [],
 			connecting: false,
@@ -154,11 +128,7 @@ module.exports = function (RED) {
 		})
 		node.brokerNode = RED.nodes.getNode(node.broker)
 		node.brokerNode.setState(node)
-		node.status({
-			fill: 'yellow',
-			shape: 'ring',
-			text: 'Deferred connection'
-		})
+		node.status({fill:'yellow',shape:'ring',text:'Deferred connection'})
 		try {
 			if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
 			node.on('input', function (msg) {
@@ -178,19 +148,11 @@ module.exports = function (RED) {
 			})
 		} catch (e) {
 			node.error(e.toString())
-			node.status({
-				fill: 'red',
-				shape: 'ring',
-				text: e.message
-			})
+			node.status({fill:'red',shape: 'ring',text:e.message})
 			return
 		}
 		node.on('close', function (removed, done) {
-			node.status({
-				fill: 'red',
-				shape: 'ring',
-				text: 'closed'
-			})
+			node.status({fill:'red',shape: 'ring',text: 'closed'})
 			node.connection.close(false, () => {
 				node.log('closed')
 			})
@@ -200,7 +162,7 @@ module.exports = function (RED) {
 	}
 	RED.nodes.registerType(logger.label, KafkaAdminNode)
 	RED.httpAdmin.get('/KafkaAdmin/:id/:action/', RED.auth.needsPermission('KafkaAdmin.write'), function (req, res) {
-		var node = RED.nodes.getNode(req.params.id)
+		const node = RED.nodes.getNode(req.params.id)
 		if (node && node.type === 'Kafka Admin') {
 			if (!node.connected) {
 				node.brokerNode.connect(node, 'Admin', (err) => {
@@ -216,18 +178,13 @@ module.exports = function (RED) {
 				}
 				throw Error('unknown action: ' + req.params.action)
 			} catch (err) {
-			if(logger.active) logger.send({
-						label: 'httpAdmin',
-						error: err,
-						request: req.params,
-						connection: Object.keys(node.connection)
-					});
-				var reason1 = 'Internal Server Error, ' + req.params.action + ' failed ' + err.toString()
+			if(logger.active) logger.send({label:'httpAdmin',error:err,request:req.params,connection:Object.keys(node.connection)});
+				const reason1 = 'Internal Server Error, ' + req.params.action + ' failed ' + err.toString()
 				node.error(reason1)
 				res.status(500).send(reason1)
 			}
 		} else {
-			var reason2 = 'request to ' + req.params.action + ' failed for id:' + req.params.id
+			const reason2 = 'request to ' + req.params.action + ' failed for id:' + req.params.id
 			res.status(404).send(reason2)
 		}
 	})
