@@ -28,7 +28,7 @@ Defines the client interface to kafka. One can add process.env for hosts with
 
 	process.env.atesthosts='[{"host":"atesthost1","port":1234},{"host":"atesthost2","port":4321}]';
 
-in settitngs.js
+in settings.js
 
 ![Kafka Broker](documentation/broker.JPG "Kafka Broker")
 ![Kafka Broker Options](documentation/brokerOptions.JPG "Kafka Broker Options")

@@ -363,19 +363,19 @@ module.exports = function (RED) {
     testHosts(node)
     if (node.checkInterval && node.checkInterval > 0) {
     	node.runtimeTimer = setInterval(function () {
-        try {
-          testHosts.apply(node, [node])
-        } catch (e) {
-          node.send('runtimeTimer ' + e.message)
-        }
-      },
-      node.checkInterval * 1000
+          try {
+            testHosts.apply(node, [node])
+          } catch (e) {
+            node.send('runtimeTimer ' + e.message)
+          }
+        },
+        node.checkInterval * 1000
       )
-      this.close = function (removed, done) {
-    	logger.info("close")
+      node.close = function (removed, done) {
+    	  logger.info("close")
    	    node.onCloseStack.forEach(callFunction=>callFunction())
         runtimeStop.apply(node)
-        done()
+        if(done) done()
       }
     }
     
