@@ -5,108 +5,88 @@
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Consumer Group">
-
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
 		<input type="text" id="node-input-name" placeholder="Name">
 	</div>
-
 	<div class="form-row">
 		<label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
 		 <select id="node-input-type">
 		 	<option value="Consumer">Base</option>
 		 </select>
 	</div>
- 
 	<div class="form-row">
 		<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
 		<input type="text" id="node-input-broker">
   	</div>
-	
 	<div class="form-row">
 		<ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaConsumer-tabs"></ul>
 	</div>
-
 	<div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
+		<div class="form-row form-row-http-in-compressionType hide">
+			<label for="node-input-compressionType"><i class="fa fa-envelope"></i> <span data-i18n="common.label.compressionType"> Type </span></label>
+			<input type="text" id="node-input-compressionType">
+		</div>
 		<div id="kafkaConsumer-tab-topics" style="display:none">
-		
-   <div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
-		<label style="vertical-align:top;">
-			<i class="fa fa-list-alt"></i> Topic 
-			<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
-		</label>
-		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
-				<table>
- 				  	<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
-						<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
-							<td style="min-width: 10px;">Delete</td>
-							<td style="min-width: 200px;">Name</td>
-						</tr>
-					</tbody>
-			</table>
-		</div>
-	</div>		
+	   		<div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
+				<label style="vertical-align:top;"><i class="fa fa-list-alt"></i> Topic <a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+				</label>
+				<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
+					<table>
+ 				  		<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+							<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+								<td style="min-width: 10px;">Delete</td>
+								<td style="min-width: 200px;">Name</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>		
 		
 		</div>
-
 		<div id="kafkaConsumer-tab-options" style="display:none">
-
-	<div class="form-row">
-		<label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
-		<input type="text" id="node-input-groupId" placeholder="groupId">
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-sessionTimeout"><i class="icon-bookmark"></i>Session Timeout (ms)</label>
-		<input type="number" id="node-input-sessionTimeout" step=100 min=100 max=1000000  >
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-protocol"><i class="fa fa-list-ul"></i> Protocol </label>
-		<select id="node-input-protocol">
-			<option value="roundrobin">Round Robin</option>
-			<option value="range">Range</option>
-		</select>
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
-		<select id="node-input-encoding">
-			<option value="utf8">utf8</option>
-			<option value="buffer">raw</option>
-		</select>
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-fromOffset"><i class="fa fa-list-ul"></i> From Offset </label>
-		<select id="node-input-fromOffset">
-			<option value="latest">latest</option>
-			<option value="earliest">earliest</option>
-			<option value="none">none</option>
-		</select>
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-commitOffsetsOnFirstJoin"><i class="fa fa-list-ul"></i> Commit Offsets On First Join </label>
-		<select id="node-input-commitOffsetsOnFirstJoin">
-			<option value="true">True</option>
-			<option value="false">False</option>
-		</select>
-	</div>
-	
-	<div class="form-row">
-		<label for="node-input-outOfRangeOffset"><i class="fa fa-list-ul"></i> Out Of Range Offset </label>
-		<select id="node-input-outOfRangeOffset">
-			<option value="latest">latest</option>
-			<option value="earliest">earliest</option>
-			<option value="none">none</option>
-		</select>
-	</div>
-
+			<div class="form-row">
+			<label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
+			<input type="text" id="node-input-groupId" placeholder="groupId">
 		</div>
-
+		<div class="form-row">
+			<label for="node-input-sessionTimeout"><i class="icon-bookmark"></i>Session Timeout (ms)</label>
+			<input type="number" id="node-input-sessionTimeout" step=100 min=100 max=1000000  >
+		</div>
+		<div class="form-row">
+			<label for="node-input-protocol"><i class="fa fa-list-ul"></i> Protocol </label>
+			<select id="node-input-protocol">
+				<option value="roundrobin">Round Robin</option>
+				<option value="range">Range</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
+			<select id="node-input-encoding">
+				<option value="utf8">utf8</option>
+				<option value="buffer">raw</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-fromOffset"><i class="fa fa-list-ul"></i> From Offset </label>
+			<input type="text" id="node-input-fromOffset">
+		</div>
+		<div class="form-row">
+			<label for="node-input-commitOffsetsOnFirstJoin"><i class="fa fa-list-ul"></i> Commit Offsets On First Join </label>
+			<select id="node-input-commitOffsetsOnFirstJoin">
+				<option value="true">True</option>
+				<option value="false">False</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-outOfRangeOffset"><i class="fa fa-list-ul"></i> Out Of Range Offset </label>
+			<select id="node-input-outOfRangeOffset">
+				<option value="latest">latest</option>
+				<option value="earliest">earliest</option>
+				<option value="none">none</option>
+			</select>
+		</div>
 	</div>
-
 </script>
 
 <script type="text/javascript">
@@ -165,6 +145,14 @@
 			$("#node-input-add-topic").click(function() {
 			   addTopic("topic"+$("#node-input-topics-tbody").children().length);
 			});
+			$("#node-input-fromOffset").typedInput({type:"fromOffset", types:[{
+			    value: "fromOffset",
+    			options: [
+					{value: "latest", label: "latest"},
+					{value: "earliest", label: "earliest"},
+					{value: "none", label: "node"},
+				]
+			}]});
 			function addTopic(topic) {
   				let row=$('<tr/>').appendTo($("#node-input-topics-tbody"));
   				if($("#node-input-topics-tbody").children().length>2){

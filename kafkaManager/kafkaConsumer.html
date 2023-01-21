@@ -4,130 +4,107 @@
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Consumer">
-
 	<div class="form-row">
 		<label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
 		<input type="text" id="node-input-name" placeholder="Name">
 	</div>
-
 	<div class="form-row">
 		<label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
 		 <select id="node-input-type">
 		 	<option value="Consumer">Base</option>
 		 </select>
 	</div>
- 
 	<div class="form-row">
 		<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
 		<input type="text" id="node-input-broker">
   	</div>
-	
 	<div class="form-row">
 		<ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-kafkaConsumer-tabs"></ul>
 	</div>
-
 	<div id="node-config-kafkaConsumer-tabs-content" style="min-height: 170px;">
 		<div id="kafkaConsumer-tab-topics" style="display:none">
-
-	<div class="form-row">
-		<label for="node-input-regex"><i class="fa fa-filter"></i> wildcard</label>
-		<input id="node-input-regex" type="checkbox" style="width: auto"></input>
-		<a> (regex)</a>
-	</div>
-		
-   <div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
-		<label style="vertical-align:top;">
-			<i class="fa fa-list-alt"></i> Topic 
-			<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
-		</label>
-		<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
-				<table>
- 				  	<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
-						<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
-							<td style="min-width: 10px;">Delete</td>
-							<td style="min-width: 200px;">Name</td>
-							<td style="min-width: 60px;">Offset</td>
-							<td style="min-width: 60px;">Partition</td>
-						</tr>
-					</tbody>
-			</table>
+			<div class="form-row">
+				<label for="node-input-regex"><i class="fa fa-filter"></i> wildcard</label>
+				<input id="node-input-regex" type="checkbox" style="width: auto"></input>
+				<a> (regex)</a>
+			</div>
+		   	<div class="form-row node-input-topics-container-row" style="margin-bottom:0px; width:100%; min-width:520px">
+				<label style="vertical-align:top;"><i class="fa fa-list-alt"></i> Topic 
+					<a href="#" class="editor-button editor-button-small" id="node-input-add-topic" style="margin-top: 4px; margin-left: 103px;"><i class="fa fa-plus"></i> <span>Add</span></a>
+				</label>
+				<div style="width:100%; display: inline-block; background-color:#f3f3f3; border-top:0px solid; border-radius:0 0 0 0; border-bottom:1px solid #ccc;">
+					<table>
+ 				  		<tbody id="node-input-topics-tbody" stype="display: block;  overflow: auto; max-width:400px; max-height: 400px;">
+							<tr style="padding-left:4px; border-bottom: 1px solid black; background: lightblue; position: sticky; top: 0;">
+								<td style="min-width: 10px;">Delete</td>
+								<td style="min-width: 200px;">Name</td>
+								<td style="min-width: 60px;">Offset</td>
+								<td style="min-width: 60px;">Partition</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>		
 		</div>
-	</div>		
-		
-		</div>
-
 		<div id="kafkaConsumer-tab-options" style="display:none">
-
-	<div class="form-row">
-		<label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
-		<input type="text" id="node-input-groupId" placeholder="groupId">
-	</div>
-	
-	<div class="form-row">
-		<label for="node-input-autoCommit"><i class="fa fa-list-ul"></i> Auto Commit </label>
-		<select id="node-input-autoCommit" placeholder="autoCommitt">
-			<option value="true">True</option>
-			<option value="false">False</option>
-		</select>
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-autoCommitIntervalMs"><i class="icon-bookmark"></i>Auto Commit Interval (Ms)</label>
-		<input type="number" id="node-input-autoCommitIntervalMs" step=100 min=100 max=10000  >
-	</div>
-
+			<div class="form-row">
+				<label for="node-input-groupId"><i class="fa fa-tag"></i> Group Id </label>
+				<input type="text" id="node-input-groupId" placeholder="groupId">
+			</div>
+			<div class="form-row">
+				<label for="node-input-autoCommit"><i class="fa fa-list-ul"></i> Auto Commit </label>
+				<select id="node-input-autoCommit" placeholder="autoCommitt">
+					<option value="true">True</option>
+					<option value="false">False</option>
+				</select>
+			</div>
+			<div class="form-row">
+				<label for="node-input-autoCommitIntervalMs"><i class="icon-bookmark"></i>Auto Commit Interval (Ms)</label>
+				<input type="number" id="node-input-autoCommitIntervalMs" step=100 min=100 max=10000  >
+			</div>
 		</div>
-
 		<div id="kafkaConsumer-tab-fetch" style="display:none">
-	
-	<div class="form-row">
-		<label for="node-input-fetchMaxWaitMs"><i class="icon-bookmark"></i>Fetch Max Wait (Ms)</label>
-		<input type="number" id="node-input-fetchMaxWaitMs" step=10 min=10 max=10000  >
-	</div>
-	
-	<div class="form-row">
-		<label for="node-input-fetchMinBytes"><i class="icon-bookmark"></i>Fetch Min Bytes</label>
-		<input type="number" id="node-input-fetchMinBytes" step=1 min=1 max=10000  >
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-fetchMaxBytes"><i class="icon-bookmark"></i>Fetch Max Bytes</label>
-		<input type="number" id="node-input-fetchMaxBytes" step=1024 min=1024 max=1024000000 >
-	</div>
-
+			<div class="form-row">
+			<label for="node-input-fetchMaxWaitMs"><i class="icon-bookmark"></i>Fetch Max Wait (Ms)</label>
+			<input type="number" id="node-input-fetchMaxWaitMs" step=10 min=10 max=10000  >
 		</div>
-
-		<div id="kafkaConsumer-tab-encoding" style="display:none">
-	
-	<div class="form-row">
-		<label for="node-input-fromOffset"><i class="icon-bookmark"></i>From Offset</label>
-		<input type="number" id="node-input-fromOffset" step=10 min=0 max=1024000000 >
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
-		<select id="node-input-encoding" placeholder="autoCommitt">
-			<option value="utf8">utf8</option>
-			<option value="buffer">raw</option>
-		</select>
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-keyEncoding"><i class="fa fa-list-ul"></i> Key Encoding </label>
-		<select id="node-input-keyEncoding" placeholder="autoCommitt">
-			<option value="utf8">utf8</option>
-			<option value="buffer">raw</option>
-		</select>
-	</div>
-	
-	<div class="form-row">
-		<label for="node-input-convertToJson"><i class="fa fa-list-ul"></i> Convert message to JSON </label>
-		<input id="node-input-convertToJson" type="checkbox" style="width: auto"></input>
-	</div>
+		<div class="form-row">
+			<label for="node-input-fetchMinBytes"><i class="icon-bookmark"></i>Fetch Min Bytes</label>
+			<input type="number" id="node-input-fetchMinBytes" step=1 min=1 max=10000  >
 		</div>
-
+		<div class="form-row">
+			<label for="node-input-fetchMaxBytes"><i class="icon-bookmark"></i>Fetch Max Bytes</label>
+			<input type="number" id="node-input-fetchMaxBytes" step=1024 min=1024 max=1024000000 >
+		</div>
 	</div>
-
+	<div id="kafkaConsumer-tab-encoding" style="display:none">
+		<div class="form-row">
+			<label for="node-input-fromOffset"><i class="icon-bookmark"></i>From Offset</label>
+			<input type="text" id="node-input-fromOffset">
+		</div>
+		<div class="form-row">
+			<label for="node-input-encoding"><i class="fa fa-list-ul"></i> Encoding </label>
+			<select id="node-input-encoding" placeholder="autoCommitt">
+				<option value="utf8">utf8</option>
+				<option value="buffer">raw</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-keyEncoding"><i class="fa fa-list-ul"></i> Key Encoding </label>
+			<select id="node-input-keyEncoding" placeholder="autoCommitt">
+				<option value="utf8">utf8</option>
+				<option value="buffer">raw</option>
+			</select>
+		</div>
+		<div class="form-row">
+			<label for="node-input-convertToJson"><i class="fa fa-list-ul"></i> Convert message to JSON </label>
+			<input id="node-input-convertToJson" type="checkbox" style="width: auto"></input>
+		</div>
+		<div class="form-row form-row-http-in-compressionType show">
+			<label for="node-input-compressionType"><i class="fa fa-envelope"></i> <span data-i18n="common.label.compressionType"> Decompression </span></label>
+			<input type="text" id="node-input-compressionType">
+		</div>
+	</div>
 </script>
 
 <script type="text/javascript">
@@ -173,11 +150,12 @@ function json2html(obj){
 			fetchMaxWaitMs: {value:100,required:true,validate:RED.validators.number()},
 			fetchMinBytes: {value:1,required:true,validate:RED.validators.number()},
 			fetchMaxBytes: {value:1024 * 1024,required:true,validate:RED.validators.number()},
-			fromOffset: {value:0,required:true,validate:RED.validators.number()},
+			fromOffset: {value:"latest",required:true},
 			encoding: {value:'utf8',required:true},
 			keyEncoding: {value:'utf8',required:true},
 			connectionType: {value:"",required:true},
-			convertToJson : {value:false, required:true}
+			convertToJson : {value:false, required:true},
+			compressionType: {value:"none"}
 		},
 		inputs:0,
 		inputLabels: "",
@@ -246,8 +224,28 @@ function json2html(obj){
 				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', offset)).appendTo(row); // offset
 				$('<td/>').append($('<input type="number" size="5" min="0" max="65535" style="width:100%; border:0;" />').attr('value', partition)).appendTo(row); // partition
 			}
-			
-		},
+            $("#node-input-fromOffset").typedInput({type:"fromOffset", types:[{
+			    value: "fromOffset",
+    			options: [
+					{value: "latest", label: "latest"},
+					{value: "earliest", label: "earliest"},
+					{value: "none", label: "none"}
+				]
+			}]});
+			if(node.compressionType==null) node.compressionType="none"
+            $("#node-input-compressionType").typedInput({type:"compression", types:[{
+			    value: "compression",
+    			options: [
+					{ value: "none", label: "none"},
+					{ value: "setGzip", label: "gzip"},
+        			{ value: "setZlib", label: "zip"},
+        			{ value: "setLzma", label: "Lempel-Ziv-Markov"},
+        			{ value: "setBrotli", label: "Brotli"},
+        			{ value: "setSnappy", label: "Snappy"},
+        			{ value: "setFlate", label: "Inflate"}
+    			]
+			}]});
+ 		},
 		oneditsave: function() {
 		   	let inputs,node=this;
 			node.topics=[];

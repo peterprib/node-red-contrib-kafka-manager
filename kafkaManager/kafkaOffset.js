@@ -1,12 +1,14 @@
-const logger = new (require("node-red-contrib-logger"))("Kafka Offset");
-logger.sendInfo("Copyright 2020 Jaroslav Peter Prib");
+const logger = new (require('node-red-contrib-logger'))('Kafka Offset')
+logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
 
 function msgProcess (node, msg, err, data) {
-  if(logger.active) logger.send({
-    label: 'msgProcess',
-    error: err,
-    data: data
-  })
+  if (logger.active) {
+    logger.send({
+      label: 'msgProcess',
+      error: err,
+      data: data
+    })
+  }
   if (err) {
     if (err.startWith('Broker not available')) {
       node.warn('Broker not available, queue message and retry connection')
@@ -65,12 +67,14 @@ maxNum: 1 //default 1
         throw Error("invalid msg action or topic, e.g msg.action='fetch'")
     }
   } catch (e) {
-    if(logger.active) logger.send({
-      label: 'input catch',
-      error: e,
-      msg: msg,
-      connection: Object.keys(node.connection)
-    })
+    if (logger.active) {
+      logger.send({
+        label: 'input catch',
+        error: e,
+        msg: msg,
+        connection: Object.keys(node.connection)
+      })
+    }
     msg.error = e.toString()
     node.send([null, msg])
   }
@@ -161,22 +165,26 @@ module.exports = function (RED) {
       try {
         switch (req.params.action) {
           case 'connect':
-            if(logger.active) logger.send({
-              label: 'httpadmin connect',
-              connection: Object.keys(node.connection)
-            })
+            if (logger.active) {
+              logger.send({
+                label: 'httpadmin connect',
+                connection: Object.keys(node.connection)
+              })
+            }
             node.connection.connect((err, data) => adminRequest(node, res, err, data))
             return
           default:
             throw Error('unknown action: ' + req.params.action)
         }
       } catch (err) {
-        if(logger.active) logger.send({
-          label: 'httpAdmin',
-          error: err,
-          request: req.params,
-          connection: Object.keys(node.connection)
-        })
+        if (logger.active) {
+          logger.send({
+            label: 'httpAdmin',
+            error: err,
+            request: req.params,
+            connection: Object.keys(node.connection)
+          })
+        }
         var reason1 = 'Internal Server Error, ' + req.params.action + ' failed ' + err.toString()
         node.error(reason1)
         res.status(500).send(reason1)

@@ -140,45 +140,10 @@ Test/example flow in test/generalTest.json
 
 # Version
 
+0.6.1 Major change in compression and add deadletter q
+
 0.5.0 add consumer wildcard topics + topics / to . along with fix on to/from/json
 
-0.4.3 add convert message payload to/from json and add some basic tests
-
-0.4.1 minor fixes
-
-0.4.0 Add commit and rollback with ability to close and start consumer.
-
-0.3.1 Add hosts list by process.env
-
-0.2.14 Add self serve TLS and fix bug plus mask ssl info when debug logging
-
-0.2.9 Change debugging mechanism and add kafka-node to dependencies
-
-0.2.8 Added all admin api's per Kafka 2.3 but dependent on [kafka-node][4] update.
-Remove refresh metadata, automated if problem.  Fix consumer group errors.  Add tests for admin calls.
-
-0.2.7 If offsetOutOfRange pause consumer.  Added in deleteTopics but dependant on [kafka-node][4] update.
-
-0.2.6 More fixes for error processing on invalid topic
-
-0.2.4 Fix for error processing
-
-0.2.3 Fix for multi nodes on broker
-
-0.2.2 Stopped bug where producer on connection initiates a null message. Fix bug with restart logic on fail and order of messages on failed retry
-
-0.2.1 When messages being queued as producer is waiting on connection or reconnection show producer in problem state.
-
-0.2.0 Add nodes consumer group and offset.
-	Another fix to issue with initial no kafka.
-	describe groups implemented
-
-0.1.0 Add in High level producer/consumer.
-  	Further fixes to make connection more robust on kafka up/down
-  	Multi host per broker
-  	Multi Topic for consumer
-
-0.0.1 base
 
 # Author
 

@@ -14,12 +14,21 @@ const nodes=[kafkaBroker,kafkaAdmin,kafkaCommit,kafkaConsumer,kafkaConsumerGroup
 helper.init(require.resolve('node-red'));
 
 function getAndTestNodeProperties(o) {
+	console.log("getAndTestNodeProperties "+o.id)	
 	const n = helper.getNode(o.id);
-	if(n==null) throw Error("can find node "+o.id);
-	for(let p in o) n.should.have.property(p, o[p]);
+	if(n==null){
+		console.error("**** can find node "+JSON.stringify(o))	
+		throw Error("can find node "+o.id);
+	}
+	for(let p in o) {
+		if(n.hasOwnProperty(p))
+			if(JSON.stringify(n[p])==JSON.stringify(o[p])) continue;
+			else throw Error("property "+p+" not equal for "+o.id+" is "+JSON.stringify(n[p])+" s/be "+JSON.stringify(o[p]))
+		else throw Error("property "+p+" not found and expected in "+o.id)
+//		n.should.have.property(p, o[p]);
+	}
 	return n;
 }
-
 const broker={
 	"id" : "brokerID",
 	"type" : "Kafka Broker",
@@ -48,7 +57,7 @@ const admin={
 	"broker" : broker.id
 };
 const consumer_test={
-	"id" : "consumerID",
+	"id" : "consumerIdTest",
 	"type" : "Kafka Consumer",
 	"name" : "Kafka Consumer Name",
 	"broker" : broker.id,
@@ -68,7 +77,7 @@ const consumer_test={
 	"fetchMaxWaitMs" : 100,
 	"fetchMinBytes" : 1,
 	"fetchMaxBytes" : 1048576,
-	"fromOffset" : 0,
+	"fromOffset" : "latest",
 	"encoding" : "utf8",
 	"keyEncoding" : "utf8",
 	"connectionType" : "Consumer"
@@ -103,7 +112,7 @@ const producerHL={
 };
 
 const consumer_atest={
-	"id" : "consumerId",
+	"id" : "consumerIdAtest",
 	"type" : "Kafka Consumer",
 	"name" : "Consumer topic atest",
 	"broker" : broker.id,
@@ -118,7 +127,7 @@ const consumer_atest={
 	"fetchMaxWaitMs" : 100,
 	"fetchMinBytes" : 1,
 	"fetchMaxBytes" : 1048576,
-	"fromOffset" : 0,
+	"fromOffset" : "latest",
 	"encoding" : "utf8",
 	"keyEncoding" : "utf8",
 	"connectionType" : "Consumer"
@@ -157,26 +166,35 @@ function testFlow(done,data,result) {
 		{id :"outHelper",	type : "helper"},
 		{id :"errorHelper",	type : "helper"}
 	];
+	console.log("test flow calling load")
 	helper.load(nodes, flow,function() {
-		const brokerNode=getAndTestNodeProperties(broker);
-		const adminNode=getAndTestNodeProperties(admin);
-		const producerNode=getAndTestNodeProperties(producer);
-		const producerHLNode=getAndTestNodeProperties(producerHL);
-		const consumer_testNode=getAndTestNodeProperties(consumer_test);
-		const consumer_atestNode=getAndTestNodeProperties(consumer_atest);
-		const consumerGroupNode=getAndTestNodeProperties(consumerGroup);
-		const outHelper = helper.getNode("outHelper");
-		const errorHelper = helper.getNode("errorHelper");
-		outHelper.on("input", function(msg) {
-			console.log(" outHelper.on input"+JSON.stringify(msg))
-//			done();
-		});
-		errorHelper.on("input", function(msg) {
-			console.log(" errorHelper.on input"+JSON.stringify(msg))
-//			done("error  check log output");
-		});
-		adminNode.receive(createTopics);
-		done();
+		console.log(" helper.load")
+		try{
+			const brokerNode=getAndTestNodeProperties(broker);
+			const adminNode=getAndTestNodeProperties(admin);
+			const producerNode=getAndTestNodeProperties(producer);
+			const producerHLNode=getAndTestNodeProperties(producerHL);
+			const consumer_testNode=getAndTestNodeProperties(consumer_test);
+			const consumer_atestNode=getAndTestNodeProperties(consumer_atest);
+			const consumerGroupNode=getAndTestNodeProperties(consumerGroup);
+			const outHelper = helper.getNode("outHelper");
+			const errorHelper = helper.getNode("errorHelper");
+			outHelper.on("input", function(msg) {
+				console.log(" outHelper.on input"+JSON.stringify(msg))
+				done();
+			});
+			errorHelper.on("input", function(msg) {
+				console.log(" errorHelper.on input"+JSON.stringify(msg))
+				done("error  check log output");
+			});
+			console.log(" helper.load send")
+			adminNode.receive(createTopics);
+			done() //as connenctions should go into wait 
+		} catch(ex) {
+			console.error(ex.message)
+			console.error(ex.stack)
+			done("error in load")
+		}
 	});
 }
 

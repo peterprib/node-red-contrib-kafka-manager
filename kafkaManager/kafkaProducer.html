@@ -5,15 +5,17 @@
     <p>
 	Topic can convert / to . so it can handle MQ messages
 	</p>
+    <p>
+    Attributes being topic, key, partition and attributes,
+    are from msg and it not found then node value used as default
+    </p>
 </script>
 
 <script type="text/x-red" data-template-name="Kafka Producer">
-
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name </label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-
     <div class="form-row">
         <label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
          <select id="node-input-connectionType">
@@ -21,27 +23,22 @@
          	<option value="HighLevelProducer">High Level (round robin)</option>
          </select>
     </div>
-
     <div class="form-row">
     	<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
     	<input type="text" id="node-input-broker">
   	</div>
-
     <div class="form-row">
         <label for="node-input-topic"><i class="fa fa-tag"></i> Topic </label>
         <input type="text" id="node-input-topic" placeholder="Topic">
     </div>
-
     <div class="form-row">
         <label for="node-input-requireAcks"><i class="fa fa-tag"></i> Require Ack </label>
         <input type="number" min="0" max="1"  id="node-input-requireAcks" >
     </div>
-
     <div class="form-row">
         <label for="node-input-ackTimeoutMs"><i class="fa fa-tag"></i> Ack Timeout (Ms) </label>
         <input type="number" min="100" max="100000" step="100" id="node-input-ackTimeoutMs" >
     </div>
-
     <div class="form-row">
         <label for="node-input-partitionerType"><i class="fa fa-tag"></i> Partitioner </label>
         <select id="node-input-partitionerType">
@@ -52,24 +49,26 @@
          	<option value="4">custom</option>
          </select>
     </div>
-
     <div class="form-row">
         <label for="node-input-key"><i class="fa fa-tag"></i> Key </label>
         <input type="text" id="node-input-key" placeholder="key">
+        <input type="hidden" id="node-input-key-type">
     </div>
-    
     <div class="form-row">
         <label for="node-input-partition"><i class="fa fa-tag"></i> Partition </label>
         <input type="number" min="0" max="1000" step="1" id="node-input-partition">
     </div>
-
-    <div class="form-row">
+    <div class="form-row form-row-http-in-attributes hide">
         <label for="node-input-attributes"><i class="fa fa-tag"></i> Attributes </label>
          <select id="node-input-attributes">
          	<option value="0">No compression</option>
          	<option value="1">Compress using GZip</option>
          	<option value="2">Compress using snappy</option>
          </select>
+    </div>
+    <div class="form-row form-row-http-in-compressionType show">
+		<label for="node-input-compressionType"><i class="fa fa-envelope"></i> <span data-i18n="common.label.compressionType"> Compression </span></label>
+		<input type="text" id="node-input-compressionType">
     </div>
     <div class="form-row">
 		<label for="node-input-convertFromJson"><i class="fa fa-list-ul"></i> Convert message from JSON </label>
@@ -79,7 +78,10 @@
 		<label for="node-input-topicSlash2dot"><i class="fa fa-list-ul"></i> Topic replace / with . </label>
 		<input id="node-input-topicSlash2dot" type="checkbox" style="width: auto"></input>
 	</div>
-
+    <div class="form-row">
+        <label for="node-input-nodeQSize"><i class="fa fa-tag"></i> producer max Q depth </label>
+        <input type="number" min="0" step="100" id="node-input-nodeQSize">
+    </div>
 </script>
 
 <script type="text/javascript">
@@ -89,15 +91,18 @@
             name: {value:"",required:false},
             broker: {type:"Kafka Broker"},
             topic: {value:"",required:true},
+            topicDeadletter: {value:"deadletter",required:false},
             topicSlash2dot: {value: false, required: true},
             requireAcks: {value:1,required:true},
             ackTimeoutMs: {value:100,required:true},
             partitionerType: {value:0,required:true},
-            key: {required:false},
+            key: {required:false},"keyType":{required:false,default:"str"},
             partition: {value:0,required:true},
-            attributes: {value:0,required:true},
+            attributes: {value:0},
             connectionType: {value:"Producer",required:true},
-            convertFromJson: {value: false, required: true}
+            convertFromJson: {value: false, required: true},
+            nodeQSize:{value:1000, required:false},
+			compressionType: {value:"none"}
         },
 	    inputs:1,
         inputLabels: "",
@@ -111,13 +116,129 @@
             return "node_label_italic";
         },
         oneditprepare: function() {
-        	if(!this.connectionType) {
-        		this.connectionType="Producer";
-        	}
+            const node=this;
+        	if(!this.connectionType) this.connectionType="Producer";
+            if(!this.nodeQSize) $("#node-input-nodeQSize").val(1000);
+            if(!this.topicDeadletter) $("#node-input-topicDeadletter").val("deadletter");
+            $("#node-input-key").typedInput({
+                type:"str",
+                types:["str","msg", "flow","global","env"],
+                typeField: "#node-input-keyType"
+            })
+            if(node.compressionType==null ){
+               switch(node.attributes){ // cater for old method
+                case 1: 
+                    node.compressionType="setGzip";
+                    node.attributes=0;
+                    break;
+                case 2:arguments
+                    node.compressionType="setSnappy";
+                    node.attributes=0;
+                    break;
+                default:
+                    node.compressionType="none";
+               } 
+            }
+            $("#node-input-compressionType").typedInput({type:"compressionType", types:[{
+			    value: "compressionType",
+    			options: [
+					{ value: "none", label: "none"},
+					{ value: "setGzip", label: "gzip"},
+					{ value: "setGzipSpeed", label: "gzip best speed"},
+					{ value: "setGzipCompression", label: "gzip best compression"},
+        			{ value: "setZlib", label: "zip"},
+        			{ value: "setZlibSpeed", label: "zip best speed"},
+        			{ value: "setZlibCompression", label: "zip best compression"},
+        			{ value: "setLzma", label: "Lempel-Ziv-Markov best speed"},
+        			{ value: "setLzmaCompression", label: "Lempel-Ziv-Markov best compression"},
+        			{ value: "setBrotli", label: "Brotli"},
+        			{ value: "setSnappy", label: "Snappy"},
+        			{ value: "setFlate", label: "Deflate"}
+    			]
+			}]});
         },
         oneditsave: function() {
         },
         oneditresize: function(size) {
+        },
+        button: {
+            enabled: function() {
+                return !this.changed;
+            },
+           	onclick: function() {
+                if (this.changed) {
+                    return RED.notify(RED._("workflow undeployed changes"),"warning");
+                }
+                let label=this._def.label.call(this);
+                if (label.length > 30) {
+                    label = label.substring(0,50)+"...";
+                }
+                label=label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+                const node=this;
+                function sendCommand(element,action) {
+                	const nodeName="Kafka Producer";
+                	$(element).dialog("close");
+                	$.get( "/"+nodeName.replace(" ","_")+"/"+node.id+"/"+action )
+			        .done(function(json) {
+            		    RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
+            		   	$('<div></div>').appendTo('body').html(JSON.stringify(json))
+            		   	.dialog({
+      						modal: true,
+      						title: (node.name||nodeName)+" "+action,
+      						zIndex: 10000,
+      						autoOpen: true,
+   							width: 'auto',
+   							resizable: false,
+							buttons: {
+								close: function (event, ui) {
+					    			$(this).remove();
+								}
+							}
+						});
+                	}).fail(function( jqXHR, textStatus, error ) {
+                   		if (jqXHR.status === 404) {
+     			           	RED.notify(node._(nodeName+" signal not deployed"),"error");
+                		} else if (jqXHR.status === 500) {
+   				           	RED.notify(node._(nodeName+" signal inject failed with error "+(jqXHR.responseText||textStatus||error||"")),"error");
+                		} else if (jqXHR.status === 0) {
+ 							RED.notify(node._(nodeName+" signal no response"),"error");
+                   		} else {
+							RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+jqXHR.responseText||textStatus+" "+error),"error");
+						}
+					});
+                }
+                $('<div></div>').appendTo('body').html('<div>Choose Action</div>')
+  				.dialog({
+      				modal: true, title: (node.name||'Kafka Admin'), zIndex: 10000, autoOpen: true,
+   					width: 'auto', resizable: false,
+					buttons: {
+						"Status": function () {
+							sendCommand(this,"Status");
+						},
+						"Connect": function () {
+							sendCommand(this,"Connect");
+						},
+						"Close": function () {
+							sendCommand(this,"Close");
+						},
+						"Retry Q": function () {
+							sendCommand(this,"Retry Q");
+						},
+						"Reset Status": function () {
+							sendCommand(this,"Reset Status");
+						},
+						"Clear Queue": function () {
+							sendCommand(this,"Clear Queue");
+						},
+						"Refresh Metadata": function () {
+							sendCommand(this,"refreshMetadata");
+						}
+					},
+					close: function (event, ui) {
+				    	$(this).remove();
+					}
+				});
+            }
         }
 });
 </script>

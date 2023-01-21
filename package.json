@@ -1,10 +1,14 @@
 {
   "name": "node-red-contrib-kafka-manager",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Node-RED implements Kafka manager with associand associated .",
   "dependencies": {
+    "compressiontool": "*",
     "kafka-node": "*",
     "node-red-contrib-logger": "*"
+  },
+  "optionalDependencies": {
+    "snappy": "^6.0.1"
   },
   "devDependencies": {
     "bcrypt": ">=5.0.0",
@@ -22,7 +26,8 @@
   "scripts": {
     "test": "mocha \"test/**/*.js\"",
     "lint": "eslint --ext .js kafkaManager",
-    "lint-fix": "eslint --fix --ext .js kafkaManager"
+    "lint-fix": "eslint --fix --ext .js kafkaManager",
+    "startNodeRed": "pwd; node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
   },
   "repository": {
     "type": "git",

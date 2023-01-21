@@ -1,0 +1,1540 @@
+[
+    {
+        "id": "7e22036e.f80bdc",
+        "type": "tab",
+        "label": "tests",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "9dd2b7c4187a72fc",
+        "type": "tab",
+        "label": "admin kafka",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "861480a71d464d53",
+        "type": "tab",
+        "label": "key test",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "8f0d8cea99bffcac",
+        "type": "xterm_config",
+        "rows": 60,
+        "columns": 120,
+        "cursorStyle": "bar",
+        "fastScrollModifier": "alt",
+        "scrollSensitivity": 1,
+        "fastScrollSensitivity": 1,
+        "scrollback": 1000,
+        "backgroundColor": "#000000",
+        "foregroundColor": "#ffffff",
+        "fontSize": 14,
+        "cursorBlink": true,
+        "drawBoldTextInBrightColors": true,
+        "loggingEnabled": false,
+        "name": "XTerminal"
+    },
+    {
+        "id": "44b7aa4c.212894",
+        "type": "Kafka Broker",
+        "name": "Kafta",
+        "hosts": [
+            {
+                "host": "127.0.0.1",
+                "port": 9092
+            }
+        ],
+        "hostsEnvVar": "",
+        "connectTimeout": "10000",
+        "requestTimeout": "30000",
+        "autoConnect": "true",
+        "idleConnection": "5",
+        "reconnectOnIdle": "true",
+        "maxAsyncRequests": "10",
+        "checkInterval": "10",
+        "selfSign": true,
+        "usetls": false,
+        "useCredentials": false
+    },
+    {
+        "id": "163f385a.3ed908",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 40,
+        "wires": [
+            [
+                "74f41911.d32bc8"
+            ]
+        ]
+    },
+    {
+        "id": "31c34a4.2603ab6",
+        "type": "Kafka Admin",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Admin",
+        "broker": "44b7aa4c.212894",
+        "x": 390,
+        "y": 380,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "e63719e6.4207f8",
+        "type": "debug",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "9557d6e1.63ba38",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload",
+                "v": "",
+                "vt": "date"
+            },
+            {
+                "p": "topic",
+                "v": "listTopics",
+                "vt": "string"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "listTopics",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 420,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "6907be35.65898",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "listGroups",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 380,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "c064163.bbad2e8",
+        "type": "comment",
+        "z": "7e22036e.f80bdc",
+        "name": "uses https://github.com/SOHU-Co/kafka-node",
+        "info": "\nhttps://github.com/SOHU-Co/kafka-node#admin",
+        "x": 510,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "bab951c5.10156",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "10",
+        "payloadType": "num",
+        "x": 110,
+        "y": 140,
+        "wires": [
+            [
+                "d2f1aac8.cad088"
+            ]
+        ]
+    },
+    {
+        "id": "f8cdbb21.121ab8",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer",
+        "broker": "44b7aa4c.212894",
+        "topic": null,
+        "topics": [
+            {
+                "topic": "test",
+                "offset": 0,
+                "partition": 0
+            },
+            {
+                "topic": "atest",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "e9bf9de8.aea8b"
+            ]
+        ]
+    },
+    {
+        "id": "593514e6.b8eb3c",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer",
+        "broker": "44b7aa4c.212894",
+        "topic": "test",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "x": 540,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "d556b2e9.8744d",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer HL",
+        "broker": "44b7aa4c.212894",
+        "topic": "atest",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "HighLevelProducer",
+        "x": 590,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "2f80a948.9711e6",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Consumer topic atest",
+        "broker": "44b7aa4c.212894",
+        "topics": [
+            {
+                "topic": "atest",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "groupTopicAtest",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "4711c52.a1e483c"
+            ]
+        ]
+    },
+    {
+        "id": "848b84fd.3738d8",
+        "type": "debug",
+        "z": "7e22036e.f80bdc",
+        "name": "error",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "a829a406.9d8e88",
+        "type": "Kafka Consumer Group",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "broker": "44b7aa4c.212894",
+        "groupId": "aGroup",
+        "sessionTimeout": 15000,
+        "protocol": [
+            "roundrobin"
+        ],
+        "encoding": "utf8",
+        "fromOffset": "latest",
+        "commitOffsetsOnFirstJoin": "true",
+        "outOfRangeOffset": "earliest",
+        "topics": [
+            "test",
+            "topic2"
+        ],
+        "x": 160,
+        "y": 320,
+        "wires": [
+            [
+                "61e3a59c.14b41c"
+            ]
+        ]
+    },
+    {
+        "id": "54bc5863.08ea98",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "describeGroups",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "describeGroups",
+        "payload": "[\"aGroup\"]",
+        "payloadType": "json",
+        "x": 140,
+        "y": 460,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "2056242a.f330ac",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "createTopics",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "createTopics",
+        "payload": "[{\"topic\":\"aTestRemoveTopic\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"aTestRemoveTopicfail\",\"partitions\":1},{\"topic\":\"test\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"atest\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testCommit\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testRollback\",\"partitions\":1,\"replicationFactor\":1}]",
+        "payloadType": "json",
+        "x": 130,
+        "y": 500,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "8bcb5ffe.b6683",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "deleteTopics",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "deleteTopics",
+        "payload": "[{\"topic\":\"aTestRemoveTopic\"},{\"topic\":\"aTestRemoveTopic2\"}]",
+        "payloadType": "json",
+        "x": 130,
+        "y": 540,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "976b6eb.28a7f9",
+        "type": "Kafka Commit",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 760,
+        "y": 600,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "b2cebe51.29788",
+        "type": "Kafka Rollback",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 760,
+        "y": 660,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "334a2286.d1440e",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer testCommit",
+        "broker": "44b7aa4c.212894",
+        "topic": null,
+        "topics": [
+            {
+                "topic": "testCommit",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "false",
+        "autoCommitIntervalMs": "15000",
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "x": 180,
+        "y": 600,
+        "wires": [
+            [
+                "cdfee20b.f152f"
+            ]
+        ]
+    },
+    {
+        "id": "917bf0a9.43ac8",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer testRollback",
+        "broker": "44b7aa4c.212894",
+        "topic": null,
+        "topics": [
+            {
+                "topic": "testRollback",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "false",
+        "autoCommitIntervalMs": "15000",
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "x": 180,
+        "y": 660,
+        "wires": [
+            [
+                "30714ddb.9b2002"
+            ]
+        ]
+    },
+    {
+        "id": "6ff186b0.25eda8",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer testCommit",
+        "broker": "44b7aa4c.212894",
+        "topic": "testCommit",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "x": 560,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "7c0ac1bb.fa061",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer testRollback",
+        "broker": "44b7aa4c.212894",
+        "topic": "testRollback",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "x": 580,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "660bf5ea.623f4c",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 740,
+        "wires": [
+            [
+                "d8cb2736.009718"
+            ]
+        ]
+    },
+    {
+        "id": "f2f4fbd6.c05eb8",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 800,
+        "wires": [
+            [
+                "10ea09c6.905986"
+            ]
+        ]
+    },
+    {
+        "id": "dc389e43.92661",
+        "type": "delay",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "outputs": 1,
+        "x": 590,
+        "y": 600,
+        "wires": [
+            [
+                "976b6eb.28a7f9"
+            ]
+        ]
+    },
+    {
+        "id": "787d1328.f0f02c",
+        "type": "delay",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "outputs": 1,
+        "x": 590,
+        "y": 660,
+        "wires": [
+            [
+                "b2cebe51.29788"
+            ]
+        ]
+    },
+    {
+        "id": "54da5b93.ce4984",
+        "type": "Load Injector",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "thinktimemin": "10",
+        "thinktimemax": "100",
+        "runtime": 60,
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 80,
+        "wires": [
+            [
+                "74f41911.d32bc8"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "74f41911.d32bc8",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 330,
+        "y": 40,
+        "wires": [
+            [
+                "593514e6.b8eb3c"
+            ]
+        ]
+    },
+    {
+        "id": "e9bf9de8.aea8b",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 470,
+        "y": 200,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "d2f1aac8.cad088",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 350,
+        "y": 140,
+        "wires": [
+            [
+                "d556b2e9.8744d"
+            ]
+        ]
+    },
+    {
+        "id": "4711c52.a1e483c",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 410,
+        "y": 260,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "61e3a59c.14b41c",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 390,
+        "y": 320,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "d8cb2736.009718",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 290,
+        "y": 740,
+        "wires": [
+            [
+                "6ff186b0.25eda8"
+            ]
+        ]
+    },
+    {
+        "id": "10ea09c6.905986",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 310,
+        "y": 800,
+        "wires": [
+            [
+                "7c0ac1bb.fa061"
+            ]
+        ]
+    },
+    {
+        "id": "cdfee20b.f152f",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 410,
+        "y": 600,
+        "wires": [
+            [
+                "dc389e43.92661"
+            ]
+        ]
+    },
+    {
+        "id": "30714ddb.9b2002",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 420,
+        "y": 660,
+        "wires": [
+            [
+                "787d1328.f0f02c"
+            ]
+        ]
+    },
+    {
+        "id": "cbc03dfd8aab08ab",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "list processes linux",
+        "process": "ps",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "",
+        "arguments": "l",
+        "env": {},
+        "x": 390,
+        "y": 200,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "69500c6b4f155943",
+        "type": "debug",
+        "z": "9dd2b7c4187a72fc",
+        "name": "log",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "d30572f71c07474b",
+        "type": "debug",
+        "z": "9dd2b7c4187a72fc",
+        "name": "error",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "1f047dff43abc5ba",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "start zookeeper - linux",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "./bin/zookeeper-server-start.sh config/zookeeper.properties",
+        "env": {},
+        "x": 360,
+        "y": 320,
+        "wires": [
+            [
+                "11bb03a65dcde83a"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "41103cb03cd4e11a",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "start kafka -  linux",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "./bin/kafka-server-start.sh config/server.properties",
+        "env": {},
+        "x": 290,
+        "y": 460,
+        "wires": [
+            [
+                "11bb03a65dcde83a"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "8fb4fafdf0b0e58b",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "mkdir /tmp/kafka-logs",
+        "process": "mkdir",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "",
+        "arguments": "/tmp/kafka-logs",
+        "env": {},
+        "x": 280,
+        "y": 620,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "b65634c6e1d4a538",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "rmdir /tmp/kafka-logs",
+        "process": "rmdir",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/tmp",
+        "arguments": "/tmp/kafka-logs",
+        "env": {},
+        "x": 280,
+        "y": 700,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "9617c3062b308835",
+        "type": "delay",
+        "z": "9dd2b7c4187a72fc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "20",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 240,
+        "y": 380,
+        "wires": [
+            [
+                "41103cb03cd4e11a"
+            ]
+        ]
+    },
+    {
+        "id": "71b648a03bccfbad",
+        "type": "inject",
+        "z": "9dd2b7c4187a72fc",
+        "name": "start",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "start",
+        "payload": "",
+        "payloadType": "date",
+        "x": 90,
+        "y": 340,
+        "wires": [
+            [
+                "9617c3062b308835",
+                "1f047dff43abc5ba"
+            ]
+        ]
+    },
+    {
+        "id": "5edaa083a07f2838",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "gen KAFKA_CLUSTER_ID",
+        "process": "sh",
+        "os": "",
+        "autoStart": "true",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "bin/kafka-storage.sh random-uuid",
+        "env": {},
+        "x": 300,
+        "y": 780,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "5170c998b55a5971",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "KRaft Format Log Directories ",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "bin/kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c config/kraft/server.properties",
+        "env": {
+            "KAFKA_CLUSTER_ID": "8WQPQFfwSwGykl_AjFkhpQ"
+        },
+        "x": 300,
+        "y": 860,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "c27aac54e752f8c3",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "stop kafka -  linux",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "./bin/kafka-server-stop.sh config/server.properties",
+        "env": {},
+        "x": 270,
+        "y": 540,
+        "wires": [
+            [
+                "11bb03a65dcde83a"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "11bb03a65dcde83a",
+        "type": "function",
+        "z": "9dd2b7c4187a72fc",
+        "name": "ignore info messages",
+        "func": "const regex = context.get(\"regex\");\nlet match;\nwhile ((match = regex.logs.exec(msg.payload)) !== null) {\n   if (match.index === regex.logs.lastIndex)\n      regex.logs.lastIndex++;\n   const newMsg = {\n      payload: {\n         \"time\": match[1],\n         \"level\": match[2],\n         \"message\": match[3],\n      }\n   };\n   switch (newMsg.payload.level) {\n      case \"INFO\":\n         node.send([null, newMsg]);\n         break;\n      case \"WARN\":\n         node.send([null, null, newMsg]);\n         break;\n      case \"ERROR\":\n         node.send([null, null, null, newMsg])\n         break;\n      default:\n         node.send([null, null, null, null, newMsg])\n         break;\n   }\n   node.send(newMsg);\n}\nreturn;",
+        "outputs": 5,
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\nconst regex={\n    log:  /\\[?(?<timestamp>\\d\\d\\d\\d-\\d\\d-\\d\\d[T|\\s]\\d\\d:\\d\\d:\\d\\d[.|,]\\d\\d\\dZ?)\\]\\s+(?<level>[a-zA-Z]+)\\s+(?<Message>.*)/gm,\n    log1: /\\[(?<timestamp>\\d\\d\\d\\d-\\d\\d-\\d\\d[T|\\s]\\d\\d:\\d\\d:\\d\\d[.|,]\\d\\d\\dZ?)\\]\\s+(?<level>[a-zA-Z]+)\\s+(?<Message>.*)$/g,\n    timestamp: /\\[?(?<timestamp>\\d\\d\\d\\d-\\d\\d-\\d\\d[T|\\s]\\d\\d:\\d\\d:\\d\\d[.|,]\\d\\d\\dZ?)\\]\\s(?<data>\\S+.*)/gm,\n    lines:/[^\\r?\\n]+/g,\n           // [2022-11-29 06:55:01,521] INFO \n           // [2019-11-14T04:23:08.362]INFO  \n    logs: /\\[?(?<timestamp>\\d\\d\\d\\d-\\d\\d-\\d\\d[T|\\s]\\d\\d:\\d\\d:\\d\\d[.|,]\\d\\d\\dZ?)\\]?\\s+(?<level>\\w+)\\s(?<message>\\S+.*)/gm\n//    logs: /(\\d+-\\d+-\\d+\\s\\S+)\\s+(\\w+)\\s(\\d+)\\s---\\s(\\S+.\\S+)\\s(\\S+\\s+:)\\s(\\S+)/gm\n};\ncontext.set(\"regex\",regex);",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 460,
+        "wires": [
+            [],
+            [],
+            [
+                "3ebadd23713ec52b"
+            ],
+            [
+                "3ebadd23713ec52b"
+            ],
+            [
+                "3ebadd23713ec52b"
+            ]
+        ],
+        "inputLabels": [
+            "Log"
+        ],
+        "outputLabels": [
+            "All",
+            "INFO",
+            "WARN",
+            "ERROR",
+            "OTHER"
+        ]
+    },
+    {
+        "id": "8ccc29d108c29331",
+        "type": "inject",
+        "z": "9dd2b7c4187a72fc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "[2019-11-14T04:23:08.362]  INFO ActivityEventRecovery-1 ActivityCacheManager - - [nsx@6876 comp=\"nsx-manager\" level=\"INFO\" subcomp=\"manager\"] Handling activity 92d6a146-fa12-4889-a0ff-441087e047d0 completion event for 1\\n",
+        "payloadType": "str",
+        "x": 630,
+        "y": 320,
+        "wires": [
+            [
+                "11bb03a65dcde83a"
+            ]
+        ]
+    },
+    {
+        "id": "e6bfc20efa1bed4a",
+        "type": "inject",
+        "z": "9dd2b7c4187a72fc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "[2022-11-29 06:55:01,521] INFO   ______                  _                                           (org.apache.zookeeper.server.ZooKeeperServer)\\n[2022-11-29 06:55:01,521] INFO  |___  /                 | |                                          (org.apache.zookeeper.server.ZooKeeperServer)\\n[2022-11-29 06:55:01,521] INFO     / /    ___     ___   | | __   ___    ___   _ __     ___   _ __    (org.apache.zookeeper.server.ZooKeeperServer)\\n[2022-11-29 06:55:01,521] INFO    / /    / _ \\   / _ \\  | |/ /  / _ \\  / _ \\ | '_ \\   / _ \\ | '__| (org.apache.zookeeper.server.ZooKeeperServer)\\n[2022-11-29 06:55:01,522] INFO   / /__  | (_) | | (_) | |   <  |  __/ |  __/ | |_) | |  __/ | |     (org.apache.zookeeper.server.ZooKeeperServer)",
+        "payloadType": "str",
+        "x": 630,
+        "y": 260,
+        "wires": [
+            [
+                "11bb03a65dcde83a"
+            ]
+        ]
+    },
+    {
+        "id": "3ebadd23713ec52b",
+        "type": "debug",
+        "z": "9dd2b7c4187a72fc",
+        "name": "error filetered",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 910,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "4741b7e0ad41a9f2",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "set deadletter retention to 1 hour",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "./bin/kafka-configs.sh --zookeeper localhost:2181 --alter  --entity-type topics --add-config retention.ms=360000  --entity-name deadletter",
+        "env": {},
+        "x": 290,
+        "y": 940,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "a5fb1c91fc12e9ea",
+        "type": "Spawn Process",
+        "z": "9dd2b7c4187a72fc",
+        "name": "deadletter cleanup policy",
+        "process": "sh",
+        "os": "Linux",
+        "autoStart": "false",
+        "workingDirectory": "/home/peter/Downloads/kafka/kafka_2.13-3.3.1",
+        "arguments": "./bin/kafka-configs.sh --bootstrap-server=localhost:2181 --alter --entity-type topics --add-config cleanup.policy='[compact,delete]' --entity-name deadletter\n",
+        "env": {},
+        "x": 270,
+        "y": 1020,
+        "wires": [
+            [
+                "69500c6b4f155943"
+            ],
+            [
+                "d30572f71c07474b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "37d374e3c79ec4c7",
+        "type": "Kafka Consumer",
+        "z": "861480a71d464d53",
+        "name": "testkey consumer",
+        "broker": "44b7aa4c.212894",
+        "regex": false,
+        "topics": [
+            {
+                "topic": "testkey",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": "latest",
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "convertToJson": false,
+        "compressionType": "setGzip",
+        "x": 260,
+        "y": 220,
+        "wires": [
+            [
+                "af907de395d5d027"
+            ]
+        ]
+    },
+    {
+        "id": "6d7497598929c009",
+        "type": "debug",
+        "z": "861480a71d464d53",
+        "name": "ok",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "0fd8d77678db2c71",
+        "type": "Kafka Producer",
+        "z": "861480a71d464d53",
+        "name": "kafka producer key test",
+        "broker": "44b7aa4c.212894",
+        "topic": "testkey",
+        "topicSlash2dot": true,
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": "1",
+        "attributes": "0",
+        "connectionType": "Producer",
+        "convertFromJson": false,
+        "nodeQSize": "1000",
+        "compressionType": "setGzip",
+        "x": 590,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "b968e6858add7291",
+        "type": "inject",
+        "z": "861480a71d464d53",
+        "name": "test",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "testkey",
+        "payload": "{\"key\":\"keyOnPayload\",\"data\":\"test in testkey\"}",
+        "payloadType": "json",
+        "x": 90,
+        "y": 80,
+        "wires": [
+            [
+                "b267a41a25dfea84"
+            ]
+        ]
+    },
+    {
+        "id": "7d6e5c26e07f2645",
+        "type": "inject",
+        "z": "861480a71d464d53",
+        "name": "createTopics",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "createTopics",
+        "payload": "[{\"topic\":\"testkey\",\"partitions\":1,\"replicationFactor\":1}]",
+        "payloadType": "json",
+        "x": 110,
+        "y": 320,
+        "wires": [
+            [
+                "865e130cee1348c3"
+            ]
+        ]
+    },
+    {
+        "id": "865e130cee1348c3",
+        "type": "Kafka Admin",
+        "z": "861480a71d464d53",
+        "name": "Kafka Admin",
+        "broker": "44b7aa4c.212894",
+        "x": 390,
+        "y": 320,
+        "wires": [
+            [
+                "6d7497598929c009"
+            ],
+            [
+                "6d7497598929c009"
+            ]
+        ]
+    },
+    {
+        "id": "af907de395d5d027",
+        "type": "Monitor Flow",
+        "z": "861480a71d464d53",
+        "name": "",
+        "x": 470,
+        "y": 220,
+        "wires": [
+            [
+                "6d7497598929c009"
+            ]
+        ]
+    },
+    {
+        "id": "b267a41a25dfea84",
+        "type": "Monitor Flow",
+        "z": "861480a71d464d53",
+        "name": "",
+        "x": 270,
+        "y": 100,
+        "wires": [
+            [
+                "0fd8d77678db2c71"
+            ]
+        ]
+    },
+    {
+        "id": "107c53df18a20f5e",
+        "type": "Kafka Consumer",
+        "z": "861480a71d464d53",
+        "name": "deadletter",
+        "broker": "44b7aa4c.212894",
+        "regex": false,
+        "topics": [
+            {
+                "topic": "deadletter",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": "104857600",
+        "fromOffset": "none",
+        "encoding": "buffer",
+        "keyEncoding": "utf8",
+        "connectionType": "Consumer",
+        "convertToJson": true,
+        "compressionType": "setGzip",
+        "x": 200,
+        "y": 420,
+        "wires": [
+            [
+                "9d6b4f1e884d7277"
+            ]
+        ]
+    },
+    {
+        "id": "9d6b4f1e884d7277",
+        "type": "Monitor Flow",
+        "z": "861480a71d464d53",
+        "name": "",
+        "x": 430,
+        "y": 420,
+        "wires": [
+            [
+                "9480e050a7b71961"
+            ]
+        ]
+    },
+    {
+        "id": "9480e050a7b71961",
+        "type": "debug",
+        "z": "861480a71d464d53",
+        "name": "deadletter",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "b5c64d8ded31e2f5",
+        "type": "inject",
+        "z": "861480a71d464d53",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "key",
+                "v": "keyOnMessage",
+                "vt": "str"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "testkey",
+        "payload": "{\"key\":\"keyOnPayload\",\"data\":\"test in testkey\"}",
+        "payloadType": "json",
+        "x": 90,
+        "y": 140,
+        "wires": [
+            [
+                "b267a41a25dfea84"
+            ]
+        ]
+    },
+    {
+        "id": "e44173a818e59f4e",
+        "type": "inject",
+        "z": "861480a71d464d53",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "testkey",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 20,
+        "wires": [
+            [
+                "b267a41a25dfea84"
+            ]
+        ]
+    }
+]
