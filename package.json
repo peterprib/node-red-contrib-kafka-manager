@@ -5,6 +5,7 @@
   "dependencies": {
     "compressiontool": "*",
     "kafka-node": "*",
+    "node": ">=0.6.13",
     "node-red-contrib-logger": "*"
   },
   "optionalDependencies": {
