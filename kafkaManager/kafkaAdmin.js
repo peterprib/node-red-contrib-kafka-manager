@@ -1,57 +1,48 @@
 const logger = new (require('node-red-contrib-logger'))('Kafka Admin')
 logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
+const setupHttpAdmin = require('./setupHttpAdmin.js')
+const State = require('./state.js')
 
-function msgProcess (node, msg, errObject, data) {
+function msgProcess (msg, errObject, data) {
+  const _this = this
   if (logger.active) logger.send({ label: 'msgProcess', error: errObject, data: data })
   if (errObject) {
     const err = typeof errObject !== 'string' ? errObject.toString() : errObject.message.toString()
     if (err.startsWith('Broker not available') || err.startsWith('Request timed out')) {
-      node.warn('Broker not available, queue message and retry connection')
-      node.waiting.push(msg)
-      node.brokerNode.connect(node, 'Admin', (err) => {
-        node.error('connection failed, clearing waiting queue ' + node.waiting.length)
-        errorWaiting(node, err)
-      })
+      this.warn('Broker not available, queue message and retry connection as ' + err)
+      this.whenUp(this.processInput,msg)
       return
     }
     node.error(msg.topic + ' ' + err)
     msg.error = err
-    node.send([null, msg])
+    this.send([null, msg])
     return
   }
-  switch (msg.topic) {
-    case 'createAcls':
-    case 'createTopics':
-    case 'deleteAcls':
-    case 'deleteTopics':
-    case 'electPreferredLeaders':
-      data.forEach((c, i, a) => {
-        const t = msg.payload.find((cp) => cp.topic === c.topic)
-        if (logger.active) logger.send({ label: 'msgProcess multi response', topic: c, data: t })
-        if (c.hasOwnProperty('error')) {
-          if (logger.active) logger.send({ label: 'msgProcess multi response', data: { topic: msg.topic, error: formatError(c.error), payload: [t] } })
-          node.send([null, {
-            topic: msg.topic,
-            error: formatError(c.error),
-            payload: [t]
-          }])
-          return
-        }
-        if (logger.active) logger.send({ label: 'msgProcess multi response ok', data: { topic: msg.topic, payload: [c] } })
-        node.send({
+  if (['createAcls', 'createTopics', 'deleteAcls', 'deleteTopics', 'electPreferredLeaders'].includes(msg.topic)) {
+    data.forEach((c, i, a) => {
+      const t = msg.payload.find((cp) => cp.topic === c.topic)
+      if (logger.active) logger.send({ label: 'msgProcess multi response', topic: c, data: t })
+      if (c.hasOwnProperty('error')) {
+        if (logger.active) logger.send({ label: 'msgProcess multi response', data: { topic: msg.topic, error: formatError(c.error), payload: [t] } })
+        _this.send([null, {
           topic: msg.topic,
+          error: formatError(c.error),
           payload: [t]
-        })
+        }])
+        return
+      }
+      if (logger.active) logger.send({ label: 'msgProcess multi response ok', data: { topic: msg.topic, payload: [c] } })
+      _this.send({
+        topic: msg.topic,
+        payload: [t]
       })
-      break
-    default:
-      msg.payload = data
-      node.send(msg)
+    })
+  } else {
+    msg.payload = data
+    this.send(msg)
   }
 }
-const processInputNoArg = [
-  'listConsumerGroups','listGroups','listTopics'
-]
+const processInputNoArg = ['listConsumerGroups', 'listGroups', 'listTopics']
 const processInputPayloadArg = [
   'alterConfigs', 'alterReplicaLogDirs', 'createAcls', '', 'createDelegationToken',
   'createPartitions', 'createTopics', 'deleteAcls', 'deleteConsumerGroups', 'deleteRecords',
@@ -61,18 +52,19 @@ const processInputPayloadArg = [
   'renewDelegationToken'
 ]
 
-function processInput (node, msg, done=(err, data)=>msgProcess(node, msg, err, data),onError) {
-  if(logger.active) logger.send({ label: 'processInput', msg })
+function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data), onError) {
+  if (logger.active) logger.send({ label: 'processInput', msg })
   try {
-    const action=msg.topic;
-    if(processInputNoArg.includes(action)) {
+    if (this.connection == null) throw Error('no connection')
+    const action = msg.topic
+    if (processInputNoArg.includes(action)) {
       if (logger.active) logger.send({ label: 'processInput processInputNoArg', msg })
-      node.connection[action](done)
+      this.connection[action](done)
       return
     }
     if (processInputPayloadArg.includes(action)) {
       if (logger.active) logger.send({ label: 'processInput processInputPayloadArg', msg })
-      node.connection[action](msg.payload,done)
+      this.connection[action](msg.payload, done)
       return
     }
     let resource = {}
@@ -89,19 +81,19 @@ function processInput (node, msg, done=(err, data)=>msgProcess(node, msg, err, d
           resources: [resource],
           includeSynonyms: false // requires kafka 2.0+
         }
-        node.connection.describeConfigs(payload,done)
+        this.connection.describeConfigs(payload, done)
         break
       default:
         throw Error('invalid message topic')
     }
   } catch (ex) {
-    if (logger.active) logger.send({ label: 'processInput catch', error: ex, msg: msg, connection: Object.keys(node.connection), stack: ex.stack})
-    if(onError) {
-      onError(ex);
-      return;
+    if (logger.active) logger.send({ label: 'processInput catch', error: ex.message, msg: msg, connection: Object.keys(this.connection || {}), stack: ex.stack })
+    if (onError) {
+      onError(ex)
+      return
     }
-    msg.error = ex.toString()
-    node.send([null, msg])
+    msg.error = ex.message
+    this.send([null, msg])
   }
 }
 
@@ -114,102 +106,71 @@ function adminHttpRequest (node, res, err, data) {
   res.status(200).send(data)
 }
 
-function errorWaiting (node, err) {
-  while (node.waiting.length) {
-    const msg = node.waiting.shift()
-    msg.error = err
-    node.send([null, msg])
-  }
-}
-
 module.exports = function (RED) {
   function KafkaAdminNode (n) {
     RED.nodes.createNode(this, n)
-    const node = Object.assign(this, n, {
-      connected: false,
-      waiting: [],
-      connecting: false,
-      processInput: processInput
-    })
-    node.brokerNode = RED.nodes.getNode(node.broker)
-    node.brokerNode.setState(node)
-    node.status({ fill: 'yellow', shape: 'ring', text: 'Deferred connection' })
+    this.state = new State(this)
     try {
-      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-      node.on('input', function (msg) {
-        if (node.connected) {
-          processInput(node, msg)
-        } else {
-          node.waiting.push(msg)
-          if (node.connecting) {
-            node.log(node.waiting.length + ' in wait queue')
-            return
+      const node = Object.assign(this, n, {
+        msgProcess: msgProcess.bind(this),
+        processInput: processInput.bind(this)
+      })
+      node.state.setUpAction(()=>{
+        node.status({	fill: 'yellow',	shape: 'ring', text: 'Connecting' })
+        node.brokerNode.getConnection('Admin',
+          (connection)=>{
+            node.connection=connection;
+            node.available();
+          },
+          (error)=>{
+            node.status({fill:'red',shape:'ring',text:'connection failed'})
+            node.upFailedAndClearQ(error)
           }
-          node.brokerNode.connect(node, 'Admin', (err) => {
-            node.error('connection failed, clearing waiting queue ' + node.waiting.length)
-            errorWaiting(node, err)
-          })
-        }
+        )
+      }).setDownAction(()=>{
+        node.status({fill:'red',shape:'ring',text:'closing'})
+        node.connection.close(false, () => {
+          node.log('closed')
+          node.status({ fill: 'red', shape: 'ring', text: 'closed' })
+        })
+      }).onUp((error)=>{
+        node.status({fill:'green',shape:'ring',text:'connectioned'})
+      }).onError((error)=>{
+        node.error(error);
+      })
+      node.status({ fill: 'yellow', shape: 'ring', text: 'Initialising' })
+      node.brokerNode = RED.nodes.getNode(node.broker)
+      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
+      node.brokerNode
+      .onUp(()=>{
+        node.status({fill:'yellow',shape:'ring',text:'Kafka available and connecting'})
+        node.setUp();
+      })
+      .onDown(()=>{
+        node.status({fill:'red',shape:'ring',text:'Kafka not available'})
+        node.setDown();
+      })
+      node.on('input', function (msg) {
+        node.whenUp(node.processInput, msg)
+      })
+      node.on('close', function (removed, done) {
+        node.setDown()
+        clearInterval(node.check)
+        done()
       })
     } catch (ex) {
-      node.error(ex.toString())
-      node.status({ fill: 'red', shape: 'ring', text: ex.message })
-      return
+      this.status({ fill: 'red', shape: 'ring', text: ex.toString() })
+      logger.sendErrorAndStackDump(ex.message, ex)
+      this.error(ex.toString())
     }
-    node.on('close', function (removed, done) {
-      node.status({ fill: 'red', shape: 'ring', text: 'closed' })
-      node.connection.close(false, () => {
-        node.log('closed')
-      })
-      clearInterval(node.check)
-      done()
-    })
   }
   RED.nodes.registerType(logger.label, KafkaAdminNode)
-  RED.httpAdmin.get('/KafkaAdmin/:id/:action/', RED.auth.needsPermission('KafkaAdmin.write'), function (req, res) {
-    const node = RED.nodes.getNode(req.params.id)
-    if (node && node.type === 'Kafka Admin') {
-      if (!node.connected) {
-        if (logger.active) logger.send({ label: 'httpAdmin try connecting', request: req.params })
-        const timerId = setTimeout(() => {
-          const err = 'timeout waiting for connection'
-          node.error(err)
-          res.status(500).send(err)
-        }, 4000)
-        node.brokerNode.connect(node, 'Admin', (err) => {
-          clearTimeout(timerId)
-          node.error(err)
-          res.status(500).send(err)
-        })
-        return
-      }
-      try {
-        const msg={topic:req.params.action}; 
-        processInput(node, msg,
-          (err, data)=>adminHttpRequest(node,res,err,data),
-          ex=>adminHttpRequest(node,res,ex.message)
-        );
-/*
-        const action=req.params.action
-                if(!node.connection.hasOwnProperty(action)){
-          throw Error('connection unknown action: '+action+' actions available:'+Object.keys(node.connection).join())
-        } 
-        if (logger.active) logger.send({ label: 'httpAdmin', action: action, request: req.params, connection: Object.keys(node.connection) })
-        if (processInputNoArg.includes(action)) {
-          node.connection[action]((err, data) => adminHttpRequest(node, res, err, data))
-          return
-        }
-        throw Error('unknown action: ' + action)
-*/
-      } catch (ex) {
-        if (logger.active) logger.send({ label: 'httpAdmin', error: ex, request: req.params, connection: Object.keys(node.connection) })
-        const reason1 = 'Internal Server Error, ' + req.params.action + ' failed ' + ex.toString()
-        node.error(reason1)
-        res.status(500).send(reason1)
-      }
-    } else {
-      const reason2 = 'request to ' + req.params.action + ' failed for id:' + req.params.id
-      res.status(404).send(reason2)
+  setupHttpAdmin(RED, logger.label, {
+     listGroups: (RED, node, callback) => {
+      node.whenUp(node.processInput, { topic: 'listGroups' }, (err, data) => callback(data, err), ex => callback(null, ex.message))
+    },
+    listTopics: (RED, node, callback) => {
+      node.whenUp(node.processInput, { topic: 'listTopics' }, (err, data) => callback(data, err), ex => callback(null, ex.message))
     }
   })
 }

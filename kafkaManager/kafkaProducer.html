@@ -32,6 +32,14 @@
         <input type="text" id="node-input-topic" placeholder="Topic">
     </div>
     <div class="form-row">
+        <label for="node-input-msgTopicOveride"><i class="fa fa-tag"></i> Message Topic Overides </label>
+        <input type="text" id="node-input-msgTopicOveride" placeholder="Topic ">
+    </div>
+    <div class="form-row">
+        <label for="node-input-msgOveride"><i class="fa fa-tag"></i> Message Overides </label>
+        <input type="text" id="node-input-msgOveride" placeholder="Topic ">
+    </div>
+    <div class="form-row">
         <label for="node-input-requireAcks"><i class="fa fa-tag"></i> Require Ack </label>
         <input type="number" min="0" max="1"  id="node-input-requireAcks" >
     </div>
@@ -71,26 +79,59 @@
 		<input type="text" id="node-input-compressionType">
     </div>
     <div class="form-row">
-		<label for="node-input-convertFromJson"><i class="fa fa-list-ul"></i> Convert message from JSON </label>
-		<input id="node-input-convertToJson" type="checkbox" style="width: auto"></input>
+		<label for="node-input-convertFromJson"><i class="fa fa-list-ul"></i> </label>
+		<input id="node-input-convertToJson" type="checkbox" style="width: auto"></input> Convert message from JSON 
 	</div>
     <div class="form-row">
-		<label for="node-input-topicSlash2dot"><i class="fa fa-list-ul"></i> Topic replace / with . </label>
-		<input id="node-input-topicSlash2dot" type="checkbox" style="width: auto"></input>
+		<label for="node-input-topicSlash2dot"><i class="fa fa-list-ul"></i> </label>
+		<input id="node-input-topicSlash2dot" type="checkbox" style="width: auto"></input> Topic replace / with . 
 	</div>
     <div class="form-row">
         <label for="node-input-nodeQSize"><i class="fa fa-tag"></i> producer max Q depth </label>
         <input type="number" min="0" step="100" id="node-input-nodeQSize">
     </div>
+    <div class="form-row">
+        <label for="node-input-topicDeadletter"><i class="fa fa-tag"></i> Deadletter Topic </label>
+        <input type="text" id="node-input-topicDeadletter" placeholder="topicDeadletter">
+    </div>
 </script>
 
 <script type="text/javascript">
+function json2html(obj){
+	if(obj==="undefined" || obj === null) return "";
+	const objType=(typeof obj);
+	if(objType!=="object") return obj;
+	let elementValue ="";
+	if(obj.constructor === Array) {
+		for(let i=0;i<obj.length;i++) {
+			const objI=obj[i],objTypeI=typeof objI;
+			if(objTypeI!== 'object'||objI.constructor==Object) {
+				elementValue+="<tr><td>"+i+"</td><td>"+json2html(objI)+"</td></tr>";
+				continue;
+			}
+			throw new Error(objTypeI+" is not supported.");
+		}
+		return "<table>"+elementValue+"</table>";
+	}
+	if(obj.constructor!==Object) return obj;
+	const objText=obj['#text'],objTypeText=(typeof objText);
+	if(objTypeText!=='undefined') {
+		if(objTypeText=='object') throw new Error(objTypeText+' which is #text, not supported.');
+		return objText;
+	}
+	for(let name in obj) {
+		elementValue+="<tr><td style='vertical-align:top'>"+name+":</td><td>"+json2html(obj[name])+"</td></tr>";	
+	}
+	return "<table>"+elementValue+"</table>";
+}
     RED.nodes.registerType('Kafka Producer',{
     	category: 'output',
         defaults: {
             name: {value:"",required:false},
             broker: {type:"Kafka Broker"},
             topic: {value:"",required:true},
+            msgOveride: {value:true,required:true},
+            msgTopicOveride: {value:true,required:true},
             topicDeadletter: {value:"deadletter",required:false},
             topicSlash2dot: {value: false, required: true},
             requireAcks: {value:1,required:true},
@@ -117,9 +158,10 @@
         },
         oneditprepare: function() {
             const node=this;
+            $("#node-input-msgOveride").typedInput({type:'bool',types:['bool']});
+            $("#node-input-msgTopicOveride").typedInput({type:'bool',types:['bool']});
         	if(!this.connectionType) this.connectionType="Producer";
             if(!this.nodeQSize) $("#node-input-nodeQSize").val(1000);
-            if(!this.topicDeadletter) $("#node-input-topicDeadletter").val("deadletter");
             $("#node-input-key").typedInput({
                 type:"str",
                 types:["str","msg", "flow","global","env"],
@@ -181,7 +223,7 @@
                 	$.get( "/"+nodeName.replace(" ","_")+"/"+node.id+"/"+action )
 			        .done(function(json) {
             		    RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-            		   	$('<div></div>').appendTo('body').html(JSON.stringify(json))
+            		   	$('<div></div>').appendTo('body').html(json2html(json))
             		   	.dialog({
       						modal: true,
       						title: (node.name||nodeName)+" "+action,
@@ -212,9 +254,6 @@
       				modal: true, title: (node.name||'Kafka Admin'), zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
 					buttons: {
-						"Status": function () {
-							sendCommand(this,"Status");
-						},
 						"Connect": function () {
 							sendCommand(this,"Connect");
 						},
@@ -232,7 +271,8 @@
 						},
 						"Refresh Metadata": function () {
 							sendCommand(this,"refreshMetadata");
-						}
+						},
+						"Status": function(){sendCommand(this,"Status")}
 					},
 					close: function (event, ui) {
 				    	$(this).remove();

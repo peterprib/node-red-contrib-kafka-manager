@@ -1,62 +1,16 @@
 const logger = new (require('node-red-contrib-logger'))('Kafka Consumer')
 logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
-const Logger = require('node-red-contrib-logger');
+const Logger = require('node-red-contrib-logger')
 const getDataType = require('./getDataType.js')
-//const zlib = require('node:zlib');
+// const zlib = require('node:zlib');
+const setupHttpAdmin = require('./setupHttpAdmin.js')
+const State = require('./state.js')
+const ClientConnnection = require('./clientConnnection.js')
 
-let kafka;
-/*
-function sendMessage(node, message) {
-  if(node.convertToJson) try{
-    message.value=JSON.parse(message.value);
-  } catch(ex){
-    message.error="JSON parse error: "+ex.message;
-  }
-  node.brokerNode.sendMsg(node, message);
+function setStatus (message, fill = 'green') {
+  this.status({ fill: fill, shape: 'ring', text: message })
 }
-*/
-function connect(node) {
-  if (logger.active) logger.send({ label: 'connect', node: node.id })
-  if (node.consumer) throw Error('already open')
-  if (node.opening) throw Error('already opening')
-  node.opening = true
-  node.status({	fill: 'yellow', shape: 'ring', text: 'Open and wait ' + node.brokerNode.name	})
-  node.client = node.brokerNode.getKafkaClient()
-  logger.info({ label: 'connecting', activeTopics: node.activeTopics, wildcard: this.regex, topics: node.topics })
-  node.consumer = new kafka[(node.connectionType || 'Consumer')](node.client, node.activeTopics, {
-    groupId: node.groupId || 'kafka-node-group',
-    autoCommit: node.autoCommitBoolean,
-    autoCommitIntervalMs: node.autoCommitIntervalMs,
-    fetchMaxWaitMs: node.fetchMaxWaitMs,
-    fetchMinBytes: node.fetchMinBytes,
-    fetchMaxBytes: node.fetchMaxBytes,
-    fromOffset: node.fromOffset,
-    encoding: node.encoding,
-    keyEncoding: node.keyEncoding
-  })
-  node.consumer.on('message', (message) => {
-    node.brokerNode.sendMsg(node, message);
-  })
 
-  node.consumer.on('error', function (e) {
-    if (logger.active) logger.send({ label: 'consumer.on.error', node: node.id,	error: e })
-    const err = e.message ? e.message : e.toString()
-    if (err.startsWith('Request timed out')) {
-      node.status({ fill: 'yellow',	shape: 'ring', text: err	})
-      node.log('on error ' + err)
-      node.timedout = true
-      return
-    }
-    node.error('on error ' + err)
-    node.status({ fill: 'red', shape: 'ring', text: node.brokerNode.getRevisedMessage(err) })
-  })
-  node.consumer.on('offsetOutOfRange', function (ex) {
-    if (logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node: node.id,	error: ex })
-    node.error('on offsetOutOfRange ' + ex)
-    node.status({	fill: 'red',	shape: 'ring', text: ex.message + ' (PAUSED)'	})
-    node.consumer.pause()
-  })
-}
 function onChangeMetadata (change) {
   if (logger.active) logger.send({ label: 'onChangeMetadata', node: this.id,	change: change, filters: this.filters.length })
   const node = this
@@ -86,89 +40,142 @@ function onChangeMetadata (change) {
     })
   }
 }
+
 module.exports = function (RED) {
   function KafkaConsumerNode (n) {
     RED.nodes.createNode(this, n)
-    const node = Object.assign(this,n)
-    node.autoCommitBoolean = (node.autoCommit || 'true') === 'true'
-    node.brokerNode = RED.nodes.getNode(node.broker)
-    if (node.regex) {
-      node.activeTopics = []
-      node.filters = node.topics.map(t => new RegExp(t.topic))
-      logger.info({ label: 'regex', node: node.id, topics: node.topics })
-      node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
-      node.status({	fill: 'yellow', shape: 'ring',	text: 'Initialising wildcard topics' })
-    } else {
-      if (!node.topics) node.activeTopics = [{ topic: node.topic, partition: 0 }] // legacy can be removed in future
-      node.activeTopics = node.topics
-      node.status({	fill: 'yellow', shape: 'ring',	text: 'Initialising' })
-    }
     try {
-      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-      node.brokerNode.setConsumerProperties(node);
-      if (!kafka) kafka = node.brokerNode.getKafkaDriver()
-      node.brokerNode.onStateUp.push({
-        node: node,
-        callback: function () {
-          if (logger.active) logger.send({ label: 'brokerNode.stateUp', node: node.id })
-          connect(node)
-        }
-      }) // needed due to bug in kafka driver
-      node.brokerNode.stateUp.push({
-        node: node,
-        callback: function () {
-          if (logger.active) logger.send({ label: 'brokerNode.stateUp', node: node.id })
-          if (this.paused) {
-            this.log('state changed to up and in paused state')
-            return
-          }
-          if (!this.ready) {
-            this.log('state changed to up but not in ready state')
-            return
-          }
-          this.log('state changed to up, resume issued')
-          this.resume()
+      this.state = new State(this)
+      const node = Object.assign(this, n, {
+        autoCommitBoolean: (n.autoCommit || 'true') === 'true',
+        setStatus: setStatus.bind(this),
+        options:{
+          groupId: this.groupId || 'kafka-node-group',
+          autoCommit: this.autoCommitBoolean,
+          autoCommitIntervalMs: this.autoCommitIntervalMs,
+          fetchMaxWaitMs: this.fetchMaxWaitMs,
+          fetchMinBytes: this.fetchMinBytes,
+          fetchMaxBytes: this.fetchMaxBytes,
+          fromOffset: this.fromOffset,
+          encoding: this.encoding,
+          keyEncoding: this.keyEncoding
         }
       })
+      this.state
+      .onUp(()=>node.status({	fill: 'green',	shape: 'ring', text: 'connected' }))
+      .onDown(()=>node.status({	fill: 'red',	shape: 'ring', text: 'down' }))
+      .setUpAction(()=>{
+        node.status({	fill: 'yellow',	shape: 'ring', text: 'Connecting' })
+        if(logger.active) logger.send({ label: 'consumer connecting', node:node.id,	name:node.name })
+         const kafka = node.brokerNode.getKafkaDriver()
+        node.consumer = new kafka.Consumer(node.client.connection, node.activeTopics,node.options)
+        node.consumer.on('connect', function () {
+          if (logger.active) logger.send({ label: 'consumer on.connect', node:node.id,	name:node.name })
+          if(node.paused) {
+            node.log('state changed to up and in paused state')
+            node.status({	fill: 'red',	shape: 'ring', text: 'Paused' })
+          } else{
+            node.log('state changed to up, resume issued')
+            node.resume()
+          }
+          node.available()
+        })
+        node.consumer.on('message', (message) => {
+          if(logger.active) logger.send({ label: 'consumer on.message', node:node.id,	name:node.name })
+          if (++node.messageCount == 1 || node.messageCount % 100 == 0) { node.setStatus('processed ' + node.messageCount) }
+          node.brokerNode.sendMsg(node, message)
+        })
+        node.consumer.on('brokersChanged', function () {
+          logger.info({ label: 'consumer on.brokersChanged', node:node.id,	name:node.name })
+          node.setStatus('broker change')
+        })
+        node.consumer.on('rebalancing', function () {
+          logger.info({ label: 'consumer on.rebalancing', node:node.id,	name:node.name })
+          node.setStatus('rebalanced')
+        })
+        node.consumer.on('error', function (ex) {
+          const err = ex.message ? ex.message : ex.toString()
+          if (logger.active) logger.send({ label: 'consumer on.error', node:node.id,	error: err})
+          node.setError(err)
+          if (err.startsWith('Request timed out')) {
+            node.setStatus(err, 'yellow')
+            node.timedout = true
+            return
+          }
+          node.setStatus(node.brokerNode.getRevisedMessage(err), 'red')
+        })
+        node.consumer.on('offsetOutOfRange', (ex) => {
+          if (logger.active) logger.send({ label: 'consumer on.offsetOutOfRange', node:node.id,	error: ex })
+          node.consumer.pause()
+          node.setStatus('offsetOutOfRange ' + ex.message + ' (PAUSED)', 'red')
+        })
+      }).setDownAction(()=>{
+        if (logger.active) logger.send({ label: 'close', node: node.id })
+        node.setStatus('closing', 'red')
+        node.consumer.close(false, () => {
+          if (logger.active) logger.send({ label: 'close close', node: node.id })
+          delete node.consumer
+          node.down()
+        })
+      })
+      node.brokerNode = RED.nodes.getNode(node.broker)
+      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
+
+      this.client = new ClientConnnection(node.brokerNode);
+      this.client.onUp(()=>{
+        node.setStatus('client up', 'yellow')
+        node.setUp()
+      }).onDown(()=>{
+        node.setStatus('client down','red')
+        node.setDown()
+      })
+
+      node.brokerNode.onUp(()=>{
+        node.setStatus('broker up', 'yellow')
+      }).onUp(()=>node.client.setUp())
+      .onDown(()=>{
+        node.setStatus('broker down','red')
+      }).onDown(()=>node.client.setDown())
+
+      if (node.regex) {
+        node.activeTopics = []
+        node.filters = node.topics.map(t => new RegExp(t.topic))
+        logger.info({ label: 'regex', node: node.id, topics: node.topics })
+        node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
+        node.setStatus('Initialising wildcard topics', 'yellow')
+      } else {
+        if (!node.topics) node.activeTopics = [{ topic: node.topic, partition: 0 }] // legacy can be removed in future
+        node.activeTopics = node.topics
+        node.setStatus('Initialising', 'yellow')
+      }
       node.on('close', function (removed, done) {
         if (logger.active) logger.send({ label: 'on.close', node: node.id })
-        node.status({	fill: 'red', shape: 'ring', text: 'closed'	})
-        //				if(node.releaseStale) clearInterval(node.releaseStale);
+        node.setStatus('closing', 'red')
         node.consumer.close(false, () => {
           if (logger.active) logger.send({ label: 'on.close consumer.close', node: node.id })
+          try{
+            node.setDown()
+          } catch(ex){
+            node.error("on close "+ex.message);
+          }
+          node.connected = false
           delete node.consumer
-          node.log('closed')
           done()
         })
       })
-      //			if(!node.autoCommitBoolean){
-      //				node.releaseStale = setInterval(function(node) {releaseStale(node)}, 1000*60,node);
-      //			}
-      node.close = (okCallback, errCallback) => {
-        node.brokerNode.closeNode(node, okCallback, errCallback)
-      }
-      node.open = (okCallback, errCallback) => {
-        if (logger.active) logger.send({ label: 'open', node: node.id	})
-        try {
-          if (node.brokerNode.available !== true) throw Error('broker ' + node.brokerNode.name + ' available: ' + node.brokerNode.available)
-          connect(node)
-        } catch (ex) {
-          if (errCallback) errCallback(ex)
-          return
-        }
-        if (okCallback) okCallback()
-      }
-      node.pause = () => {
+      node.pause = (done) => {
         if (logger.active) logger.send({ label: 'pause', node: node.id })
         node.paused = true
         node.consumer.pause()
-        node.status({	fill: 'red',	shape: 'ring',	text: 'paused'	})
+        node.setStatus('paused', 'red')
+        done & done()
       }
-      node.resume = () => {
+      node.resume = (done) => {
         if (logger.active) logger.send({ label: 'resume', node: node.id	})
         node.resumed = true
         node.consumer.resume()
-        node.status({	fill: 'green',	shape: 'ring', text: 'Ready with ' + node.brokerNode.name })
+        node.setStatus('Ready with ' + node.brokerNode.name)
+        done & done()
       }
       node.addTopics = (topics, fromOffset, callBack) => {
         if (logger.active) logger.send({ label: 'consumer.addTopics', node: node.id,	topics: topics, fromOffset: fromOffset })
@@ -200,90 +207,57 @@ module.exports = function (RED) {
       node.pauseTopics = (topics) => node.consumer.pauseTopics(topics)
       node.resumeTopics = (topics) => node.consumer.resumeTopics(topics)
     } catch (ex) {
-      logger.sendErrorAndStackDump("",ex);
-      node.error(ex.toString())
-      node.status({ fill: 'red', shape: 'ring', text: ex.toString() })
+      this.status({ fill: 'red', shape: 'ring', text: ex.toString() })
+      logger.sendErrorAndStackDump(ex.message, ex)
+      this.error(ex.toString())
     }
   }
   RED.nodes.registerType(logger.label, KafkaConsumerNode)
-  RED.httpAdmin.post('/KafkaConsumer/:id/:action', RED.auth.needsPermission('KafkaConsumer.write'), function (req, res) {
-    if (logger.active) logger.send({ label: 'httpAdmin.post', parms: req.params, data: req.body })
-    const node = RED.nodes.getNode(req.params.id)
-    try {
-      if (node == null) throw Error('node not found')
-      if (node.type !== logger.label) throw Error('node found but wrong type')
-      const topics = req.body.topics
-      switch (req.params.action) {
-        case 'addTopic':
-        case 'addTopics':
-          if (node.regex) return res.status(500).send('wildcard topics')
-          node.addTopics(topics, undefined, err => {
-            if (err) return res.status(500).send(err)
-            return res.sendStatus(200)
-          })
-          return
-        case 'removeTopic':
-        case 'removeTopics':
-          if (node.regex) return res.status(500).send('wildcard topics')
-          node.removeTopics(topics, undefined, err => {
-            if (err) return res.status(500).send(err)
-            return res.sendStatus(200)
-          })
-          break
-        default:
-          res.status(404).send('request to ' + req.params.action + ' failed for id:' + req.params.id)
-          return
-      }
-      node.warn('Request to ' + req.params.action)
-      res.sendStatus(200)
-    } catch (err) {
-      const reason1 = 'Internal Server Error, id: ' + req.params.id + ' action: ' + req.params.action + ' failed ' + err.toString()
-      node && node.error(reason1)
-      res.status(500).send(reason1)
-    }
-  })
-  RED.httpAdmin.get('/KafkaConsumer/:id/:action', RED.auth.needsPermission('KafkaConsumer.write'), function (req, res) {
-    if (logger.active) logger.send({ label: 'httpAdmin.get', parms: req.params })
-    const node = RED.nodes.getNode(req.params.id)
-    try {
-      if (node == null) throw Error('flow node not found')
-      if (node.type !== logger.label) throw Error('flow node found but wrong type')
-      switch (req.params.action) {
-        case 'activeTopics':
-          res.status(200).json(node.activeTopics || [])
-          return
-        case 'allTopics':
-          const topics = node.brokerNode.getTopicsPartitions()
-          if (topics == null) throw Error('getTopicsPartitions returned null')
-          res.status(200).json(topics)
-          return
-        case 'close':
-          node.close(() => res.sendStatus(200), (ex) => { const err = 'close error: ' + ex.message; node.warn(err); res.status(500).send(err) })
-          return
-        case 'open':
-          node.open(() => res.sendStatus(200), (ex) => { const err = 'open error: ' + ex.message; node.warn(err); res.status(500).send(err) })
-          return
-        case 'pause':
-          node.pause()
-          break
-        case 'refresh':
-          const error = node.brokerNode.metadataRefresh()
-          if (error) throw Error(error)
-          break
-        case 'resume':
-          node.resume()
-          break
-        default:
-          res.status(404).send('request to ' + req.params.action + ' failed for id:' + req.params.id)
-          return
-      }
-      node.warn('Request to ' + req.params.action)
-      res.sendStatus(200)
-    } catch (ex) {
-      const reason1 = 'Internal Server Error, id: ' + req.params.id + ' action: ' + req.params.action + ' failed ' + ex.toString()
-      node && node.error(reason1)
-      logger.error({ label: 'httpAdmin.get', error: ex.message, stack: ex.stack })
-      res.status(500).send(reason1)
+  setupHttpAdmin(RED, logger.label, {
+    status: (RED, node, callback) => callback({
+      node: node.getState(),
+      client: node.brokerNode.getState(),
+      host: node.brokerNode.hostState.getState()
+    }),
+    addTopics: (RED, node, callback) => {
+      node.testUp()
+      if (node.regex) return callback(null, 'wildcard topics')
+      node.addTopics(topics, undefined, err => callback(null, err))
+    },
+    removeTopics: (RED, node, callback) => {
+      node.testUp()
+      if (node.regex) return callback(null, 'wildcard topics')
+      node.removeTopics(topics, undefined, err => callback(null, err))
+    },
+    activeTopics: (RED, node, callback) => {
+      node.testUp()
+      callback(node.activeTopics || [])
+    },
+    allTopics: (RED, node, callback) => {
+      node.testUp()
+      const topics = node.brokerNode.getTopicsPartitions()
+      callback(topics, topics == null ? 'getTopicsPartitions returned null' : null)
+    },
+    close: (RED, node, callback) => {
+      node.testUp()
+      node.setDown(callback)
+    },
+    connect: (RED, node, callback) => {
+      node.testDown()
+      node.setUp(callback)
+    },
+    pause: (RED, node, callback) => {
+      node.testUp()
+      node.pause(callback)
+    },
+    resume: (RED, node, callback) => {
+      node.testUp()
+      node.resume(callback)
+    },
+    refresh: (RED, node, callback) => {
+      node.testUp()
+      const error = node.brokerNode.metadataRefresh()
+      callback(null, error)
     }
   })
 }

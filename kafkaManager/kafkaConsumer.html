@@ -9,12 +9,6 @@
 		<input type="text" id="node-input-name" placeholder="Name">
 	</div>
 	<div class="form-row">
-		<label for="node-input-connectionType"><i class="fa fa-tag"></i> Type </label>
-		 <select id="node-input-type">
-		 	<option value="Consumer">Base</option>
-		 </select>
-	</div>
-	<div class="form-row">
 		<label for="node-input-broker"><i class="fa fa-list-ul"></i> Broker </label>
 		<input type="text" id="node-input-broker">
   	</div>
@@ -131,7 +125,7 @@ function json2html(obj){
 		return objText;
 	}
 	for(let name in obj) {
-		elementValue+="<tr><td>"+name+"</td><td>"+json2html(obj[name])+"</td></tr>";	
+		elementValue+="<tr><td style='vertical-align:top'>"+name+":</td><td>"+json2html(obj[name])+"</td></tr>";	
 	}
 	return "<table>"+elementValue+"</table>";
 }
@@ -153,7 +147,6 @@ function json2html(obj){
 			fromOffset: {value:"latest",required:true},
 			encoding: {value:'utf8',required:true},
 			keyEncoding: {value:'utf8',required:true},
-			connectionType: {value:"",required:true},
 			convertToJson : {value:false, required:true},
 			compressionType: {value:"none"}
 		},
@@ -192,11 +185,6 @@ function json2html(obj){
 				id: "kafkaConsumer-tab-encoding",
 				label: "Encoding"
 			});
-		
-			if(!this.connectionType) {
-				this.connectionType="Consumer";
-			}
-			
 			const node=this;
   			if(!node.topics) {   // due to legacy
   			 	node.topics=node.topic?[{topic:node.topic,offset:0,partition:0}]:[];
@@ -315,28 +303,33 @@ function json2html(obj){
 				function sendCommand(element,action,data) {
 					const nodeName="Kafka Consumer";
 					$(element).dialog("close");
-					$[data?"post":"get"]( "KafkaConsumer/"+node.id+"/"+action,data)
+                	$.get( "/"+nodeName.replace(" ","_")+"/"+node.id+"/"+action )
 					.done(function(json) {
-					  	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
 					  	if(action=="activeTopics"){
 					  		listTopic(node,json,float("Topics"))
 						} else if(action=="allTopics"){
 					  		listTopic(node,json,float("Topics"),true)
-						}
+						} else if(["refresh","status"].includes(action)){
+							float("State",json2html(json));
+						} else
+							RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
 					}).fail(function( jqXHR, textStatus, error ) {
-						if(jqXHR.status === 404) RED.notify(node._(nodeName+" signal not deployed"),"error");
-						else if(jqXHR.status === 500) RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
-						else if(jqXHR.status === 0)	RED.notify(node._(nodeName+" signal no response"),"error");
-				   		else RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
+						const message=
+							jqXHR.status === 404?"not deployed":
+							jqXHR.status === 500?("inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)):
+							jqXHR.status === 0?"no response":
+							"unexpected status:"+jqXHR.status+" message: "+textStatus+" "+error;
+				   		RED.notify(node._(nodeName+" signal "+message),"error");
 					});
 				}
 				const buttons={
 						"active topics":function(){sendCommand(this,"activeTopics")},
 						close:function(){sendCommand(this,"close")},
-						open:function(){sendCommand(this,"open")},
+						connect:function(){sendCommand(this,"connect")},
 						pause:function(){sendCommand(this,"pause")},
 						refresh:function(){sendCommand(this,"refresh")},
-						resume:function(){sendCommand(this,"resume")}
+						resume:function(){sendCommand(this,"resume")},
+						status:function(){sendCommand(this,"status")}
 				}
 				if(!node.regex) {
 					buttons["topic add"]=function(){sendCommand(this,"allTopics")};

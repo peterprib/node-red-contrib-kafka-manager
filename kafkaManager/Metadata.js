@@ -14,7 +14,13 @@ function Metadata (broker, logger = new (require('node-red-contrib-logger'))('Me
   this.startRefresh = this.startRefreshFunction.bind(this)
   this.stopRefresh = this.stopRefreshFunction.bind(this)
   this.history = []
-  this.refresh()
+  const _this=this
+  broker.onUp(()=>{
+    broker.getConnection('Admin',
+      (connection)=>_this.connection=connection,
+      (error)=>_this.logger.error('metadata getConnection error:'+error)
+    )
+  })
 }
 Metadata.prototype.compareTopicsLists = function (left, right, filter) {
   const r = this.topics(filter, right)
@@ -40,11 +46,12 @@ Metadata.prototype.onChange = function (callBack) {
 }
 Metadata.prototype.refreshFunction = function (next) {
   if (this.logger.active) this.logger.send({ label: 'Metadata refresh', node: this.broker.id, connected: this.broker.connected })
+  if (this.broker.isNotAvailable()) return
   const node = this
-  node.broker.adminRequest({
+  this.broker.adminRequest({
     action: 'listTopics',
     callback: (data) => {
-      if (this.logger.active) this.logger.send({ label: 'Metadata refresh callback', node: this.broker.id })
+      if (node.logger.active) node.logger.send({ label: 'Metadata refresh callback', node: node.broker.id })
       node.dataPrevious = { ...node.data }
       node.data = data
       node.setTopicPartitions()
@@ -54,7 +61,7 @@ Metadata.prototype.refreshFunction = function (next) {
       }
       if (node.changes.add.length || node.changes.add.length) node.history.push(Object.assign({ time: new Date() }, node.changes))
       else return
-      node.logger.info({ label: 'Metadata refresh ', node: this.broker.id, changes: node.changes })
+      node.logger.info({ label: 'Metadata refresh ', node: node.broker.id, changes: node.changes })
       node.refreshStack.forEach(consumer => consumer(node.changes))
       next && next()
     },
@@ -74,7 +81,7 @@ Metadata.prototype.startRefreshFunction = function () {
 }
 Metadata.prototype.stopRefreshFunction = function () {
   this.logger.info('metadata stop cyclic refresh')
-	  if (!this.metadataTimer) return
+  if (!this.metadataTimer) return
   this.logger.info('stopped metadata refresh')
   clearTimeout(this.metadataTimer)
   delete this.metadataTimer
@@ -86,7 +93,7 @@ Metadata.prototype.topics = function (filter, topics = Object.keys(this.data[1].
     return filterArray(topics, filter)
   } catch (ex) {
     if (this.logger.active) this.logger.send({ label: 'Metadata topics', data: this.data, error: ex.message, stack: ex.stack })
-		 return []
+    return []
   }
 }
 module.exports = Metadata

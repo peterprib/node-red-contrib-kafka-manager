@@ -1,419 +1,504 @@
-const logger = new (require('node-red-contrib-logger'))('Kafka Producer');
-logger.sendInfo('Copyright 2022 Jaroslav Peter Prib');
-const setupHttpAdmin = require('./setupHttpAdmin.js');
-const evalInFunction = require('./evalInFunction.js');
-const getDataType = require('./getDataType.js');
-const zlib = require('node:zlib');
-const compressionTool = require('compressiontool');
-let kafka;
-
-function messageAttributes(msg){
+const logger = new (require('node-red-contrib-logger'))('Kafka Producer')
+logger.sendInfo('Copyright 2022 Jaroslav Peter Prib')
+const setupHttpAdmin = require('./setupHttpAdmin.js')
+const evalInFunction = require('./evalInFunction.js')
+const getDataType = require('./getDataType.js')
+const State = require('./state.js')
+const zlib = require('node:zlib')
+const compressionTool = require('compressiontool')
+let maxDetailedError = 111
+function showStatus(statusText, statusfill) {
+  this.statusText = statusText
+  this.statusfill = statusfill
+  this.status({ fill: this.statusfill, shape: 'ring', text: this.statusText })
+}
+const messageAttributes = (msg) => {
+  if (msg == null) return '***Message not define***'
   return {
     messageDataType: getDataType(msg.messages[0]),
     topic: msg.topic,
     key: msg.key,
     partition: msg.partition,
-    attributes: msg.attributes,
+    attributes: msg.attributes
   }
 }
-
-function producerSend(node, msgIn, retry=0) {
-  if (logger.active) logger.send({ label: 'producerSend', node: node.id, retry: retry, msg:sendMsgToString })
+function sendKafka(msg, done) {
   /*
-  //				node.KeyedMessage = kafka.KeyedMessage
+  //	node.KeyedMessage = kafka.KeyedMessage
   //	km = new KeyedMessage('key', 'message'),
   //	payloads = [
   //			{ topic: 'topic1', messages: 'hi', partition: 0 },
   //			{ topic: 'topic2', messages: ['hello', 'world', km] }
   //	];
 
-{
-topic: 'topicName',
-messages: ['message body'], // multi messages should be a array, single message can be just a string or a KeyedMessage instance
-key: 'theKey', // string or buffer, only needed when using keyed partitioner
-partition: 0, // default 0
-attributes: 2, // default: 0
-timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10+)
+{ topic: 'topicName',
+  messages: ['message body'], // multi messages should be a array, single message can be just a string or a KeyedMessage instance
+  key: 'theKey', // string or buffer, only needed when using keyed partitioner
+  partition: 0, // default 0
+  attributes: 2, // default: 0
+  timestamp: Date.now() // <-- defaults to Date.now() (only available with kafka v0.10+)
+}
+attributes: 0: No compression, 1: Compress using GZip, 2: Compress using snappy
+*/
+
+  const _this = this
+  if (logger.active) logger.send({ label: 'sendKafka', node: _this.id, msg: sendMsgToString, doneProvide: done != null })
+  _this.producer.send([msg], (err, data) => {
+    if(err) {
+      logger.error({ label: 'send', node: _this.id,error:err })
+      const errmsg = (typeof err === 'string' ? err : err.message)
+      if (errmsg.startsWith('InvalidTopic')) {
+        setInError(_this, 'Invalid topic ' + msg.topic)
+      } else if(errmsg.startsWith('Broker not available')) {
+        _this.brokerNode.setDown()
+        _this.whenUp(_this.sendKafka,msg)
+        _this.retryCount++
+        done && done(err)
+        return;
+      } else if(errmsg.startsWith('Could not find the leader')) {
+
+        _this.brokerNode.client.refreshMetadata([msg.topic],(error)=>{ // bug workaround
+          if(error){
+            _this.error('producer.send client.refreshMetadata '+error)
+            _this.showStatus('leader reset issue', 'red')
+            done && done(err)
+          } else {
+            _this.log('refreshMetadata issued')
+            _this.producer.send([msg], (err, data) => {
+              if(err) {
+                _this.error('retry send error '+err)
+                _this.sendDeadletter(msg,done)
+              } else {
+                _this.successes++
+              }
+              done && done(err)
+            })
+          }
+        });
+/*
+        _this.log('issuing loadMetadataForTopics as may be issue with caching')
+        _this.brokerNode.client.loadMetadataForTopics([msg.topic], (error, metadata) => {
+          if(error){
+            _this.error('producer.send client.loadMetadataForTopics '+error)
+            _this.showStatus('leader reset issue', 'red')
+            done && done(err)
+          } else {
+            _this.producer.send([msg], (err, data) => {
+              if(err) {
+                _this.error('retry send error '+err)
+                _this.sendDeadletter(msg,done)
+              } else {
+                _this.successes++
+              }
+              done && done(err)
+            })
+          }
+        })
+*/
+        return
+      }
+      _this.sendDeadletter(msg,done)
+    } else {
+      _this.successes++
+    }
+    done && done(err)
+  })
 }
 
-attributes:
-0: No compression
-1: Compress using GZip
-2: Compress using snappy
-*/
+function producerSendDELETE(node, msgIn, retry = 0) {
   try {
-    let msg
-    if (retry && msgIn) {
-      msg = msgIn;
-    } else {
-      if (node.waiting.length) {
-        if (msgIn) node.waiting.push(msgIn) //get oldest message
-        msg = node.waiting.shift()
-      } else {
-        if (!msgIn) return
-        msg = msgIn
-      }
-    }
     node.producer.send([msg],
       function (err, data) {
         if (err) {
           let errmsg = (typeof err === 'string' ? err : err.message)
-          if (logger.active) logger.error({label: 'producerSend',
-            error: errmsg, node: node.id, retry: retry,messageAttributes:messageAttributes(msg),
-            stack: (typeof err === 'string' ? undefined : err.stack)
-          });
-          if (errmsg.startsWith('Could not find the leader')
-            || errmsg.startsWith('Broker not available')) {
-            node.log(errmsg)
+          if (errmsg.startsWith('Could not find the leader') ||
+            errmsg.startsWith('Broker not available')) {
+            //            node.log(errmsg)
             node.inError = true
-            if (retry>0) {
+            if (retry > 0) {
               node.retryCount++
               setInError(node, 'retry ' + node.retryCount + ' failed, waiting: ' + node.waiting.length)
-              node.sendDeadletter(msg);
-              return;
+              node.sendDeadletter(msg)
+              return
             }
-            if (node.client.refreshMetadata) {
+            const client = node.brokerNode.client
+            if (client.refreshMetadata) {
               node.log('issuing refreshMetadata as may be issue with caching')
-              node.client.refreshMetadata([node.topic], (err) => {
+              client.loadMetadataForTopics([], (error, metadata) => {
+                if (logger.active) logger.send({ label: 'producer.send client.refreshMetadata', node: node.id, name: node.name, error: err })
                 if (err) {
                   setInError(node, errmsg)
-                  msg.error=err;
-                  node.sendDeadletter(msg);
+                  msg.error = err
+                  node.sendDeadletter(msg)
                   return
                 }
-                if (node.waiting.length) setStatus(node, 'trying sending ' + node.waiting.length + ' queued messages', 'yellow')
-                producerSend(node, msg,++retry)
+                if (node.waiting.length) { node.status({ fill: 'yellow', shape: 'ring', text: node.waiting.length + ' queued messages' }) }
+                producerSend(node, msg, ++retry)
                 if (node.waiting.length) {
-                  setStatus(node, 'retry send to Kafka failed, ' + node.waiting.length + ' queued messages', 'red');
+                  node.showStatus('retry send to Kafka failed, ' + node.waiting.length + ' queued messages', 'red')
                 } else {
-                  setStatus(node, 'Connected to ' + node.brokerNode.name)
+                  node.showStatus('Connected to ' + node.brokerNode.name)
                 }
               })
               return
             } else if (errmsg.startsWith('Could not find the leader')) {
-              msg.error=err;
-              node.sendDeadletter(msg);
-              return;
+              msg.error = err
+              node.sendDeadletter(msg)
+              return
             } else {
               node.connected = false
               node.queueMsg(msg)
             }
           } else if (errmsg.startsWith('InvalidTopic')) {
-            errmsg = "Invalid topic " + msg.topic;
+            errmsg = 'Invalid topic ' + msg.topic
+          } else {
+            if (logger.active) {
+              logger.error({
+                label: 'producer.send err',
+                node: node.id,
+                node: node.name,
+                error: errmsg,
+                retry: retry,
+                messageAttributes: messageAttributes(msg),
+                stack: (typeof err === 'string' ? undefined : err.stack)
+              })
+            }
           }
-          setInError(node, errmsg);
-          msg.error=err;
-          node.sendDeadletter(msg);
+          setInError(node, errmsg)
+          msg.error = err
+          node.sendDeadletter(msg)
         } else {
           node.successes++
           if (node.inError) {
             node.inError = false
-            setStatus(node, 'Connected to ' + node.brokerNode.name)
+            _this.showStatus('Connected')
           }
-          if (node.waiting) producerSend(node);
+          if (node.waiting) producerSend(node)
         }
       })
   } catch (ex) {
-    node.inError = true;
-    if (logger.active) logger.error({label: 'producerSend',
-      error: ex.message, node: node.id, retry: retry,messageAttributes:messageAttributes(msg),
-      stack: ex.stack
-    });
-    setStatus(node, 'send error ' + ex.toString(), 'yellow')
   }
-}
-
-function setStatus(node, msg, color = "green") {
-  node.statusText = msg;
-  node.statusfill = color
-  if (color == "red") node.error(msg)
-  else if (color == "yellow") node.warn(msg);
-  showStatus(node);
-}
-function showStatus(node) {
-  node.status({ fill: node.statusfill, shape: 'ring', text: node.statusText })
 }
 function setInError(node, errmsg) {
-  setStatus(node, 'send error ' + errmsg, "red")
-  node.inError = true
+  node.status({ fill: 'yellow', shape: 'ring', text: 'send error ' + ex.toString() })
 }
-function connect(node) {
-  if (logger.active) logger.send({ label: 'connect', node: node.id });
-  if (node.connected) throw Error("Already connected");
-  if (!node.client) node.client = node.brokerNode.getKafkaClient();
-  if (node.connecting == true) {
-    if (logger.active) logger.send({ label: 'connect', node: node.id, warning: "already connecting" });
-    throw Error("Already connecting")
-  }
-  node.connecting = true;
-  node.producer = new kafka[(node.connectionType || 'Producer')](node.client, {
-    // Configuration for when to consider a message as acknowledged, default 1
-    requireAcks: node.partitionerType || 1,
-    // The amount of time in milliseconds to wait for all acks before considered, default 100ms
-    ackTimeoutMs: node.partitionerType || 100,
-    // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
-    partitionerType: node.partitionerType || 0
-  })
-  node.statusText = 'Waiting on ' + node.brokerNode.name;
-  node.statusfill = "yellow";
-  node.status({ fill: node.statusfill, shape: 'ring', text: node.statusText })
-  node.producer.on('error', function (ex) {
-    const errMsg = "connect error " + node.brokerNode.getRevisedMessage(ex.message)
-    logger.error({ label: 'connect error', node: node.id, error: ex.message, errorEnhanced: errMsg });
-    node.connecting = false;
-    setStatus(node, errMsg, "red")
-  })
-  node.producer.on('close', function () {
-    logger.info({ label: 'connect close', node: node.id, name: node.name });
-    node.connecting = false;
-    node.connected = false;
-  })
-  node.producer.on('ready', function () {
-    node.connected = true
-    node.connecting = false;
-    setStatus(node, 'sending to ' + node.brokerNode.name);
-    node.log('connected and processing ' + node.waiting.length + ' messages')
-    producerSend(node, undefined);
-  });
+function sendDeadletterError(msg, err, _this = this) {
+  _this.error('dead letter failed turned off')
+  _this.sendDeadletter = sendDeadletterNotOK.bind(_this)
+  _this.sendDeadletter(msg)
 }
-function sendDeadletter(msg) {
-  const node = this;
-  const message = JSON.stringify(msg);
+function sendDeadletterNewOK(msg, _this = this) {
   try {
+    const message = JSON.stringify(msg)
     zlib.gzip(message, (err, buffer) => {
       if (err) {
-        logger.error({ label: "deadletter", error: err, deadletterTopic: node.deadletterTopic })
-        node.error("dead letter failed turned off");
-        node.sendDeadletter = () => node.errorDiscarded++;
-        return;
+        logger.error({ label: 'deadletter gzip fail', error: err, deadletterTopic: _this.deadletterTopic })
+        _this.sendDeadletterError.apppy(_this, [msg, err])
+        return
       }
       const deadletterMsg = {
-        topic: node.deadletterTopic || "deadletter",
+        topic: _this.topicDeadletter || 'deadletter',
         messages: [buffer],
         attributes: 0
       }
-      node.producer.send([deadletterMsg],
-        function (err, data) {
+      _this.producer.send([deadletterMsg],
+        (err, data) => {
           if (err) {
-            logger.error({ label: "deadletter", error: err, deadletterTopic: node.deadletterTopic })
-            node.error("dead letter failed turned off");
-            node.sendDeadletter = () => node.errorDiscarded++;
-          } else
-            node.deadletters++;
-          if (node.waiting) producerSend(node, undefined);
-        });
-
-    });
+            logger.error({ label: 'deadletter.producer.send', error: err, deadletterTopic: _this.deadletterTopic })
+            _this.sendDeadletterError.apppy(_this, [msg, err])
+          } else {
+            _this.deadletters++
+          }
+        })
+    })
   } catch (ex) {
-    logger.error({ label: "deadletter", error: ex.message, deadletterTopic: node.deadletterTopic })
-    node.error("dead letter failed turned off");
-    node.sendDeadletter = () => node.errorDiscarded++;
+    logger.error({ label: 'deadletter.producer.send', error: ex.message, deadletterTopic: _this.deadletterTopic })
+    _this.sendDeadletterError.apppy(_this, [msg, ex.message])
   }
 }
-function sendMsgToString(msg){
-  return {topic:msg.topic, key:msg.key,partition:msg.partition,attributes: msg.attributes}.toString()
+
+function sendDeadletterNotOK(msg) {
+  this.errorDiscarded++
+  this.error('discarded', msg)
 }
-function processMessageNoCompression(node, msg, msgData) {
-  if(logger.active) logger.send({label:"processMessageNoCompression",msg:msg})
+function sendMsgToString(msg) {
+  return { topic: msg.topic, key: msg.key, partition: msg.partition, attributes: msg.attributes }.toString()
+}
+function getTopicNodeDefault(msg) {
+  const msgTopic = this.topicSlash2dot && msg.topic ? msg.topic.replace('/', '.') : msg.topic
+  return msgTopic || this.topic || ''
+}
+function getTopicNode() { return this.topic || '' }
+function convert2KafkaMsgOveride(msg,msgData){
+  return {
+    topic: this.getTopic(msg),
+    messages: [msgData],
+    key: msg.key || this.getKey(msg),
+    partition: msg.partition || this.partition || 0,
+    attributes: msg.attributes || this.attributes || 0
+  }
+}
+function convert2KafkaMsgNoOveride(msg,msgData){
+  return {
+    topic: this.getTopic(msg),
+    messages: [msgData],
+    key:this.getKey(msg),
+    partition: this.partition || 0,
+    attributes: this.attributes || 0
+  }
+}
+function processMessageNoCompression(msg, msgData) {
+  if (logger.active) logger.send({ label: 'processMessageNoCompression', msg: msg })
   try {
-    const msgTopic = node.topicSlash2dot && msg.topic ? msg.topic.replace('/', '.') : msg.topic
+/*
     const sendMsg = {
-      topic: msgTopic || node.topic || '',
+      topic: this.getTopic(msg),
       messages: [msgData],
-      key: msg.key || node.getKey(msg),
-      partition: msg.partition || node.partition || 0,
-      attributes: msg.attributes || node.attributes || 0
-    };
-    if (node.connected) {
-      producerSend(node, sendMsg)
-      return
+      key: msg.key || this.getKey(msg),
+      partition: msg.partition || this.partition || 0,
+      attributes: msg.attributes || this.attributes || 0
     }
-    node.queueMsg(msg)
+*/
+    this.whenUp(this.sendKafka, this.convert2Kafka(msg, msgData))
   } catch (ex) {
     if (logger.active) logger.sendErrorAndStackDump(ex.message, ex)
-    node.error('input error:' + ex.message)
+    this.error('input error:' + ex.message, msg)
   }
 }
-function processMessageCompression(node, msg, msgData) {
-  node.compressor.compress(msgData,
-    (compressed) => processMessageNoCompression(node, msg, compressed),
+function processMessageCompression(msg, msgData, _this = this) {
+  this.compressor.compress(msgData,
+    (compressed) => _this.processMessageNoCompression(msg, compressed),
     (err) => {
-      if((node.compressionError++)==1){
-        node.warn("compression failure(s)")
+      if ((_this.compressionError++) == 1) {
+        _this.warn('compression failure(s)')
       }
-      processMessageNoCompression(node, msg, msgData)
+      try{
+        _this.processMessageNoCompression(msg, msgData)
+      } catch(ex){
+        if (logger.active) logger.sendErrorAndStackDump(ex.message, ex)
+        _this.error('input error:' + ex.message, msg)
+      }
     }
-  );
+  )
 }
+
 module.exports = function (RED) {
   function KafkaProducerNode(n) {
     RED.nodes.createNode(this, n)
-    const node = Object.assign(this, n, {
-      connected: false,
-      nodeQSize: 1000,
-      retryCount: 0,
-      successes: 0,
-      deadletters: 0,
-      errorDiscarded: 0,
-      compressionError: 0,
-      waiting: []
-    })
-    node.sendDeadletter = sendDeadletter.bind(this);
-    node.brokerNode = RED.nodes.getNode(node.broker)
-    setStatus(node, 'Initialising', 'yellow')
     try {
-      if(node.compressionType==null ){
-        switch(node.attributes){ // old method conversion
-         case 1: 
-             node.compressionType="setGzip";
-             node.attributes=0;
-             break;
-         case 2:arguments
-             node.compressionType="setSnappy";
-             node.attributes=0;
-             break;
-         default:
-             node.compressionType="none";
-        } 
-     }
-
+      const node = Object.assign(this, n, {
+        compressionError: 0,
+        deadletters: 0,
+        errorDiscarded: 0,
+        messageCount: 0,
+        convert2Kafka:(this.msgOveride == true ? convert2KafkaMsgOveride.bind(this):convert2KafkaMsgNoOveride.bind(this)),
+        processMessageCompression: processMessageCompression.bind(this),
+        processMessageNoCompression: processMessageNoCompression.bind(this),
+        getTopic: (this.msgTopicOveride == true ? getTopicNodeDefault.bind(this) : getTopicNode).bind(this),
+        retryCount: 0,
+        sendDeadletter: (this.topicDeadletter ? sendDeadletterNewOK.bind(this) : sendDeadletterNotOK.bind(this)),
+        sendKafka:sendKafka.bind(this),
+        showStatus: showStatus.bind(this),
+        successes: 0,
+        options: {
+          // Configuration for when to consider a message as acknowledged, default 1
+          requireAcks: this.requireAcks || 1,
+          // time in milliseconds to wait for all acks before considered, default 100ms
+          ackTimeoutMs: this.ackTimeoutMs || 100,
+          // Partitioner type (default = 0, random = 1, cyclic = 2, keyed = 3, custom = 4), default 0
+          partitionerType: this.partitionerType || 0
+        }
+      })
+      this.state = new State(this)
+      this.state
+        .onUp(() => {
+          node.status({ fill: 'green', shape: 'ring', text: 'Up' })
+          node.maxQState == false
+        }).onDown(() => {
+          node.status({ fill: 'red', shape: 'ring', text: 'Down' })
+        }).onError((error) =>
+          node.status({ fill: 'red', shape: 'ring', text: error })
+        ).setUpAction(() => {
+          node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
+          const kafka = node.brokerNode.getKafkaDriver()
+          node.producer = new kafka[(node.connectionType || 'Producer')](node.brokerNode.client, node.options)
+          node.producer.on('error', function (ex) {
+            const errMsg = 'connect error ' + _this.brokerNode.getRevisedMessage(ex.message)
+            logger.error({ label: 'producer.on.error', node: node.id, error: ex.message, errorEnhanced: errMsg })
+            node.down(errMsg)
+          })
+          node.producer.on('close', function () {
+            node.down()
+          })
+          if (node.producer && node.producer.hasOwnProperty('ready')) {
+            node.available()
+          } else {
+            node.producer.on('ready', function () {
+              if (logger.active) logger.info({ label: 'producer.on.ready', node: node.id, name: node.name })
+              node.available()
+            })
+          }
+        }).setDownAction(() =>
+          node.producer.close(function (err, data) {
+            if (logger.active) logger.send({ label: 'close ', node: node.id, error: err, data: data })
+          })
+        ).setMaxQDepth(this.nodeQSize)
+        .setOnMaxQUpAction(() => {
+          node.errorDiscarded++
+          node.error('max queue')
+          if (node.maxQState == true) return
+          node.status({ fill: 'red', shape: 'ring', text: 'max queue depth reached ' + node.nodeQSize })
+          node.maxQState == true;
+        })
+      node.brokerNode = RED.nodes.getNode(this.broker)
+      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
+      node.brokerNode
+        .onUp(() => {
+          node.status({ fill: 'yellow', shape: 'ring', text: "broker available" })
+          node.setUp()
+        }).onDown(() => {
+          node.status({ fill: 'red', shape: 'ring', text: "broker down" })
+          node.setDown();
+        })
+      if (node.compressionType == null) {
+        switch (node.attributes) { // old method conversion
+          case 1:
+            node.compressionType = 'setGzip'
+            node.attributes = 0
+            break
+          case 2: arguments
+            node.compressionType = 'setSnappy'
+            node.attributes = 0
+            break
+          default:
+            node.compressionType = 'none'
+        }
+      }
       if (!node.hasOwnProperty('key-type')) node['key-type'] = 'str'
       node.getKey = node.key ? evalInFunction(node, 'key') : () => undefined
-      if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-      if (!kafka) kafka = node.brokerNode.getKafkaDriver();
-      if(node.compressionType==null || node.compressionType=="none") {
-        node.processMessage=processMessageNoCompression.bind(node)
+      if (node.compressionType == null || node.compressionType == 'none') {
+        node.processMessage = this.processMessageNoCompression
       } else {
-        node.compressor=new compressionTool(),
-        node.compressor[node.compressionType];
-        node.processMessage=processMessageCompression.bind(node)
+        node.compressor = new compressionTool(),
+          node.compressor[node.compressionType]
+        node.processMessage = this.processMessageCompression
       }
       if (node.convertFromJson) {
-        node.getMessage = (RED, node, msg) => JSON.stringify(msg.payload);
+        node.getMessage = (RED, node, msg) => JSON.stringify(msg.payload)
       } else {
         node.getMessage = (RED, node, msg) => {
-          const data = msg.payload;
+          const data = msg.payload
           if (data == null) return null
-          const dataType = typeof data;
-          if (['string', 'number'].includes(dataType)
-            || data instanceof Buffer) return msg.payload;
-          if (dataType == 'object') return JSON.stringify(msg.payload);
-          if (data.buffer)
-            return Buffer.from(data.buffer)
-          throw Error("unknow data type: " + dataType)
+          const dataType = typeof data
+          if (['string', 'number'].includes(dataType) ||
+            data instanceof Buffer) return msg.payload
+          if (dataType == 'object') return JSON.stringify(msg.payload)
+          if (data.buffer) { return Buffer.from(data.buffer) }
+          throw Error('unknow data type: ' + dataType)
         }
       }
-      node.brokerNode.onStateUp.push({
-        node: node,
-        callback: function () {
-          connect(node)
+      if (logger.active) logger.send({ label: 'kafkaProducer', node: node.id, getKey: node.getKey.toString() })
+      node.on('input', function (msg) {
+        node.messageCount++;
+        try {
+          node.processMessage(node.getMessage(RED, node, msg))
+        } catch (ex) {
+          if (logger.active) logger.sendErrorAndStackDump(ex.message, ex)
+          node.error('input error:' + ex.message, msg)
         }
-      }) // needed due to bug in kafka driver
-    } catch (ex) {
-      node.error(ex.message)
-      logger.sendErrorAndStackDump(ex.message, ex)
-      setStatus(node, ex.message, 'red')
-      return
-    }
-    node.queueMsg = function (msg, retry) {
-      if (!node.waiting.length) setStatus(node, 'Connection down started queuing messages', "yellow")
-      if (retry) {
-        node.waiting.unshift(msg)
-      } else {
-        if (node.waiting.length > node.nodeQSize)
-          setStatus(node, 'Connection down, max queue depth reached ' + node.waiting.length, "red")
-        else
-          node.waiting.push(msg)
-      }
-      if (!(node.waiting.length % 100)) {
-        setStatus(node, 'Connection down, queue depth reached ' + node.waiting.length, "yellow")
-      }
-    }
-    if (logger.active) logger.send({ label: 'kafkaProducer', node: node.id, getKey: node.getKey.toString() })
-    node.on('input', function (msg) {
-      try {
-        node.processMessage(node,node.getMessage(RED, node, msg));
-      } catch (ex) {
-        if (logger.active) logger.sendErrorAndStackDump(ex.message, ex)
-        node.error('input error:' + ex.message)
-      }
-    })
-    node.on('close', function (removed, done) {
-      setStatus(node, "closed", "red")
-      node.producer.close(false, () => {
-        node.log('closed')
       })
-      done()
-    })
+      node.on('close', function (removed, done) {
+        node.setDown()
+        done()
+      })
+    } catch (ex) {
+      this.status({ fill: 'red', shape: 'ring', text: ex.toString() })
+      logger.sendErrorAndStackDump(ex.message, ex)
+      this.error(ex.toString())
+    }
   }
   RED.nodes.registerType(logger.label, KafkaProducerNode)
   setupHttpAdmin(RED, logger.label, {
     Status: (RED, node, callback) => callback({
-      connecting: node.connecting,
-      connected: node.connected,
+      "messages in": node.messageCount,
       retryCount: node.retryCount,
-      "no. waiting": node.waiting.length,
       successes: node.successes,
       deadletters: node.deadletters,
       errorDiscarded: node.errorDiscarded,
+      node: node.getState(),
+      client: node.brokerNode.getState(),
+      host: node.brokerNode.hostState.getState()
     }),
-    "Connect": (RED, node, callback) => {
+    Connect: (RED, node, callback) => {
       try {
-        connect(node);
-        callback("connect issued");
+        node.testDisconnected()
+        node.brokerNode.testCanConnect()
+        node.setUp()
+        callback('connect issued')
       } catch (ex) {
-        callback(ex.message);
+        if (logger.active) logger.send({ label: 'kafkaProducer httpadmin connect', node: node.id, error: ex.message, stack: ex.stack })
+        callback(ex.message)
       }
     },
-    "Close": (RED, node, callback) => {
+    Close: (RED, node, callback) => {
       try {
-        logger.warn("httpadmin close issued")
+        node.testConnected()
+        logger.warn('httpadmin close issued')
         node.producer.close(function (err, data) {
           if (logger.active) logger.send({ label: 'kafkaProducer httpadmin close callback', node: node.id, error: err, data: data })
-          callback(err || "Closed")
-        });
+          callback(err || 'Closed')
+        })
       } catch (ex) {
-        if (node.producer.close) {
-          callback(ex.message);
+        if (node.producer && node.producer.hasOwnProperty('close')) {
+          callback(ex.message)
         } else {
-          callback("not connected")
+          callback('not connected')
         }
-        callback(ex.message);
+        callback(ex.message)
       }
     },
-    "Retry Q": (RED, node, callback) => {
-      if (node.waiting.length) {
-        producerSend(node, undefined, 1)
-        callback("Retry issued");
-      } else {
-        callback("Empty Queue");
-      }
+    'Retry Q': (RED, node, callback) => {
+      if (node.getUpQDepth() == 0) callback("Empty Q")
+      node.testNotConnected();
+      node.whenUp(() => {
+        callback('Processed waiting q');
+      });
     },
-    "Reset Status": (RED, node, callback) => {
-      showStatus(node);
-      callback("Status reset");
+    'Reset Status': (RED, node, callback) => {
+      //      node.nodeState.show()
+      callback('Status reset')
     },
-    "Clear Queue": (RED, node, callback) => {
-      node.waiting = [];
-      callback("Queue cleared")
+    'Clear Queue': (RED, node, callback) => {
+      node.state.clearWhenUpQ((msg) => node.error('cleared q', msg))
+      callback('Queue cleared')
     },
-    "refreshMetadata": (RED, node, callback) => {
+    refreshMetadata: (RED, node, callback) => {
       try {
-        logger.warn("httpadmin refreshMetadata issued")
-        if(node.connected!==true) throw Error("not connected");
-        if(node.client.refreshMetadata==null) throw Error("no refreshMetadata");
-        node.client.refreshMetadata([node.topic], (err) => {
-          if (logger.active) logger.send({ label: 'kafkaProducer httpadmin refreshMetadata callback', node: node.id, error: err})
-          callback(err || "Refreshed")
-          if (node.waiting) producerSend(node);
-        });
+        logger.warn('httpadmin refreshMetadata issued')
+        if(node.brokerNode.isNotAvailable()){
+          callback("broker down")
+          return
+        }  
+        const client = node.brokerNode.client
+        if (client.refreshMetadata == null) throw Error('no refreshMetadata')
+        client.refreshMetadata([node.topic], (err) => {
+          const message = err || 'Refreshed'
+          logger.warn(message)
+          callback(message)
+          if(node.getUpQDepth()) node.setUp()
+        })
       } catch (ex) {
-        if (node.producer.close) {
-          callback(ex.message);
-        } else {
-          callback("not connected")
-        }
+        logger.sendErrorAndStackDump(ex.message, ex)
+        callback(ex.message)
       }
     },
+    checkState: (RED, node, callback) => {
+      try {
+        node.testConnected()
+        callback('connected')
+      } catch (ex) {
+        callback(ex.message)
+      }
+    }
   })
 }

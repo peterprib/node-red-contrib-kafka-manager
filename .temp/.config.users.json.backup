@@ -13,7 +13,7 @@
                 "view-show-welcome-tours": true
             },
             "tours": {
-                "welcome": "2.2.1-git"
+                "welcome": "3.0.1"
             }
         },
         "menu-menu-item-sidebar": true

@@ -19,6 +19,33 @@
 </script>
 
 <script type="text/javascript">
+function json2html(obj){
+	if(obj==="undefined" || obj === null) return "";
+	const objType=(typeof obj);
+	if(objType!=="object") return obj;
+	let elementValue ="";
+	if(obj.constructor === Array) {
+		for(let i=0;i<obj.length;i++) {
+			const objI=obj[i],objTypeI=typeof objI;
+			if(objTypeI!== 'object'||objI.constructor==Object) {
+				elementValue+="<tr><td>"+i+"</td><td>"+json2html(objI)+"</td></tr>";
+				continue;
+			}
+			throw new Error(objTypeI+" is not supported.");
+		}
+		return "<table>"+elementValue+"</table>";
+	}
+	if(obj.constructor!==Object) return obj;
+	const objText=obj['#text'],objTypeText=(typeof objText);
+	if(objTypeText!=='undefined') {
+		if(objTypeText=='object') throw new Error(objTypeText+' which is #text, not supported.');
+		return objText;
+	}
+	for(let name in obj) {
+		elementValue+="<tr><td style='vertical-align:top'>"+name+":</td><td>"+json2html(obj[name])+"</td></tr>";	
+	}
+	return "<table>"+elementValue+"</table>";
+}
     RED.nodes.registerType('Kafka Admin',{
     	category: 'function',
         defaults: {
@@ -60,11 +87,11 @@
                 function sendCommand(element,action) {
                 	const nodeName="Kafka Admin";
                 	$(element).dialog("close");
-                	$.get( "/KafkaAdmin/"+node.id+"/"+action )
+					$.get( "/"+nodeName.replace(" ","_")+"/"+node.id+"/"+action )
 			        .done(function(json) {
-			        console.log(JSON.stringify(json));
+//			             console.log(JSON.stringify(json));
             		   	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-            		   	$('<div></div>').appendTo('body').html(JSON.stringify(json))
+            		   	$('<div></div>').appendTo('body').html(json2html(json))
             		   	.dialog({
       						modal: true,
       						title: (node.name||'Kafka Admin')+" "+action,
@@ -95,9 +122,6 @@
       				modal: true, title: (node.name||'Kafka Admin'), zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
 					buttons: {
-						"List Groups": function () {
-							sendCommand(this,"listConsumerGroups");
-						},
 						"List Groups": function () {
 							sendCommand(this,"listGroups");
 						},

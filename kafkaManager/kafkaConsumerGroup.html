@@ -90,6 +90,33 @@
 </script>
 
 <script type="text/javascript">
+function json2html(obj){
+	if(obj==="undefined" || obj === null) return "";
+	const objType=(typeof obj);
+	if(objType!=="object") return obj;
+	let elementValue ="";
+	if(obj.constructor === Array) {
+		for(let i=0;i<obj.length;i++) {
+			const objI=obj[i],objTypeI=typeof objI;
+			if(objTypeI!== 'object'||objI.constructor==Object) {
+				elementValue+="<tr><td>"+i+"</td><td>"+json2html(objI)+"</td></tr>";
+				continue;
+			}
+			throw new Error(objTypeI+" is not supported.");
+		}
+		return "<table>"+elementValue+"</table>";
+	}
+	if(obj.constructor!==Object) return obj;
+	const objText=obj['#text'],objTypeText=(typeof objText);
+	if(objTypeText!=='undefined') {
+		if(objTypeText=='object') throw new Error(objTypeText+' which is #text, not supported.');
+		return objText;
+	}
+	for(let name in obj) {
+		elementValue+="<tr><td style='vertical-align:top'>"+name+":</td><td>"+json2html(obj[name])+"</td></tr>";	
+	}
+	return "<table>"+elementValue+"</table>";
+}
 	RED.nodes.registerType('Kafka Consumer Group',{
 		category: 'input',
 		defaults: {
@@ -183,6 +210,7 @@
 				return !this.changed;
 			},
 			onclick: function() {
+				const node=this;
 				if(this.changed) {
 					return RED.notify(RED._("Queue undeployed changes"),"warning");
 				}
@@ -191,25 +219,25 @@
 					label = label.substring(0,50)+"...";
 				}
 				label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-				var node = this;
-				
+
 				function sendCommand(element,action) {
 					const nodeName="Kafka Consumer Group";
 					$(element).dialog("close");
-					$.get( "/KafkaConsumerGroup/"+node.id+"/"+action )
+					$.get( "/"+nodeName.replace(/ /g,"_")+"/"+node.id+"/"+action )
 					.done(function( json ) {
-								RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-							}).fail(function( jqXHR, textStatus, error ) {
-				   				if(jqXHR.status === 404) {
-	 								RED.notify(node._(nodeName+" signal not deployed"),"error");
-								} else if(jqXHR.status === 500) {
-		   							RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
-								} else if(jqXHR.status === 0) {
- 									RED.notify(node._(nodeName+" signal no response"),"error");
-				   				} else {
-									RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
-								}
-							});
+						RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
+						if(["refresh","status"].includes(action)) float("State",json2html(json));
+					}).fail(function( jqXHR, textStatus, error ) {
+				   		if(jqXHR.status === 404) {
+	 						RED.notify(node._(nodeName+" signal not deployed"),"error");
+						} else if(jqXHR.status === 500) {
+		   					RED.notify(node._(nodeName+" signal inject failed with "+(textStatus||"error")+" "+(jqXHR.responseText||error)),"error");
+						} else if(jqXHR.status === 0) {
+ 							RED.notify(node._(nodeName+" signal no response"),"error");
+				   		} else {
+							RED.notify(node._(nodeName+" signal unexpected status:"+jqXHR.status+" message:"+textStatus+" "+error),"error");
+						}
+					});
 				}
 				$('<div></div>').appendTo('body').html('<div>Choose Action</div>')
   				.dialog({
@@ -225,8 +253,14 @@
 						pause: function () {
 							sendCommand(this,"pause");
 						},
+						refresh: function () {
+							sendCommand(this,"refresh");
+						},
 						resume: function () {
 							sendCommand(this,"resume");
+						},
+						status: function () {
+							sendCommand(this,"status");
 						}
 					},
 					close: function (event, ui) {

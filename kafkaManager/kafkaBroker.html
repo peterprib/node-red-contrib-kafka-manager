@@ -38,6 +38,10 @@
         		<input id="node-config-input-hostsEnvVar" type="text" >
     		</div>
 			<div class="form-row">
+        		<label for="node-config-input-connectViaZookeeper"><i class="fa fa-tag"></i>via Zookeeper</label>
+        		<input id="node-config-input-connectViaZookeeper" type="text" >
+    		</div>
+			<div class="form-row">
 				<input type="checkbox" id="node-config-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
 				<label for="node-config-input-usetls" style="width: auto">Use TLS</label>
 				<div id="node-config-row-tls" class="hide">
@@ -119,6 +123,7 @@
         	hosts: {value:[{host:"127.0.0.1",port:9092}] ,required:true}, 
         	hostsEnvVar: {value:"",required:false},
 			connectTimeout: {value:10000, required:false,validate:RED.validators.number()},
+			connectViaZookeeper:{value:true},
 			requestTimeout: {value:30000, required:false,validate:RED.validators.number()},
 			autoConnect: {value:"true", required:false},
 			idleConnection: {value:5, required:false,validate:RED.validators.number()},
@@ -146,6 +151,7 @@
             return "node_label_italic";
         },
   	    oneditprepare: function() {
+			$("#node-config-input-connectViaZookeeper").typedInput({type:'bool',types:['bool']});
   	    	let tabs = RED.tabs.create({
                 id: "node-config-kafkaBroker-tabs",
                 onchange: function(tab) {

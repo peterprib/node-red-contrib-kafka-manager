@@ -29,7 +29,7 @@ function evalInFunction (node, propertyName) {
       case 'env':
         return evalFunction(propertyName, '()=>process.env[' + property + ']')
       case 'msg':
-        return evalFunction(propertyName, '(msg)=>msg.' + property+"||undefined")
+        return evalFunction(propertyName, '(msg)=>msg.' + property + '||undefined')
       default:
         throw Error('unknown type ' + node[propertyType])
     }
