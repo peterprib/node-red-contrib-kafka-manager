@@ -1,12 +1,5 @@
 [
     {
-        "id": "7e22036e.f80bdc",
-        "type": "tab",
-        "label": "tests",
-        "disabled": false,
-        "info": ""
-    },
-    {
         "id": "9dd2b7c4187a72fc",
         "type": "tab",
         "label": "admin kafka",
@@ -17,6 +10,13 @@
         "id": "861480a71d464d53",
         "type": "tab",
         "label": "key test",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "7e22036e.f80bdc",
+        "type": "tab",
+        "label": "tests",
         "disabled": false,
         "info": ""
     },
@@ -42,803 +42,6 @@
         "selfSign": true,
         "usetls": false,
         "useCredentials": false
-    },
-    {
-        "id": "163f385a.3ed908",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 120,
-        "y": 40,
-        "wires": [
-            [
-                "74f41911.d32bc8"
-            ]
-        ]
-    },
-    {
-        "id": "31c34a4.2603ab6",
-        "type": "Kafka Admin",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Admin",
-        "broker": "44b7aa4c.212894",
-        "x": 390,
-        "y": 380,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ],
-            [
-                "848b84fd.3738d8"
-            ]
-        ]
-    },
-    {
-        "id": "e63719e6.4207f8",
-        "type": "debug",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 690,
-        "y": 320,
-        "wires": []
-    },
-    {
-        "id": "9557d6e1.63ba38",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "props": [
-            {
-                "p": "payload",
-                "v": "",
-                "vt": "date"
-            },
-            {
-                "p": "topic",
-                "v": "listTopics",
-                "vt": "string"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "listTopics",
-        "payload": "",
-        "payloadType": "date",
-        "x": 150,
-        "y": 420,
-        "wires": [
-            [
-                "31c34a4.2603ab6"
-            ]
-        ]
-    },
-    {
-        "id": "6907be35.65898",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "listGroups",
-        "payload": "",
-        "payloadType": "date",
-        "x": 160,
-        "y": 380,
-        "wires": [
-            [
-                "31c34a4.2603ab6"
-            ]
-        ]
-    },
-    {
-        "id": "c064163.bbad2e8",
-        "type": "comment",
-        "z": "7e22036e.f80bdc",
-        "name": "uses https://github.com/SOHU-Co/kafka-node",
-        "info": "\nhttps://github.com/SOHU-Co/kafka-node#admin",
-        "x": 510,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "bab951c5.10156",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "10",
-        "payloadType": "num",
-        "x": 110,
-        "y": 140,
-        "wires": [
-            [
-                "d2f1aac8.cad088"
-            ]
-        ]
-    },
-    {
-        "id": "f8cdbb21.121ab8",
-        "type": "Kafka Consumer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Consumer",
-        "broker": "44b7aa4c.212894",
-        "regex": false,
-        "topic": null,
-        "topics": [
-            {
-                "topic": "test",
-                "offset": 0,
-                "partition": 0
-            },
-            {
-                "topic": "atest",
-                "offset": 0,
-                "partition": 0
-            }
-        ],
-        "groupId": "kafka-node-group",
-        "autoCommit": "true",
-        "autoCommitIntervalMs": 5000,
-        "fetchMaxWaitMs": 100,
-        "fetchMinBytes": 1,
-        "fetchMaxBytes": 1048576,
-        "fromOffset": "latest",
-        "encoding": "utf8",
-        "keyEncoding": "utf8",
-        "connectionType": "Consumer",
-        "convertToJson": false,
-        "compressionType": "none",
-        "x": 140,
-        "y": 200,
-        "wires": [
-            [
-                "e9bf9de8.aea8b"
-            ]
-        ]
-    },
-    {
-        "id": "593514e6.b8eb3c",
-        "type": "Kafka Producer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Producer",
-        "broker": "44b7aa4c.212894",
-        "topic": "test",
-        "msgOveride": "false",
-        "msgTopicOveride": "false",
-        "topicDeadletter": "",
-        "topicSlash2dot": false,
-        "requireAcks": 1,
-        "ackTimeoutMs": 100,
-        "partitionerType": 0,
-        "key": "",
-        "partition": 0,
-        "attributes": 0,
-        "connectionType": "Producer",
-        "nodeQSize": "1000",
-        "compressionType": "none",
-        "x": 540,
-        "y": 40,
-        "wires": []
-    },
-    {
-        "id": "d556b2e9.8744d",
-        "type": "Kafka Producer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Producer HL",
-        "broker": "44b7aa4c.212894",
-        "topic": "atest",
-        "msgOveride": "true",
-        "msgTopicOveride": "true",
-        "topicDeadletter": "",
-        "topicSlash2dot": false,
-        "requireAcks": 1,
-        "ackTimeoutMs": 100,
-        "partitionerType": 0,
-        "key": "",
-        "partition": 0,
-        "attributes": 0,
-        "connectionType": "HighLevelProducer",
-        "nodeQSize": "1000",
-        "compressionType": "none",
-        "x": 590,
-        "y": 140,
-        "wires": []
-    },
-    {
-        "id": "2f80a948.9711e6",
-        "type": "Kafka Consumer",
-        "z": "7e22036e.f80bdc",
-        "name": "Consumer topic atest",
-        "broker": "44b7aa4c.212894",
-        "topics": [
-            {
-                "topic": "atest",
-                "offset": 0,
-                "partition": 0
-            }
-        ],
-        "groupId": "groupTopicAtest",
-        "autoCommit": "true",
-        "autoCommitIntervalMs": 5000,
-        "fetchMaxWaitMs": 100,
-        "fetchMinBytes": 1,
-        "fetchMaxBytes": 1048576,
-        "fromOffset": 0,
-        "encoding": "utf8",
-        "keyEncoding": "utf8",
-        "connectionType": "Consumer",
-        "compressionType": "none",
-        "x": 160,
-        "y": 260,
-        "wires": [
-            [
-                "4711c52.a1e483c"
-            ]
-        ]
-    },
-    {
-        "id": "848b84fd.3738d8",
-        "type": "debug",
-        "z": "7e22036e.f80bdc",
-        "name": "error",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 610,
-        "y": 380,
-        "wires": []
-    },
-    {
-        "id": "a829a406.9d8e88",
-        "type": "Kafka Consumer Group",
-        "z": "7e22036e.f80bdc",
-        "name": "Consumer Group test + topic2",
-        "broker": "44b7aa4c.212894",
-        "groupId": "aGroup",
-        "sessionTimeout": 15000,
-        "protocol": [
-            "roundrobin"
-        ],
-        "encoding": "utf8",
-        "fromOffset": "latest",
-        "commitOffsetsOnFirstJoin": "true",
-        "outOfRangeOffset": "earliest",
-        "topics": [
-            "test",
-            "topic2"
-        ],
-        "x": 180,
-        "y": 320,
-        "wires": [
-            [
-                "61e3a59c.14b41c"
-            ]
-        ]
-    },
-    {
-        "id": "54bc5863.08ea98",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "describeGroups",
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "describeGroups",
-        "payload": "[\"aGroup\"]",
-        "payloadType": "json",
-        "x": 140,
-        "y": 460,
-        "wires": [
-            [
-                "31c34a4.2603ab6"
-            ]
-        ]
-    },
-    {
-        "id": "2056242a.f330ac",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "createTopics",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "createTopics",
-        "payload": "[{\"topic\":\"aTestRemoveTopic\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"aTestRemoveTopicfail\",\"partitions\":1},{\"topic\":\"test\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"atest\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testCommit\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testRollback\",\"partitions\":1,\"replicationFactor\":1}]",
-        "payloadType": "json",
-        "x": 130,
-        "y": 500,
-        "wires": [
-            [
-                "31c34a4.2603ab6"
-            ]
-        ]
-    },
-    {
-        "id": "8bcb5ffe.b6683",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "deleteTopics",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "deleteTopics",
-        "payload": "[{\"topic\":\"aTestRemoveTopic\"},{\"topic\":\"aTestRemoveTopic2\"}]",
-        "payloadType": "json",
-        "x": 130,
-        "y": 540,
-        "wires": [
-            [
-                "31c34a4.2603ab6"
-            ]
-        ]
-    },
-    {
-        "id": "976b6eb.28a7f9",
-        "type": "Kafka Commit",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 760,
-        "y": 600,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ],
-            [
-                "848b84fd.3738d8"
-            ]
-        ]
-    },
-    {
-        "id": "b2cebe51.29788",
-        "type": "Kafka Rollback",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 760,
-        "y": 660,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ],
-            [
-                "848b84fd.3738d8"
-            ]
-        ]
-    },
-    {
-        "id": "334a2286.d1440e",
-        "type": "Kafka Consumer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Consumer testCommit",
-        "broker": "44b7aa4c.212894",
-        "topic": null,
-        "topics": [
-            {
-                "topic": "testCommit",
-                "offset": 0,
-                "partition": 0
-            }
-        ],
-        "groupId": "kafka-node-group",
-        "autoCommit": "false",
-        "autoCommitIntervalMs": "15000",
-        "fetchMaxWaitMs": 100,
-        "fetchMinBytes": 1,
-        "fetchMaxBytes": 1048576,
-        "fromOffset": 0,
-        "encoding": "utf8",
-        "keyEncoding": "utf8",
-        "connectionType": "Consumer",
-        "x": 180,
-        "y": 600,
-        "wires": [
-            [
-                "cdfee20b.f152f"
-            ]
-        ]
-    },
-    {
-        "id": "917bf0a9.43ac8",
-        "type": "Kafka Consumer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Consumer testRollback",
-        "broker": "44b7aa4c.212894",
-        "topic": null,
-        "topics": [
-            {
-                "topic": "testRollback",
-                "offset": 0,
-                "partition": 0
-            }
-        ],
-        "groupId": "kafka-node-group",
-        "autoCommit": "false",
-        "autoCommitIntervalMs": "15000",
-        "fetchMaxWaitMs": 100,
-        "fetchMinBytes": 1,
-        "fetchMaxBytes": 1048576,
-        "fromOffset": 0,
-        "encoding": "utf8",
-        "keyEncoding": "utf8",
-        "connectionType": "Consumer",
-        "x": 180,
-        "y": 660,
-        "wires": [
-            [
-                "30714ddb.9b2002"
-            ]
-        ]
-    },
-    {
-        "id": "6ff186b0.25eda8",
-        "type": "Kafka Producer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Producer testCommit",
-        "broker": "44b7aa4c.212894",
-        "topic": "testCommit",
-        "requireAcks": 1,
-        "ackTimeoutMs": 100,
-        "partitionerType": 0,
-        "key": "",
-        "partition": 0,
-        "attributes": 0,
-        "connectionType": "Producer",
-        "x": 560,
-        "y": 740,
-        "wires": []
-    },
-    {
-        "id": "7c0ac1bb.fa061",
-        "type": "Kafka Producer",
-        "z": "7e22036e.f80bdc",
-        "name": "Kafka Producer testRollback",
-        "broker": "44b7aa4c.212894",
-        "topic": "testRollback",
-        "requireAcks": 1,
-        "ackTimeoutMs": 100,
-        "partitionerType": 0,
-        "key": "",
-        "partition": 0,
-        "attributes": 0,
-        "connectionType": "Producer",
-        "x": 580,
-        "y": 800,
-        "wires": []
-    },
-    {
-        "id": "660bf5ea.623f4c",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 120,
-        "y": 740,
-        "wires": [
-            [
-                "d8cb2736.009718"
-            ]
-        ]
-    },
-    {
-        "id": "f2f4fbd6.c05eb8",
-        "type": "inject",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 120,
-        "y": 800,
-        "wires": [
-            [
-                "10ea09c6.905986"
-            ]
-        ]
-    },
-    {
-        "id": "dc389e43.92661",
-        "type": "delay",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "pauseType": "delay",
-        "timeout": "5",
-        "timeoutUnits": "seconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "outputs": 1,
-        "x": 590,
-        "y": 600,
-        "wires": [
-            [
-                "976b6eb.28a7f9"
-            ]
-        ]
-    },
-    {
-        "id": "787d1328.f0f02c",
-        "type": "delay",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "pauseType": "delay",
-        "timeout": "5",
-        "timeoutUnits": "seconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "outputs": 1,
-        "x": 590,
-        "y": 660,
-        "wires": [
-            [
-                "b2cebe51.29788"
-            ]
-        ]
-    },
-    {
-        "id": "54da5b93.ce4984",
-        "type": "Load Injector",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "thinktimemin": "10",
-        "thinktimemax": "100",
-        "runtime": 60,
-        "payload": "",
-        "payloadType": "date",
-        "x": 130,
-        "y": 80,
-        "wires": [
-            [
-                "74f41911.d32bc8"
-            ],
-            []
-        ]
-    },
-    {
-        "id": "74f41911.d32bc8",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 330,
-        "y": 40,
-        "wires": [
-            [
-                "593514e6.b8eb3c"
-            ]
-        ]
-    },
-    {
-        "id": "e9bf9de8.aea8b",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 470,
-        "y": 200,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ]
-        ]
-    },
-    {
-        "id": "d2f1aac8.cad088",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 350,
-        "y": 140,
-        "wires": [
-            [
-                "d556b2e9.8744d"
-            ]
-        ]
-    },
-    {
-        "id": "4711c52.a1e483c",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 410,
-        "y": 260,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ]
-        ]
-    },
-    {
-        "id": "61e3a59c.14b41c",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 390,
-        "y": 320,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ]
-        ]
-    },
-    {
-        "id": "d8cb2736.009718",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 290,
-        "y": 740,
-        "wires": [
-            [
-                "6ff186b0.25eda8"
-            ]
-        ]
-    },
-    {
-        "id": "10ea09c6.905986",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 310,
-        "y": 800,
-        "wires": [
-            [
-                "7c0ac1bb.fa061"
-            ]
-        ]
-    },
-    {
-        "id": "cdfee20b.f152f",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 410,
-        "y": 600,
-        "wires": [
-            [
-                "dc389e43.92661"
-            ]
-        ]
-    },
-    {
-        "id": "30714ddb.9b2002",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 420,
-        "y": 660,
-        "wires": [
-            [
-                "787d1328.f0f02c"
-            ]
-        ]
-    },
-    {
-        "id": "4db3aa8.18b56d4",
-        "type": "Kafka Consumer Group",
-        "z": "7e22036e.f80bdc",
-        "name": "consumer group  topic3",
-        "broker": "44b7aa4c.212894",
-        "groupId": "aGroup",
-        "sessionTimeout": 15000,
-        "protocol": [
-            "roundrobin"
-        ],
-        "encoding": "utf8",
-        "fromOffset": "latest",
-        "commitOffsetsOnFirstJoin": "true",
-        "outOfRangeOffset": "earliest",
-        "topics": [
-            "test",
-            "topic3"
-        ],
-        "x": 820,
-        "y": 220,
-        "wires": [
-            [
-                "c357ab2f.2ab5f8"
-            ]
-        ]
-    },
-    {
-        "id": "c357ab2f.2ab5f8",
-        "type": "Monitor Flow",
-        "z": "7e22036e.f80bdc",
-        "name": "",
-        "x": 1090,
-        "y": 220,
-        "wires": [
-            [
-                "e63719e6.4207f8"
-            ]
-        ]
     },
     {
         "id": "cbc03dfd8aab08ab",
@@ -1367,7 +570,7 @@
         "os": "Linux",
         "autoStart": "false",
         "workingDirectory": "/home/peter/Downloads/kafka_2.13-3.4.0",
-        "arguments": "./bin/kafka-topics.sh --list --zookeeper localhost:2181",
+        "arguments": "./bin/kafka-topics.sh --list --bootstrap-server localhost:9092",
         "env": {},
         "x": 640,
         "y": 1100,
@@ -1390,7 +593,7 @@
         "os": "Linux",
         "autoStart": "false",
         "workingDirectory": "/home/peter/Downloads/kafka_2.13-3.4.0",
-        "arguments": "./bin/kafka-consumer-groups --bootstrap-server localhost:9092 --all-groups --describe",
+        "arguments": "./bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --all-groups --describe",
         "env": {},
         "x": 850,
         "y": 1060,
@@ -1427,7 +630,6 @@
         "fromOffset": "latest",
         "encoding": "utf8",
         "keyEncoding": "utf8",
-        "connectionType": "Consumer",
         "convertToJson": false,
         "compressionType": "setGzip",
         "x": 120,
@@ -1492,9 +694,9 @@
                 "vt": "str"
             }
         ],
-        "repeat": "30",
+        "repeat": "",
         "crontab": "",
-        "once": true,
+        "once": false,
         "onceDelay": 0.1,
         "topic": "testkey",
         "payload": "{\"key\":\"keyOnPayload\",\"data\":\"test in testkey\"}",
@@ -1602,7 +804,6 @@
         "fromOffset": "none",
         "encoding": "buffer",
         "keyEncoding": "utf8",
-        "connectionType": "Consumer",
         "convertToJson": true,
         "compressionType": "setGzip",
         "x": 200,
@@ -1662,7 +863,7 @@
                 "vt": "str"
             }
         ],
-        "repeat": "30",
+        "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
@@ -1823,6 +1024,799 @@
         "wires": [
             [
                 "5b8f8cd8.6781f4"
+            ]
+        ]
+    },
+    {
+        "id": "163f385a.3ed908",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 40,
+        "wires": [
+            [
+                "74f41911.d32bc8"
+            ]
+        ]
+    },
+    {
+        "id": "31c34a4.2603ab6",
+        "type": "Kafka Admin",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Admin",
+        "broker": "44b7aa4c.212894",
+        "x": 390,
+        "y": 380,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "e63719e6.4207f8",
+        "type": "debug",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 690,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "9557d6e1.63ba38",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload",
+                "v": "",
+                "vt": "date"
+            },
+            {
+                "p": "topic",
+                "v": "listTopics",
+                "vt": "string"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "listTopics",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 420,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "6907be35.65898",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "listGroups",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 380,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "c064163.bbad2e8",
+        "type": "comment",
+        "z": "7e22036e.f80bdc",
+        "name": "uses https://github.com/SOHU-Co/kafka-node",
+        "info": "\nhttps://github.com/SOHU-Co/kafka-node#admin",
+        "x": 510,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "bab951c5.10156",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "10",
+        "payloadType": "num",
+        "x": 110,
+        "y": 140,
+        "wires": [
+            [
+                "d2f1aac8.cad088"
+            ]
+        ]
+    },
+    {
+        "id": "f8cdbb21.121ab8",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer",
+        "broker": "44b7aa4c.212894",
+        "regex": false,
+        "topic": null,
+        "topics": [
+            {
+                "topic": "test",
+                "offset": 0,
+                "partition": 0
+            },
+            {
+                "topic": "atest",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": "latest",
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "convertToJson": false,
+        "compressionType": "none",
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "e9bf9de8.aea8b"
+            ]
+        ]
+    },
+    {
+        "id": "593514e6.b8eb3c",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer",
+        "broker": "44b7aa4c.212894",
+        "topic": "test",
+        "msgOveride": "false",
+        "msgTopicOveride": "false",
+        "topicDeadletter": "",
+        "topicSlash2dot": false,
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "nodeQSize": "1000",
+        "compressionType": "none",
+        "x": 540,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "d556b2e9.8744d",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer HL",
+        "broker": "44b7aa4c.212894",
+        "topic": "atest",
+        "msgOveride": "true",
+        "msgTopicOveride": "true",
+        "topicDeadletter": "",
+        "topicSlash2dot": false,
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "HighLevelProducer",
+        "nodeQSize": "1000",
+        "compressionType": "none",
+        "x": 590,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "2f80a948.9711e6",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Consumer topic atest",
+        "broker": "44b7aa4c.212894",
+        "topics": [
+            {
+                "topic": "atest",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "groupTopicAtest",
+        "autoCommit": "true",
+        "autoCommitIntervalMs": 5000,
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "compressionType": "none",
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "4711c52.a1e483c"
+            ]
+        ]
+    },
+    {
+        "id": "848b84fd.3738d8",
+        "type": "debug",
+        "z": "7e22036e.f80bdc",
+        "name": "error",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 610,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "a829a406.9d8e88",
+        "type": "Kafka Consumer Group",
+        "z": "7e22036e.f80bdc",
+        "name": "Consumer Group test + topic2",
+        "broker": "44b7aa4c.212894",
+        "groupId": "aGroup",
+        "sessionTimeout": 15000,
+        "protocol": [
+            "roundrobin"
+        ],
+        "encoding": "utf8",
+        "fromOffset": "latest",
+        "commitOffsetsOnFirstJoin": "true",
+        "outOfRangeOffset": "earliest",
+        "topics": [
+            "test",
+            "topic2"
+        ],
+        "x": 180,
+        "y": 320,
+        "wires": [
+            [
+                "61e3a59c.14b41c"
+            ]
+        ]
+    },
+    {
+        "id": "54bc5863.08ea98",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "describeGroups",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "describeGroups",
+        "payload": "[\"aGroup\"]",
+        "payloadType": "json",
+        "x": 140,
+        "y": 460,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "2056242a.f330ac",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "createTopics",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "createTopics",
+        "payload": "[{\"topic\":\"aTestRemoveTopic\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"aTestRemoveTopicfail\",\"partitions\":1},{\"topic\":\"test\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"atest\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testCommit\",\"partitions\":1,\"replicationFactor\":1},{\"topic\":\"testRollback\",\"partitions\":1,\"replicationFactor\":1}]",
+        "payloadType": "json",
+        "x": 130,
+        "y": 500,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "8bcb5ffe.b6683",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "deleteTopics",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "deleteTopics",
+        "payload": "[{\"topic\":\"aTestRemoveTopic\"},{\"topic\":\"aTestRemoveTopic2\"}]",
+        "payloadType": "json",
+        "x": 130,
+        "y": 540,
+        "wires": [
+            [
+                "31c34a4.2603ab6"
+            ]
+        ]
+    },
+    {
+        "id": "976b6eb.28a7f9",
+        "type": "Kafka Commit",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 760,
+        "y": 600,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "b2cebe51.29788",
+        "type": "Kafka Rollback",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 760,
+        "y": 660,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ],
+            [
+                "848b84fd.3738d8"
+            ]
+        ]
+    },
+    {
+        "id": "334a2286.d1440e",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer testCommit",
+        "broker": "44b7aa4c.212894",
+        "topic": null,
+        "topics": [
+            {
+                "topic": "testCommit",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "false",
+        "autoCommitIntervalMs": "15000",
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "x": 180,
+        "y": 600,
+        "wires": [
+            [
+                "cdfee20b.f152f"
+            ]
+        ]
+    },
+    {
+        "id": "917bf0a9.43ac8",
+        "type": "Kafka Consumer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Consumer testRollback",
+        "broker": "44b7aa4c.212894",
+        "topic": null,
+        "topics": [
+            {
+                "topic": "testRollback",
+                "offset": 0,
+                "partition": 0
+            }
+        ],
+        "groupId": "kafka-node-group",
+        "autoCommit": "false",
+        "autoCommitIntervalMs": "15000",
+        "fetchMaxWaitMs": 100,
+        "fetchMinBytes": 1,
+        "fetchMaxBytes": 1048576,
+        "fromOffset": 0,
+        "encoding": "utf8",
+        "keyEncoding": "utf8",
+        "x": 180,
+        "y": 660,
+        "wires": [
+            [
+                "30714ddb.9b2002"
+            ]
+        ]
+    },
+    {
+        "id": "6ff186b0.25eda8",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer testCommit",
+        "broker": "44b7aa4c.212894",
+        "topic": "testCommit",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "x": 560,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "7c0ac1bb.fa061",
+        "type": "Kafka Producer",
+        "z": "7e22036e.f80bdc",
+        "name": "Kafka Producer testRollback",
+        "broker": "44b7aa4c.212894",
+        "topic": "testRollback",
+        "requireAcks": 1,
+        "ackTimeoutMs": 100,
+        "partitionerType": 0,
+        "key": "",
+        "partition": 0,
+        "attributes": 0,
+        "connectionType": "Producer",
+        "x": 580,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "660bf5ea.623f4c",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 740,
+        "wires": [
+            [
+                "d8cb2736.009718"
+            ]
+        ]
+    },
+    {
+        "id": "f2f4fbd6.c05eb8",
+        "type": "inject",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 800,
+        "wires": [
+            [
+                "10ea09c6.905986"
+            ]
+        ]
+    },
+    {
+        "id": "dc389e43.92661",
+        "type": "delay",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "outputs": 1,
+        "x": 590,
+        "y": 600,
+        "wires": [
+            [
+                "976b6eb.28a7f9"
+            ]
+        ]
+    },
+    {
+        "id": "787d1328.f0f02c",
+        "type": "delay",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "outputs": 1,
+        "x": 590,
+        "y": 660,
+        "wires": [
+            [
+                "b2cebe51.29788"
+            ]
+        ]
+    },
+    {
+        "id": "54da5b93.ce4984",
+        "type": "Load Injector",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "thinktimemin": "10",
+        "thinktimemax": "100",
+        "runtime": 60,
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 80,
+        "wires": [
+            [
+                "74f41911.d32bc8"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "74f41911.d32bc8",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 330,
+        "y": 40,
+        "wires": [
+            [
+                "593514e6.b8eb3c"
+            ]
+        ]
+    },
+    {
+        "id": "e9bf9de8.aea8b",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 470,
+        "y": 200,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "d2f1aac8.cad088",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 350,
+        "y": 140,
+        "wires": [
+            [
+                "d556b2e9.8744d"
+            ]
+        ]
+    },
+    {
+        "id": "4711c52.a1e483c",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 410,
+        "y": 260,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "61e3a59c.14b41c",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 450,
+        "y": 320,
+        "wires": [
+            [
+                "e63719e6.4207f8"
+            ]
+        ]
+    },
+    {
+        "id": "d8cb2736.009718",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 290,
+        "y": 740,
+        "wires": [
+            [
+                "6ff186b0.25eda8"
+            ]
+        ]
+    },
+    {
+        "id": "10ea09c6.905986",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 310,
+        "y": 800,
+        "wires": [
+            [
+                "7c0ac1bb.fa061"
+            ]
+        ]
+    },
+    {
+        "id": "cdfee20b.f152f",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 410,
+        "y": 600,
+        "wires": [
+            [
+                "dc389e43.92661"
+            ]
+        ]
+    },
+    {
+        "id": "30714ddb.9b2002",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 420,
+        "y": 660,
+        "wires": [
+            [
+                "787d1328.f0f02c"
+            ]
+        ]
+    },
+    {
+        "id": "4db3aa8.18b56d4",
+        "type": "Kafka Consumer Group",
+        "z": "7e22036e.f80bdc",
+        "name": "consumer group  topic3",
+        "broker": "44b7aa4c.212894",
+        "groupId": "aGroup",
+        "sessionTimeout": 15000,
+        "protocol": [
+            "roundrobin"
+        ],
+        "encoding": "utf8",
+        "fromOffset": "latest",
+        "commitOffsetsOnFirstJoin": "true",
+        "outOfRangeOffset": "earliest",
+        "topics": [
+            "test",
+            "topic3"
+        ],
+        "x": 820,
+        "y": 220,
+        "wires": [
+            [
+                "c357ab2f.2ab5f8"
+            ]
+        ]
+    },
+    {
+        "id": "c357ab2f.2ab5f8",
+        "type": "Monitor Flow",
+        "z": "7e22036e.f80bdc",
+        "name": "",
+        "x": 1090,
+        "y": 220,
+        "wires": [
+            [
+                "e63719e6.4207f8"
             ]
         ]
     }

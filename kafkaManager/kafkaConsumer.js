@@ -5,7 +5,7 @@ const getDataType = require('./getDataType.js')
 // const zlib = require('node:zlib');
 const setupHttpAdmin = require('./setupHttpAdmin.js')
 const State = require('./state.js')
-const ClientConnnection = require('./clientConnnection.js')
+const ClientConnnection = require('./clientConnection.js')
 
 function setStatus (message, fill = 'green') {
   this.status({ fill: fill, shape: 'ring', text: message })
@@ -62,36 +62,35 @@ module.exports = function (RED) {
         }
       })
       this.state
-      .onUp(()=>node.status({	fill: 'green',	shape: 'ring', text: 'connected' }))
-      .onDown(()=>node.status({	fill: 'red',	shape: 'ring', text: 'down' }))
+      .onUp(()=>{
+        if(node.paused) {
+          node.log('state changed to up and in paused state')
+          node.paused();
+        } else{
+          node.log('state changed to up, resume issued')
+          node.resume()
+        }
+      }).onDown(()=>node.status({	fill: 'red',	shape: 'ring', text: 'down' }))
       .setUpAction(()=>{
         node.status({	fill: 'yellow',	shape: 'ring', text: 'Connecting' })
+        node.messageCount = 0;
         if(logger.active) logger.send({ label: 'consumer connecting', node:node.id,	name:node.name })
-         const kafka = node.brokerNode.getKafkaDriver()
+        const kafka = node.brokerNode.getKafkaDriver()
         node.consumer = new kafka.Consumer(node.client.connection, node.activeTopics,node.options)
-        node.consumer.on('connect', function () {
-          if (logger.active) logger.send({ label: 'consumer on.connect', node:node.id,	name:node.name })
-          if(node.paused) {
-            node.log('state changed to up and in paused state')
-            node.status({	fill: 'red',	shape: 'ring', text: 'Paused' })
-          } else{
-            node.log('state changed to up, resume issued')
-            node.resume()
-          }
-          node.available()
-        })
         node.consumer.on('message', (message) => {
           if(logger.active) logger.send({ label: 'consumer on.message', node:node.id,	name:node.name })
-          if (++node.messageCount == 1 || node.messageCount % 100 == 0) { node.setStatus('processed ' + node.messageCount) }
-          node.brokerNode.sendMsg(node, message)
-        })
-        node.consumer.on('brokersChanged', function () {
-          logger.info({ label: 'consumer on.brokersChanged', node:node.id,	name:node.name })
-          node.setStatus('broker change')
-        })
-        node.consumer.on('rebalancing', function () {
-          logger.info({ label: 'consumer on.rebalancing', node:node.id,	name:node.name })
-          node.setStatus('rebalanced')
+          try{
+            if (++node.messageCount == 1 || node.timedout) {
+               node.timedout = false
+               node.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
+               if (message.value == null) return //	seems to send an empty on connect in no messages waiting
+             } else if(node.messageCount % 100 == 0) node.setStatus('processed ' + node.messageCount)
+             node.brokerNode.sendMsg(node, message)
+           } catch(ex) {
+             logger.sendErrorAndStackDump(ex.message, ex)
+             node.paused();
+             this.status({ fill: 'red', shape: 'ring', text:"Error and paused" })
+           }
         })
         node.consumer.on('error', function (ex) {
           const err = ex.message ? ex.message : ex.toString()
@@ -109,7 +108,8 @@ module.exports = function (RED) {
           node.consumer.pause()
           node.setStatus('offsetOutOfRange ' + ex.message + ' (PAUSED)', 'red')
         })
-      }).setDownAction(()=>{
+        node.available()
+    }).setDownAction(()=>{
         if (logger.active) logger.send({ label: 'close', node: node.id })
         node.setStatus('closing', 'red')
         node.consumer.close(false, () => {
@@ -124,18 +124,19 @@ module.exports = function (RED) {
       this.client = new ClientConnnection(node.brokerNode);
       this.client.onUp(()=>{
         node.setStatus('client up', 'yellow')
+        node.log("client connected, connection")
         node.setUp()
       }).onDown(()=>{
         node.setStatus('client down','red')
-        node.setDown()
-      })
+      }).beforeDown(()=>node.setDown())
 
       node.brokerNode.onUp(()=>{
         node.setStatus('broker up', 'yellow')
       }).onUp(()=>node.client.setUp())
       .onDown(()=>{
         node.setStatus('broker down','red')
-      }).onDown(()=>node.client.setDown())
+      }).beforeDown(()=>node.client.setDown())
+
 
       if (node.regex) {
         node.activeTopics = []
@@ -167,15 +168,15 @@ module.exports = function (RED) {
         if (logger.active) logger.send({ label: 'pause', node: node.id })
         node.paused = true
         node.consumer.pause()
-        node.setStatus('paused', 'red')
-        done & done()
+        node.setStatus('Paused', 'red')
+        done && done()
       }
       node.resume = (done) => {
         if (logger.active) logger.send({ label: 'resume', node: node.id	})
         node.resumed = true
         node.consumer.resume()
-        node.setStatus('Ready with ' + node.brokerNode.name)
-        done & done()
+        node.setStatus('Ready')
+        done && done()
       }
       node.addTopics = (topics, fromOffset, callBack) => {
         if (logger.active) logger.send({ label: 'consumer.addTopics', node: node.id,	topics: topics, fromOffset: fromOffset })
@@ -244,7 +245,10 @@ module.exports = function (RED) {
     },
     connect: (RED, node, callback) => {
       node.testDown()
-      node.setUp(callback)
+      if(node.client.isNotAvailable()) {
+        node.client.setUp(callback)
+      } else
+        node.setUp(callback)
     },
     pause: (RED, node, callback) => {
       node.testUp()
@@ -258,6 +262,25 @@ module.exports = function (RED) {
       node.testUp()
       const error = node.brokerNode.metadataRefresh()
       callback(null, error)
+    },
+    resetForce: (RED, node, callback) => {
+      try{
+        node.setDown();
+        callback("set down")
+      } catch(ex){
+        node.log("Resetting staus to do as set down error "+ex.message)
+        node.resetDown();
+        callback(null,"set down failed and set down status");
+      }
+    },
+    resetClientForce: (RED, node, callback) => {
+      try{
+        node.client.setDown();
+        callback("set client down")
+      } catch(ex){
+        node.log("Resetting staus to do as client set down error "+ex.message)
+        node.client.resetDown();
+      }
     }
   })
 }

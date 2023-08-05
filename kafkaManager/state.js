@@ -9,8 +9,7 @@ function State (node,logger=console) {
   }
   this.logger=logger;
   this.stack={onUp:[],onDown:[],beforeUp:[],beforeDown:[],onError:[],setUpDone:[],setDownDone:[]};
-  this.available=false;
-  this.transitioning={up:false,down:false}
+  this.resetDown()
   this.wait={up:[],down:[]};
   this.maxQDepth=1000;
   this.upOnUpQDepth=null;
@@ -184,6 +183,15 @@ State.prototype.onAvailable=State.prototype.up;
 State.prototype.onReady=State.prototype.up;
 State.prototype.onOpen=State.prototype.up;
 State.prototype.onClose=State.prototype.onClose;
+State.prototype.resetDown = function () {
+  this.available=false;
+  this.transitioning={up:false,down:false};
+}
+State.prototype.resetUp = function () {
+  this.available=up;
+  this.transitioning={up:false,down:false};
+  return this;
+}
 State.prototype.setCheckOff = function () {
   clearTimeout(this.checkTimer)
   return this;
@@ -266,6 +274,8 @@ State.prototype.setMethods = function (node) {
   node.onDown=this.onDown.bind(this);
   node.onError=this.onError.bind(this);
   node.setError=this.error.bind(this);
+  node.resetDown=this.resetDown.bind(this);
+  node.resetUp=this.resetUp.bind(this);
   node.setDown=this.setDown.bind(this);
   node.setUp=this.setUp.bind(this);
   node.testConnected=this.testConnected.bind(this);

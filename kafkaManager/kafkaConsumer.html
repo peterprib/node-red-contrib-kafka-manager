@@ -328,6 +328,8 @@ function json2html(obj){
 						connect:function(){sendCommand(this,"connect")},
 						pause:function(){sendCommand(this,"pause")},
 						refresh:function(){sendCommand(this,"refresh")},
+						"reset client":function(){sendCommand(this,"resetClientForce")},
+						"reset connection":function(){sendCommand(this,"resetForce")},
 						resume:function(){sendCommand(this,"resume")},
 						status:function(){sendCommand(this,"status")}
 				}

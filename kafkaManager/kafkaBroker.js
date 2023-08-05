@@ -77,12 +77,12 @@ function sendMsgPostDecompose (node, message) {
   try {
     if (!node.ready) {
       node.ready = true
-      node.status({	fill: 'green',	shape: 'ring', text: 'Ready with ' + node.brokerNode.name })
+      node.status({	fill: 'green',	shape: 'ring', text: 'Ready'})
       if (message.value == null) return //	seems to send an empty on connect in no messages waiting
     }
     if (node.timedout) {
       node.timedout = false
-      node.status({	fill: 'green', shape: 'ring', text: 'Ready with ' + node.brokerNode.name	})
+      node.status({	fill: 'green', shape: 'ring', text: 'Ready'})
     }
     const dataType = getDataType(message.value)
     switch (dataType) {
@@ -198,7 +198,7 @@ module.exports = function (RED) {
             errorCallback(node.getRevisedMessage(ex.message))
           })
           connection.on('connect', function () {
-            if (logger.active) logger.send({ label: 'connectKafka.on.connect'type:type,, node: node.id })
+            if (logger.active) logger.send({ label: 'connectKafka.on.connect',type:type, node: node.id })
             okCallback(connection)
           })
         },

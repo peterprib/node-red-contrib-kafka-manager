@@ -20,58 +20,7 @@ function getOptions (_this = this) {
   if (_this.brokerNode.TLSOptions) _this.options.sslOptions = _this.brokerNode.TLSOptions
   return options
 }
-/*
-function clientReady (_this = this) {
-  _this.messageCount = 0
-  _this.ready = false
-  _this.options = getOptions(_this)
-  const kafka = _this.brokerNode.getKafkaDriver()
-  _this.consumer = new kafka.ConsumerGroup(_this.options, _this.topics)
-  _this.consumer.on('connect', function () {
-    if (logger.active) logger.send({ label: 'consumer.on.connect', node: _this.id,	name: _this.name })
-    _this.connected = true
-  })
-  _this.consumer.on('message', (message) => {
-    if (logger.active) logger.send({ label: 'consumer.on.message', node: _this.id,	name: _this.name, message: message })
-    if (++_this.messageCount == 1) {
-      _this.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
-      if (message.value == null) return //	seems to send an empty on connect in no messages waiting
-    }
-    if (_this.timedout) {
-      _this.timedout = false
-      _this.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
-    }
-    _this.brokerNode.sendMsg(node, message)
-  })
 
-  _this.consumer.on('rebalancing', () => {
-    logger.info({ label: 'consumerGroup.on.rebalancing', node: _this.id,	name: _this.name })
-  })
-  _this.consumer.on('error', (e) => {
-    if (logger.active) logger.send({ label: 'consumer.on.error', node: _this.id,	name: _this.name, error: e })
-    const err = e.message ? e.message : e.toString()
-    if (err.startsWith('Request timed out')) {
-      _this.status({	fill: 'yellow',	shape: 'ring', text: e.message })
-      node.timedout = true
-      return
-    }
-    _this.status({	fill: 'red',	shape: 'ring', text: _this.brokerNode.getRevisedMessage(err) })
-  })
-  _this.consumer.on('offsetOutOfRange', (err) => {
-    if (logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node: node.id,	name: _this.name, error: err })
-    _this.consumer.pause()
-    _this.status({	fill: 'red',	shape: 'ring', text: 'offsetOutOfRange ' + err.message + ' (PAUSED)' })
-  })
-  if (this.paused) {
-    this.log('state changed to up and in paused state')
-    _this.status({	fill: 'red',	shape: 'ring', text: 'Paused' })
-    return
-  }
-  this.log('state changed to up, resume issued')
-  this.resume()
-}
-
-*/
 module.exports = function (RED) {
   function KafkaConsumerGroupNode (n) {
     RED.nodes.createNode(this, n)
@@ -80,6 +29,15 @@ module.exports = function (RED) {
     try {
       const node = Object.assign(this, n, { connected: false, paused: false, timedout: false })
       this.state
+      .onUp(()=>{
+        if(node.paused) {
+          node.log('state changed to up and in paused state')
+          node.paused();
+        } else{
+          node.log('state changed to up, resume issued')
+          node.resume()
+        }
+      })
       .onUp(()=>this.status({	fill: 'green',	shape: 'ring', text: 'active' }))
       .onDown(()=>node.status({	fill: 'red',	shape: 'ring', text: 'down' }))
       .setUpAction(()=>{
@@ -87,29 +45,6 @@ module.exports = function (RED) {
         node.messageCount = 0
         const kafka = node.brokerNode.getKafkaDriver()
         node.consumer = new kafka.ConsumerGroup(getOptions(node),node.topics)
-        node.consumer.on('connect', function () {
-          if (logger.active) logger.send({ label: 'consumerGroup on.connect', node:node.id,	name:node.name })
-          if(node.paused) {
-            node.log('state changed to up and in paused state')
-            node.status({	fill: 'red',	shape: 'ring', text: 'Paused' })
-          } else{
-            node.log('state changed to up, resume issued')
-            node.resume()
-          }
-          node.available()
-        })
-        node.consumer.on('message', (message) => {
-          if (logger.active) logger.send({ label: 'consumerGroup on.message', node:node.id,name:node.name, message: message })
-          if (++node.messageCount == 1 || node.timedout) {
-            node.timedout = false
-            node.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
-            if (message.value == null) return //	seems to send an empty on connect in no messages waiting
-          }
-          node.brokerNode.sendMsg(node, message)
-        })
-        node.consumer.on('rebalancing', () => {
-          logger.info({ label: 'consumerGroup on.rebalancing', node:node.id,name:node.name })
-        })
         node.consumer.on('error', (e) => {
           if (logger.active) logger.send({ label: 'consumerGroup on.error', node:node.id,name:node.name, error: e })
           const err = e.message ? e.message : e.toString()
@@ -120,6 +55,25 @@ module.exports = function (RED) {
           }
           node.status({fill:'red',shape:'ring',text:node.brokerNode.getRevisedMessage(err)})
           node.down()
+        })
+        node.consumer.on('message', (message) => {
+          if (logger.active) logger.send({ label: 'consumerGroup on.message', node:node.id,name:node.name, message: message })
+          try{
+           if (++node.messageCount == 1 || node.timedout) {
+              node.timedout = false
+              node.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
+              if (message.value == null) return //	seems to send an empty on connect in no messages waiting
+            } else if(node.messageCount % 100 == 0) node.status({	fill: 'green',	shape: 'ring', text:'processed ' + node.messageCount})
+            node.brokerNode.sendMsg(node, message)
+          } catch(ex) {
+            logger.sendErrorAndStackDump(ex.message, ex)
+            node.paused();
+            this.status({ fill: 'red', shape: 'ring', text:"Error and paused" })
+          }
+        })
+        node.available()
+        node.consumer.on('rebalancing', () => {
+          logger.info({ label: 'consumerGroup on.rebalancing', node:node.id,name:node.name })
         })
         node.consumer.on('offsetOutOfRange', (err) => {
           if(logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node:node.id,	name:node.name, error: err })

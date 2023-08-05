@@ -401,7 +401,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.messageCount++;
         try {
-          node.processMessage(node.getMessage(RED, node, msg))
+          node.processMessage(msg,node.getMessage(RED, node, msg))
         } catch (ex) {
           if (logger.active) logger.sendErrorAndStackDump(ex.message, ex)
           node.error('input error:' + ex.message, msg)
