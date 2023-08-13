@@ -15,7 +15,7 @@ function getOptions (_this = this) {
     fromOffset: _this.fromOffset, // default: 'latest'
     commitOffsetsOnFirstJoin: _this.commitOffsetsOnFirstJoin === 'true',
     outOfRangeOffset: _this.outOfRangeOffset, // default: 'earliest'
-    onRebalance: (isAlreadyMember, callback) => { callback() } // or null
+    onRebalance: (isAlreadyMember, done) => { done() } // or null
   }
   if (_this.brokerNode.TLSOptions) _this.options.sslOptions = _this.brokerNode.TLSOptions
   return options
@@ -24,96 +24,102 @@ function getOptions (_this = this) {
 module.exports = function (RED) {
   function KafkaConsumerGroupNode (n) {
     RED.nodes.createNode(this, n)
-    this.status({	fill: 'yellow',	shape: 'ring', text: 'Initialising' })
+    this.status({ fill: 'yellow', shape: 'ring', text: 'Initialising' })
     this.state = new State(this)
     try {
       const node = Object.assign(this, n, { connected: false, paused: false, timedout: false })
       this.state
-      .onUp(()=>{
-        if(node.paused) {
-          node.log('state changed to up and in paused state')
-          node.paused();
-        } else{
-          node.log('state changed to up, resume issued')
-          node.resume()
-        }
-      })
-      .onUp(()=>this.status({	fill: 'green',	shape: 'ring', text: 'active' }))
-      .onDown(()=>node.status({	fill: 'red',	shape: 'ring', text: 'down' }))
-      .setUpAction(()=>{
-        node.status({	fill: 'yellow',	shape: 'ring', text: 'Connecting' })
-        node.messageCount = 0
-        const kafka = node.brokerNode.getKafkaDriver()
-        node.consumer = new kafka.ConsumerGroup(getOptions(node),node.topics)
-        node.consumer.on('error', (e) => {
-          if (logger.active) logger.send({ label: 'consumerGroup on.error', node:node.id,name:node.name, error: e })
-          const err = e.message ? e.message : e.toString()
-          if (err.startsWith('Request timed out')) {
-            node.status({	fill: 'yellow',	shape: 'ring', text: e.message })
-            node.timedout = true
-            return
+        .onUp(() => {
+          if (node.paused) {
+            node.log('state changed to up and in paused state')
+            node.paused()
+          } else {
+            node.log('state changed to up, resume issued')
+            node.resume()
           }
-          node.status({fill:'red',shape:'ring',text:node.brokerNode.getRevisedMessage(err)})
-          node.down()
+          node.status({ fill: 'green', shape: 'ring', text: 'active' })
         })
-        node.consumer.on('message', (message) => {
-          if (logger.active) logger.send({ label: 'consumerGroup on.message', node:node.id,name:node.name, message: message })
-          try{
-           if (++node.messageCount == 1 || node.timedout) {
-              node.timedout = false
-              node.status({	fill: 'green',	shape: 'ring', text: 'Processing Messages' })
-              if (message.value == null) return //	seems to send an empty on connect in no messages waiting
-            } else if(node.messageCount % 100 == 0) node.status({	fill: 'green',	shape: 'ring', text:'processed ' + node.messageCount})
-            node.brokerNode.sendMsg(node, message)
-          } catch(ex) {
-            logger.sendErrorAndStackDump(ex.message, ex)
-            node.paused();
-            this.status({ fill: 'red', shape: 'ring', text:"Error and paused" })
-          }
+        .onDown(() => node.status({ fill: 'red', shape: 'ring', text: 'down' }))
+        .setUpAction(() => {
+          node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
+          node.messageCount = 0
+          const kafka = node.brokerNode.getKafkaDriver()
+          node.consumer = new kafka.ConsumerGroup(getOptions(node), node.topics)
+          node.consumer.on('error', (e) => {
+            if (logger.active) logger.send({ label: 'consumerGroup on.error', node: node.id, name: node.name, error: e })
+            const err = e.message ? e.message : e.toString()
+            if (err.startsWith('Request timed out')) {
+              node.status({ fill: 'yellow', shape: 'ring', text: e.message })
+              node.timedout = true
+              return
+            }
+            node.status({ fill: 'red', shape: 'ring', text: node.brokerNode.getRevisedMessage(err) })
+            node.setDown()
+          })
+          node.consumer.on('message', (message) => {
+            if (logger.active) logger.send({ label: 'consumerGroup on.message', node: node.id, name: node.name, message: message })
+            try {
+              if (++node.messageCount === 1 || node.timedout) {
+                node.timedout = false
+                node.status({ fill: 'green', shape: 'ring', text: 'Processing Messages' })
+                if (message.value == null) return // seems to send an empty on connect in no messages waiting
+              } else if (node.messageCount % 100 === 0) node.status({ fill: 'green', shape: 'ring', text: 'processed ' + node.messageCount })
+              node.brokerNode.sendMsg(node, message)
+            } catch (ex) {
+              logger.sendErrorAndStackDump(ex.message, ex)
+              node.paused()
+              this.status({ fill: 'red', shape: 'ring', text: 'Error and paused' })
+            }
+          })
+          node.available()
+          node.consumer.on('rebalancing', () => {
+            logger.info({ label: 'consumerGroup on.rebalancing', node: node.id, name: node.name })
+          })
+          node.consumer.on('offsetOutOfRange', (err) => {
+            if (logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node: node.id, name: node.name, error: err })
+            node.consumer.pause()
+            node.status({ fill: 'red', shape: 'ring', text: 'offsetOutOfRange ' + err.message + ' (PAUSED)' })
+          })
         })
-        node.available()
-        node.consumer.on('rebalancing', () => {
-          logger.info({ label: 'consumerGroup on.rebalancing', node:node.id,name:node.name })
+        .setDownAction(() => {
+          if (logger.active) logger.send({ label: 'close', node: node.id, name: node.name })
+          node.status({ fill: 'red', shape: 'ring', text: 'Closing' })
+          node.consumer.close(false, () => {
+            node.status({ fill: 'red', shape: 'ring', text: 'Closed' })
+            node.down()
+          })
         })
-        node.consumer.on('offsetOutOfRange', (err) => {
-          if(logger.active) logger.send({ label: 'consumer.on.offsetOutOfRange', node:node.id,	name:node.name, error: err })
-          node.consumer.pause()
-          node.status({	fill: 'red',	shape: 'ring', text: 'offsetOutOfRange ' + err.message + ' (PAUSED)' })
-        })
-      })
-      .setDownAction(()=>{
-        if (logger.active) logger.send({ label: 'close', node:node.id,	name:node.name })
-        node.status({	fill: 'red',	shape: 'ring', text: 'Closing' })
-        node.consumer.close(false, () => {
-          node.status({	fill: 'red',	shape: 'ring', text: 'Closed' })
-          node.down()
-        })
-      })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-      node.brokerNode.onUp(node.setUp.bind(node))
+      node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
+      node.brokerNode.onUp(() => {
+        node.status({ fill: 'red', shape: 'ring', text: 'client down' })
+        node.setUp()
+      }).onDown(() => {
+        node.setStatus('broker down', 'red')
+      })
       node.on('close', function (removed, done) {
-        if (logger.active) logger.send({ label: 'close', node: node.id,	name: node.name })
+        if (logger.active) logger.send({ label: 'close', node: node.id, name: node.name })
         node.setDown(done)
       })
-      node.pause = (callback) => {
-        if (logger.active) logger.send({ label: 'pause', node: node.id,	name: node.name })
+      node.pause = (done) => {
+        if (logger.active) logger.send({ label: 'pause', node: node.id, name: node.name })
         node.paused = true
         node.consumer.pause()
-        node.status({	fill: 'red',	shape: 'ring', text: 'Paused' })
-        callback && callback()
+        node.status({ fill: 'red', shape: 'ring', text: 'Paused' })
+        done && done()
       }
-      node.resume = (callback) => {
-        if (logger.active) logger.send({ label: 'resume', node: node.id,	name: node.name })
+      node.resume = (done) => {
+        if (logger.active) logger.send({ label: 'resume', node: node.id, name: node.name })
         node.resumed = true
         node.consumer.resume()
-        node.status({	fill: 'green',	shape: 'ring', text: 'Ready' })
-        callback && callback()
+        node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
+        done && done()
       }
-      node.commit = (callBack) => {
+      node.commit = (done) => {
         node.consumer.commit((err, data) => {
-          if (logger.active) logger.send({ label: 'commit', node: node.id,	name: node.name, error: err, data: data })
-          callback && callback(data, err)
+          if (logger.active) logger.send({ label: 'commit', node: node.id, name: node.name, error: err, data: data })
+          done && done(data, err)
         })
       }
     } catch (ex) {
@@ -124,30 +130,30 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType(logger.label, KafkaConsumerGroupNode)
   setupHttpAdmin(RED, logger.label, {
-    close: (RED, node, callback) => {
+    close: (RED, node, done) => {
       node.testUp()
-      node.setDown(callback)
+      node.setDown(done)
     },
-    open: (RED, node, callback) => {
+    open: (RED, node, done) => {
       node.testDown()
-      node.setUp(callback)
+      node.setUp(done)
     },
-    commit: (RED, node, callback) => {
+    commit: (RED, node, done) => {
       node.testUp()
-      node.commit(() => callback(), (ex) => callback(null, 'close error: ' + ex.message))
+      node.commit(() => done(), (ex) => done(null, 'close error: ' + ex.message))
     },
-    pause: (RED, node, callback) => {
+    pause: (RED, node, done) => {
       node.testUp()
-      node.pause(callback)
+      node.pause(done)
     },
-    resume: (RED, node, callback) => {
+    resume: (RED, node, done) => {
       node.testUp()
-      node.resume(callback)
+      node.resume(done)
     },
-    refresh: (RED, node, callback) => {
+    refresh: (RED, node, done) => {
       node.testUp()
       const error = node.brokerNode.metadataRefresh()
-      callback(null, error)
+      done(null, error)
     }
   })
 }

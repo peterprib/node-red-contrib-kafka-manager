@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 const logger = new (require('node-red-contrib-logger'))('Kafka Admin')
 logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
 const setupHttpAdmin = require('./setupHttpAdmin.js')
@@ -10,10 +11,10 @@ function msgProcess (msg, errObject, data) {
     const err = typeof errObject !== 'string' ? errObject.toString() : errObject.message.toString()
     if (err.startsWith('Broker not available') || err.startsWith('Request timed out')) {
       this.warn('Broker not available, queue message and retry connection as ' + err)
-      this.whenUp(this.processInput,msg)
+      this.whenUp(this.processInput, msg)
       return
     }
-    node.error(msg.topic + ' ' + err)
+    this.error(msg.topic + ' ' + err)
     msg.error = err
     this.send([null, msg])
     return
@@ -73,7 +74,7 @@ function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data
       case 'describeConfigs':
         // msg.payload={type:'topic',name:'a-topic'}
         resource = {
-          resourceType: node.connection.RESOURCE_TYPES[msg.payload.type || 'topic'], // 'broker' or 'topic'
+          resourceType: this.connection.RESOURCE_TYPES[msg.payload.type || 'topic'], // 'broker' or 'topic'
           resourceName: msg.payload.name,
           configNames: [] // specific config names, or empty array to return all,
         }
@@ -97,15 +98,6 @@ function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data
   }
 }
 
-function adminHttpRequest (node, res, err, data) {
-  if (err) {
-    node.error(err)
-    res.status(500).send(err)
-    return
-  }
-  res.status(200).send(data)
-}
-
 module.exports = function (RED) {
   function KafkaAdminNode (n) {
     RED.nodes.createNode(this, n)
@@ -115,41 +107,42 @@ module.exports = function (RED) {
         msgProcess: msgProcess.bind(this),
         processInput: processInput.bind(this)
       })
-      node.state.setUpAction(()=>{
-        node.status({	fill: 'yellow',	shape: 'ring', text: 'Connecting' })
+      node.state.setUpAction(() => {
+        node.status({fill: 'yellow', shape: 'ring', text: 'Connecting' })
         node.brokerNode.getConnection('Admin',
-          (connection)=>{
-            node.connection=connection;
-            node.available();
+          (connection) => {
+            node.connection = connection
+            node.available()
           },
-          (error)=>{
-            node.status({fill:'red',shape:'ring',text:'connection failed'})
+          (error) => {
+            node.status({ fill: 'red', shape: 'ring', text: 'connection failed' })
             node.upFailedAndClearQ(error)
           }
         )
-      }).setDownAction(()=>{
-        node.status({fill:'red',shape:'ring',text:'closing'})
+      }).setDownAction(() => {
+        node.status({ fill: 'red', shape: 'ring', text: 'closing' })
         node.connection.close(false, () => {
           node.log('closed')
           node.status({ fill: 'red', shape: 'ring', text: 'closed' })
         })
-      }).onUp((error)=>{
-        node.status({fill:'green',shape:'ring',text:'connectioned'})
-      }).onError((error)=>{
-        node.error(error);
+      }).onUp(() => {
+        node.status({ fill: 'green', shape: 'ring', text: 'connectioned' })
+      }).onError((error) => {
+        node.error(error)
       })
       node.status({ fill: 'yellow', shape: 'ring', text: 'Initialising' })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
+      node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
       node.brokerNode
-      .onUp(()=>{
-        node.status({fill:'yellow',shape:'ring',text:'Kafka available and connecting'})
-        node.setUp();
-      })
-      .onDown(()=>{
-        node.status({fill:'red',shape:'ring',text:'Kafka not available'})
-        node.setDown();
-      })
+        .onUp(() => {
+          node.status({ fill: 'yellow', shape: 'ring', text: 'client down' })
+          node.setUp()
+        })
+        .onDown(() => {
+          node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
+          node.setDown()
+        })
       node.on('input', function (msg) {
         node.whenUp(node.processInput, msg)
       })
@@ -166,7 +159,7 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType(logger.label, KafkaAdminNode)
   setupHttpAdmin(RED, logger.label, {
-     listGroups: (RED, node, callback) => {
+    listGroups: (RED, node, callback) => {
       node.whenUp(node.processInput, { topic: 'listGroups' }, (err, data) => callback(data, err), ex => callback(null, ex.message))
     },
     listTopics: (RED, node, callback) => {

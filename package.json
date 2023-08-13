@@ -27,7 +27,7 @@
   },
   "scripts": {
     "test": "mocha \"test/t01*.js\"",
-    "startNodeRed": "pwd; node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
+    "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
   },
   "repository": {
     "type": "git",

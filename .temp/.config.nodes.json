@@ -1,7 +1,7 @@
 {
     "node-red": {
         "name": "node-red",
-        "version": "3.0.1",
+        "version": "3.0.2-git",
         "local": false,
         "user": false,
         "nodes": {
@@ -14,7 +14,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/05-junction.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\05-junction.js"
             },
             "inject": {
                 "name": "inject",
@@ -25,7 +25,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/20-inject.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\20-inject.js"
             },
             "debug": {
                 "name": "debug",
@@ -36,7 +36,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/21-debug.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\21-debug.js"
             },
             "complete": {
                 "name": "complete",
@@ -47,7 +47,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/24-complete.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\24-complete.js"
             },
             "catch": {
                 "name": "catch",
@@ -58,7 +58,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/25-catch.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\25-catch.js"
             },
             "status": {
                 "name": "status",
@@ -69,7 +69,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/25-status.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\25-status.js"
             },
             "link": {
                 "name": "link",
@@ -82,7 +82,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/60-link.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\60-link.js"
             },
             "comment": {
                 "name": "comment",
@@ -93,7 +93,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/90-comment.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\90-comment.js"
             },
             "unknown": {
                 "name": "unknown",
@@ -104,7 +104,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/common/98-unknown.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\98-unknown.js"
             },
             "function": {
                 "name": "function",
@@ -115,7 +115,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/10-function.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\10-function.js"
             },
             "switch": {
                 "name": "switch",
@@ -126,7 +126,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/10-switch.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\10-switch.js"
             },
             "change": {
                 "name": "change",
@@ -137,7 +137,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/15-change.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\15-change.js"
             },
             "range": {
                 "name": "range",
@@ -148,7 +148,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/16-range.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\16-range.js"
             },
             "template": {
                 "name": "template",
@@ -159,7 +159,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/80-template.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\80-template.js"
             },
             "delay": {
                 "name": "delay",
@@ -170,7 +170,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/89-delay.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\89-delay.js"
             },
             "trigger": {
                 "name": "trigger",
@@ -181,7 +181,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/89-trigger.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\89-trigger.js"
             },
             "exec": {
                 "name": "exec",
@@ -192,7 +192,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/90-exec.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\90-exec.js"
             },
             "rbe": {
                 "name": "rbe",
@@ -203,7 +203,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/function/rbe.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\function\\rbe.js"
             },
             "tls": {
                 "name": "tls",
@@ -214,7 +214,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/05-tls.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\05-tls.js"
             },
             "httpproxy": {
                 "name": "httpproxy",
@@ -225,7 +225,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/06-httpproxy.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\06-httpproxy.js"
             },
             "mqtt": {
                 "name": "mqtt",
@@ -238,7 +238,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\10-mqtt.js"
             },
             "httpin": {
                 "name": "httpin",
@@ -250,7 +250,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/21-httpin.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\21-httpin.js"
             },
             "httprequest": {
                 "name": "httprequest",
@@ -261,7 +261,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/21-httprequest.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\21-httprequest.js"
             },
             "websocket": {
                 "name": "websocket",
@@ -275,7 +275,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/22-websocket.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\22-websocket.js"
             },
             "tcpin": {
                 "name": "tcpin",
@@ -288,7 +288,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/31-tcpin.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\31-tcpin.js"
             },
             "udp": {
                 "name": "udp",
@@ -300,7 +300,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/network/32-udp.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\network\\32-udp.js"
             },
             "CSV": {
                 "name": "CSV",
@@ -311,7 +311,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/parsers/70-CSV.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\parsers\\70-CSV.js"
             },
             "HTML": {
                 "name": "HTML",
@@ -322,7 +322,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/parsers/70-HTML.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\parsers\\70-HTML.js"
             },
             "JSON": {
                 "name": "JSON",
@@ -333,7 +333,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/parsers/70-JSON.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\parsers\\70-JSON.js"
             },
             "XML": {
                 "name": "XML",
@@ -344,7 +344,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/parsers/70-XML.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\parsers\\70-XML.js"
             },
             "YAML": {
                 "name": "YAML",
@@ -355,7 +355,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/parsers/70-YAML.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\parsers\\70-YAML.js"
             },
             "split": {
                 "name": "split",
@@ -367,7 +367,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/sequence/17-split.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\sequence\\17-split.js"
             },
             "sort": {
                 "name": "sort",
@@ -378,7 +378,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/sequence/18-sort.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\sequence\\18-sort.js"
             },
             "batch": {
                 "name": "batch",
@@ -389,7 +389,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/sequence/19-batch.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\sequence\\19-batch.js"
             },
             "file": {
                 "name": "file",
@@ -401,7 +401,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/storage/10-file.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\storage\\10-file.js"
             },
             "watch": {
                 "name": "watch",
@@ -412,7 +412,7 @@
                 "local": false,
                 "user": false,
                 "module": "node-red",
-                "file": "/usr/local/lib/node_modules/node-red/node_modules/@node-red/nodes/core/storage/23-watch.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\storage\\23-watch.js"
             }
         }
     },
@@ -431,7 +431,103 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-logger",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-logger/loggerNode.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-logger\\loggerNode.js"
+            }
+        }
+    },
+    "node-red-contrib-kafka-manager": {
+        "name": "node-red-contrib-kafka-manager",
+        "version": "0.7.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "kafkaAdmin": {
+                "name": "kafkaAdmin",
+                "types": [
+                    "Kafka Admin"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaAdmin.js"
+            },
+            "kafkaBroker": {
+                "name": "kafkaBroker",
+                "types": [
+                    "Kafka Broker"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaBroker.js"
+            },
+            "kafkaCommit": {
+                "name": "kafkaCommit",
+                "types": [
+                    "Kafka Commit"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaCommit.js"
+            },
+            "kafkaConsumer": {
+                "name": "kafkaConsumer",
+                "types": [
+                    "Kafka Consumer"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaConsumer.js"
+            },
+            "kafkaConsumerGroup": {
+                "name": "kafkaConsumerGroup",
+                "types": [
+                    "Kafka Consumer Group"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaConsumerGroup.js"
+            },
+            "kafkaOffset": {
+                "name": "kafkaOffset",
+                "types": [
+                    "Kafka Offset"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaOffset.js"
+            },
+            "kafkaProducer": {
+                "name": "kafkaProducer",
+                "types": [
+                    "Kafka Producer"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaProducer.js"
+            },
+            "kafkaRollback": {
+                "name": "kafkaRollback",
+                "types": [
+                    "Kafka Rollback"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaRollback.js"
             }
         }
     },
@@ -450,7 +546,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/append/append.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\append\\append.js"
             },
             "dataAnalysis": {
                 "name": "dataAnalysis",
@@ -461,7 +557,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/dataAnalysis/dataAnalysis.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\dataAnalysis\\dataAnalysis.js"
             },
             "hostAvailable": {
                 "name": "hostAvailable",
@@ -472,7 +568,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/testing/hostAvailable.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\hostAvailable.js"
             },
             "levenshteinDistance": {
                 "name": "levenshteinDistance",
@@ -483,7 +579,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/levenshteinDistance/levenshteinDistanceNode.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\levenshteinDistance\\levenshteinDistanceNode.js"
             },
             "load-injector": {
                 "name": "load-injector",
@@ -494,7 +590,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/testing/load-injector.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\load-injector.js"
             },
             "matrix": {
                 "name": "matrix",
@@ -505,7 +601,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/matrix/matrixNode.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\matrix\\matrixNode.js"
             },
             "monitorflow": {
                 "name": "monitorflow",
@@ -516,7 +612,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/monitor/monitorflow.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\monitor\\monitorflow.js"
             },
             "os": {
                 "name": "os",
@@ -527,7 +623,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/nodejs/os.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\nodejs\\os.js"
             },
             "spawnProcess": {
                 "name": "spawnProcess",
@@ -538,7 +634,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/spawnProcess/spawnProcess.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\spawnProcess\\spawnProcess.js"
             },
             "test": {
                 "name": "test",
@@ -549,7 +645,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/testing/test.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\test.js"
             },
             "transform": {
                 "name": "transform",
@@ -560,123 +656,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-contrib-prib-functions",
-                "file": "/home/peter/node-red-contrib-kafka-manager/.temp/node_modules/node-red-contrib-prib-functions/transform/transform.js"
-            }
-        }
-    },
-    "node-red-contrib-kafka-manager": {
-        "name": "node-red-contrib-kafka-manager",
-        "version": "0.7.0",
-        "local": false,
-        "user": false,
-        "nodes": {
-            "kafkaAdmin": {
-                "name": "kafkaAdmin",
-                "types": [
-                    "Kafka Admin"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaAdmin.js"
-            },
-            "kafkaBroker": {
-                "name": "kafkaBroker",
-                "types": [
-                    "Kafka Broker"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaBroker.js"
-            },
-            "kafkaCommit": {
-                "name": "kafkaCommit",
-                "types": [
-                    "Kafka Commit"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaCommit.js"
-            },
-            "kafkaConsumer": {
-                "name": "kafkaConsumer",
-                "types": [
-                    "Kafka Consumer"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaConsumer.js"
-            },
-            "kafkaConsumerGroup": {
-                "name": "kafkaConsumerGroup",
-                "types": [
-                    "Kafka Consumer Group"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaConsumerGroup.js"
-            },
-            "kafkaOffset": {
-                "name": "kafkaOffset",
-                "types": [
-                    "Kafka Offset"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaOffset.js"
-            },
-            "kafkaProducer": {
-                "name": "kafkaProducer",
-                "types": [
-                    "Kafka Producer"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaProducer.js"
-            },
-            "kafkaRollback": {
-                "name": "kafkaRollback",
-                "types": [
-                    "Kafka Rollback"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-kafka-manager",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-kafka-manager/kafkaManager/kafkaRollback.js"
-            }
-        }
-    },
-    "node-red-contrib-xsltransform": {
-        "name": "node-red-contrib-xsltransform",
-        "version": "0.4.0",
-        "local": false,
-        "user": false,
-        "nodes": {
-            "xsltransform": {
-                "name": "xsltransform",
-                "types": [
-                    "xslParse",
-                    "xslTransform"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-xsltransform",
-                "file": "/usr/local/lib/node_modules/node-red-contrib-xsltransform/xsltransform/xsltransform.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\transform\\transform.js"
             }
         }
     }

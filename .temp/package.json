@@ -4,6 +4,7 @@
     "version": "0.0.1",
     "private": true,
     "dependencies": {
+        "node-red-contrib-kafka-manager": "file:..",
         "node-red-contrib-prib-functions": "~0.18.0"
     }
 }

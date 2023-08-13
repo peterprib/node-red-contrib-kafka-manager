@@ -495,7 +495,7 @@
         "host": "127.0.0.1",
         "port": "2181",
         "checkInterval": "10",
-        "x": 90,
+        "x": 110,
         "y": 180,
         "wires": [
             [
@@ -524,7 +524,7 @@
         "type": "Monitor Flow",
         "z": "9dd2b7c4187a72fc",
         "name": "",
-        "x": 90,
+        "x": 110,
         "y": 440,
         "wires": [
             [

@@ -16,9 +16,9 @@ function setupHttpAdmin (RED, nodeType, actions) {
       try {
         const action = req.params.action
         node.log('httpAdmin request ' + action)
-        if (!actions.hasOwnProperty(action)) throw Error('unknown action: ' + action)
-        callFunction = actions[action].bind(node)
-        callFunction(RED, node, (data, err) => adminRequest(node, res, data, err))
+        if (!(action in actions)) throw Error('unknown action: ' + action)
+        const callFunction = actions[action].bind(node)
+        callFunction(RED, node, (data, err) => adminRequest(node, res, data, err), req.params, req.body)
       } catch (ex) {
         if (logger.active) logger.error({ label: 'setupHttpAdmin', error: ex.messsage, stack: ex.stack })
         adminRequest(node, res, null, 'Internal Server Error, ' + req.params.action + ' failed ' + ex.toString())
