@@ -5,6 +5,7 @@ setUpOnDownEmptyQ - when queuéd messages for down processed then set up
 setIdleTime
 
 */
+const ProcessStack = require('./processStack.js')
 
 function State (node, logger = console) {
   if (node) {
@@ -12,6 +13,7 @@ function State (node, logger = console) {
     this.node = node
   }
   this.logger = logger
+  this.stacks = { onUp: new ProcessStack(), onDown: new ProcessStack(), beforeUp: new ProcessStack(), beforeDown: new ProcessStack(), onError: new ProcessStack(), setUpDone: new ProcessStack(), setDownDone: new ProcessStack(), onIdle: new ProcessStack() }
   this.stack = { onUp: [], onDown: [], beforeUp: [], beforeDown: [], onError: [], setUpDone: [], setDownDone: [], onIdle: [] }
   this.resetDown()
   this.wait = { up: [], down: [] }
@@ -21,41 +23,6 @@ function State (node, logger = console) {
   this.downOnUpEmptyQ = false
   this.upOnDownEmptyQ = false
   this.idleTime = null
-}
-State.prototype.setIdleTime = function (time) {
-  if (this.upActionCall == null) throw Error('no up action specified')
-  this.idleTime = time
-  this.onUp(this.setCheckIdleOn.bind(this))
-  return this
-}
-State.prototype.setCheckIdleOff = function () {
-  if (this.checkIdleTimer) {
-    clearTimeout(this.checkIdleTimer)
-    delete this.checkIdleTimer
-  }
-  return this
-}
-State.prototype.setCheckIdleOn = function () {
-  if (!this.idleTime) return this
-  const _this = this
-  this.checkIdleTimer = setInterval(() => {
-    try {
-      if (this.lastCheckTime && this.lastUsed < this.lastCheckTime) {
-        _this.setDown()
-//        _this.callStack(this.stack.onIdle)
-        this.callForEachNext(this.stack.onIdle, [], () => _this.setDownPart2())
-      }
-      _this.lastCheckTime = new Date()
-    } catch (ex) {
-      _this.logger.error(ex.message)
-      _this.logger.error(ex.stack)
-      _this.setCheckOff()
-      _this.logger.error('*** check idle turned off***')
-    }
-  },
-  this.idleTime
-  )
-  return this
 }
 State.prototype.beforeDown = function (callFunction, ...args) {
   if (typeof callFunction !== 'function') throw Error('expected function')
@@ -82,7 +49,6 @@ State.prototype.callForEachNext = function (stack, args, done, index = 0) {
     this.logger.error(ex.stack)
   }
 }
-
 State.prototype.callForEach = function (stack, ...args) {
   let error = 0
   for (const action of stack) {
@@ -110,17 +76,16 @@ State.prototype.callStack = function (stack, ...args) {
   }
   return error
 }
-State.prototype.clearWhenUpQ = function (callFunction, ...args) {
-  if (callFunction) {
-    for (const action of this.wait.up) {
-      try {
-        callFunction(...action.args.concat(args))
-      } catch (ex) {
-        this.logger.error('clearWhenUpQ error: ' + ex.message)
-        this.logger.error(ex.stack)
-      }
+State.prototype.clearWhenUpQ = function (reason, callFunction, ...args) {
+  for (const action of this.wait.up) {
+    try {
+      if (action.onDisgard) action.onDisgard(reason, ...action.args.concat(args))
+      if (callFunction) callFunction(...action.args.concat(args))
+    } catch (ex) {
+      this.logger.error('clearWhenUpQ error: ' + ex.message)
+      this.logger.error(ex.stack)
     }
-  } else { this.wait.up = [] }
+  }
   if (this.upOnDownEmptyQ === true) this.setDown()
   return this
 }
@@ -133,19 +98,7 @@ State.prototype.down = function (done) {
   if (this.downActionCall && this.transitioning.down === false) throw Error('not transitioning down')
   else this.transitioning.down = true
   this.callForEach(this.stack.onDown)
-  this.available = false
-  this.callStack(this.stack.setDownDone)
-  if (done) {
-    this.done = done
-    this.downWaitNext()
-  } else {
-    while (this.wait.down.length > 0 && this.available === false) {
-      const action = this.wait.down.shift()
-      action.callFunction(...action.args)
-    }
-    if (this.upOnDownEmptyQ === true) this.setUp()
-  }
-  return this
+  this.forceDown(done)
 }
 State.prototype.downWaitNext = function () {
   if (this.wait.down.length > 0) {
@@ -164,6 +117,22 @@ State.prototype.foundUp = function () {
 }
 State.prototype.foundDown = function () {
   if (this.isAvailable()) this.setDown() // set status down
+}
+State.prototype.forceDown = function (done) {
+  if (this.available === false) return this
+  this.available = false
+  this.callStack(this.stack.setDownDone)
+  if (done) {
+    this.done = done
+    this.downWaitNext()
+  } else {
+    while (this.wait.down.length > 0 && this.available === false) {
+      const action = this.wait.down.shift()
+      action.callFunction(...action.args)
+    }
+    if (this.upOnDownEmptyQ === true) this.setUp()
+  }
+  return this
 }
 State.prototype.getDownQDepth = function () {
   return this.wait.down.length
@@ -186,7 +155,7 @@ State.prototype.isAvailable = function (up, down) {
 State.prototype.isNotAvailable = function (down, up) {
   if (this.available) up && up()
   else down && down()
-  return !this.available
+  return this.available === false || this.transitioning.up === true || this.transitioning.down === true
 }
 State.prototype.isDown = State.prototype.isNotAvailable
 State.prototype.isTransitioning = function () {
@@ -242,6 +211,34 @@ State.prototype.setCheck = function (callFunction, interval = 1000) {
   this.checkCall = callFunction
   return this
 }
+State.prototype.setCheckIdleOff = function () {
+  if (this.checkIdleTimer) {
+    clearTimeout(this.checkIdleTimer)
+    delete this.checkIdleTimer
+  }
+  return this
+}
+State.prototype.setCheckIdleOn = function () {
+  if (!this.idleTime) return this
+  const _this = this
+  this.checkIdleTimer = setInterval(() => {
+    try {
+      if (this.lastCheckTime && this.lastUsed < this.lastCheckTime) {
+        _this.setDown()
+        this.callForEachNext(this.stack.onIdle, [], () => _this.setDownPart2())
+      }
+      _this.lastCheckTime = new Date()
+    } catch (ex) {
+      _this.logger.error(ex.message)
+      _this.logger.error(ex.stack)
+      _this.setCheckOff()
+      _this.logger.error('*** check idle turned off***')
+    }
+  },
+  this.idleTime
+  )
+  return this
+}
 State.prototype.setCheckOn = function (_this = this, foundUp = this.foundUp.bind(this), foundDown = this.foundDown.bind(this)) {
   this.checkTimer = setInterval(() => {
     try {
@@ -291,40 +288,17 @@ State.prototype.setDownTransitioning = function (done) {
   this.transitioning.down = true
   return this
 }
+State.prototype.setIdleTime = function (time) {
+  if (this.upActionCall == null) throw Error('no up action specified')
+  this.idleTime = time
+  this.onUp(this.setCheckIdleOn.bind(this))
+  return this
+}
 State.prototype.setOnMaxQUpAction = function (callFunction) {
   this.onMaxQUpAction = callFunction
 }
 State.prototype.setOnMaxDownAction = function (callFunction) {
   this.onMaxQDownAction = callFunction
-}
-State.prototype.setMethods = function (node) {
-  if (node == null) throw Error('no object specified')
-  node.available = this.up.bind(this)
-  node.down = this.down.bind(this)
-  node.getDownQDepth = this.getDownQDepth.bind(this)
-  node.getUpQDepth = this.getUpQDepth.bind(this)
-  node.getState = this.getState.bind(this)
-  node.isAvailable = this.isAvailable.bind(this)
-  node.isNotAvailable = this.isNotAvailable.bind(this)
-  node.isDown = this.isDown.bind(this)
-  node.isTransitioning = this.isTransitioning.bind(this)
-  node.onUp = this.onUp.bind(this)
-  node.onDown = this.onDown.bind(this)
-  node.onIdle = this.onIdle.bind(this)
-  node.onError = this.onError.bind(this)
-  node.setError = this.error.bind(this)
-  node.resetDown = this.resetDown.bind(this)
-  node.resetUp = this.resetUp.bind(this)
-  node.setDown = this.setDown.bind(this)
-  node.setUp = this.setUp.bind(this)
-  node.testConnected = this.testConnected.bind(this)
-  node.testUp = this.testUp.bind(this)
-  node.testDisconnected = this.testDisconnected.bind(this)
-  node.testDown = this.testDown.bind(this)
-  node.whenUp = this.whenUp.bind(this)
-  node.whenDown = this.whenDown.bind(this)
-  node.unavailable = this.down.bind(this)
-  return this
 }
 State.prototype.setMaxQDepth = function (depth = 1000) {
   this.maxQDepth = depth
@@ -419,25 +393,38 @@ State.prototype.upFailed = function (error) {
   this.transitioning.up = false
   return this
 }
-State.prototype.upFailedandClearQ = function (error) {
-  this.clearWhenUpQ()
+State.prototype.upFailedAndClearQ = function (error) {
+  this.clearWhenUpQ(error)
   this.upFailed(error)
   return this
 }
-State.prototype.whenDown = function (callFunction, ...args) {
-  if (typeof callFunction !== 'function') throw Error('expected function')
+State.prototype.whenDown = function (arg1, ...args) {
+  let onDisgard
+  let callFunction = arg1
+  if (typeof callFunction !== 'function') {
+    if (typeof callFunction !== 'object') throw Error('expected function or object')
+    onDisgard = callFunction.onDisgard
+    callFunction = callFunction.call
+  }
   const q = this.wait.down
   if (this.available === false && q.length === 0) {
     callFunction(...args)
   } else {
     if (this.maxQDepth < q.length) return this.onMaxQDownAction(callFunction, ...args)
-    q.push({ callFunction: callFunction, args: args })
+    q.push({ callFunction: callFunction, args: args, onDisgard: onDisgard })
     if (this.downOnDownQDepth == null || this.downOnDownQDepth < q.length) return this
     if (this.downActionCall) this.setDown()
   }
   return this
 }
-State.prototype.whenUp = function (callFunction, ...args) {
+State.prototype.whenUp = function (arg1, ...args) {
+  let onDisgard
+  let callFunction = arg1
+  if (typeof callFunction !== 'function') {
+    if (typeof callFunction !== 'object') throw Error('expected function or object')
+    onDisgard = callFunction.onDisgard
+    callFunction = callFunction.call
+  }
   if (typeof callFunction !== 'function') throw Error('expected function')
   const q = this.wait.up
   if (this.available === true && q.length === 0) {
@@ -445,10 +432,11 @@ State.prototype.whenUp = function (callFunction, ...args) {
     callFunction(...args)
   } else {
     if (this.maxQDepth < q.length) return this.onMaxQUpAction(callFunction, args)
-    q.push({ callFunction: callFunction, args: args })
+    q.push({ callFunction: callFunction, args: args, onDisgard: onDisgard })
     if (this.upActionCall) {
       try {
-        if (this.upOnUpQDepth == null || q.length <= this.upOnUpQDepth ) return this
+        if (this.upOnUpQDepth == null || q.length <= this.upOnUpQDepth) return this
+        if (this.isTransitioning.up === true) return this
         this.setUp()
       } catch (ex) {
         if (ex.message === 'Disconnected') return this
@@ -458,4 +446,38 @@ State.prototype.whenUp = function (callFunction, ...args) {
   }
   return this
 }
+State.prototype.setMethods = function (node) {
+  if (node == null) throw Error('no object specified')
+  node.available = this.up.bind(this)
+  node.forceDown = this.foundDown.bind(this)
+  node.down = this.down.bind(this)
+  node.getDownQDepth = this.getDownQDepth.bind(this)
+  node.getUpQDepth = this.getUpQDepth.bind(this)
+  node.getState = this.getState.bind(this)
+  node.isAvailable = this.isAvailable.bind(this)
+  node.isNotAvailable = this.isNotAvailable.bind(this)
+  node.isDown = this.isDown.bind(this)
+  node.isTransitioning = this.isTransitioning.bind(this)
+  node.onUp = this.onUp.bind(this)
+  node.onDown = this.onDown.bind(this)
+  node.onIdle = this.onIdle.bind(this)
+  node.onError = this.onError.bind(this)
+  node.setError = this.error.bind(this)
+  node.resetDown = this.resetDown.bind(this)
+  node.resetUp = this.resetUp.bind(this)
+  node.setDown = this.setDown.bind(this)
+  node.setIdleTime = this.setIdleTime.bind(this)
+  node.setUp = this.setUp.bind(this)
+  node.setUpOnUpQDepth = this.setUpOnUpQDepth.bind(this)
+  node.testConnected = this.testConnected.bind(this)
+  node.testUp = this.testUp.bind(this)
+  node.testDisconnected = this.testDisconnected.bind(this)
+  node.testDown = this.testDown.bind(this)
+  node.upFailedAndClearQ = this.upFailedAndClearQ.bind(this)
+  node.whenUp = this.whenUp.bind(this)
+  node.whenDown = this.whenDown.bind(this)
+  node.unavailable = this.down.bind(this)
+  return this
+}
+
 module.exports = State

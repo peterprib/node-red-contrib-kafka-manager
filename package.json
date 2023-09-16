@@ -26,7 +26,7 @@
     "zlib": "*"
   },
   "scripts": {
-    "test": "mocha \"test/t01*.js\"",
+    "test": "mocha \"test/t00p*.js\"",
     "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
   },
   "repository": {

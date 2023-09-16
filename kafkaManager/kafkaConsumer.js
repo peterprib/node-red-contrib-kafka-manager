@@ -4,7 +4,6 @@ logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
 // const zlib = require('node:zlib');
 const setupHttpAdmin = require('./setupHttpAdmin.js')
 const State = require('./state.js')
-const ClientConnnection = require('./clientConnection.js')
 
 function setStatus (message, fill = 'green') {
   this.status({ fill: fill, shape: 'ring', text: message })
@@ -74,8 +73,7 @@ module.exports = function (RED) {
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
           node.messageCount = 0
           if (logger.active) logger.send({ label: 'consumer connecting', node: node.id, name: node.name })
-          const kafka = node.brokerNode.getKafkaDriver()
-          node.consumer = new kafka.Consumer(node.client.connection, node.activeTopics, node.options)
+          node.consumer = new node.brokerNode.Kafka.Consumer(node.client.connection, node.activeTopics, node.options)
           node.consumer.on('message', (message) => {
             if (logger.active) logger.send({ label: 'consumer on.message', node: node.id, name: node.name })
             try {
@@ -93,7 +91,7 @@ module.exports = function (RED) {
           })
           node.consumer.on('error', function (ex) {
             const err = ex.message ? ex.message : ex.toString()
-            if (logger.active) logger.send({ label: 'consumer on.error', node: node.id, name:node.name, error: err })
+            if (logger.active) logger.send({ label: 'consumer on.error', node: node.id, name: node.name, error: err })
             node.setError(err)
             if (err.startsWith('Request timed out')) {
               node.setStatus(err, 'yellow')
@@ -107,6 +105,10 @@ module.exports = function (RED) {
             node.consumer.pause()
             node.setStatus('offsetOutOfRange ' + ex.message + ' (PAUSED)', 'red')
           })
+          node.consumer.on('ready', () => {
+            if (logger.active) logger.send({ label: 'consumer on.ready', node: node.id, name: node.name })
+            node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
+          })
           node.available()
         }).setDownAction(() => {
           if (logger.active) logger.send({ label: 'close', node: node.id })
@@ -119,22 +121,24 @@ module.exports = function (RED) {
         })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
+      node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
 
-      this.client = new ClientConnnection(node.brokerNode)
+      this.client = node.brokerNode.getClient()
       this.client.onUp(() => {
         node.setStatus('client up', 'yellow')
         node.log('client connected, connection')
         node.setUp()
       }).onDown(() => {
         node.setStatus('client down', 'red')
+        if (node.isAvailable()) node.forceDown()
       }).beforeDown(() => node.setDown())
       node.setStatus('broker down', 'red')
-      node.brokerNode.onUp(() => {
+      node.brokerNode.hostState.onUp(() => {
         node.setStatus('client down', 'red')
-        node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
         node.client.setUp()
       }).onDown(() => {
         node.setStatus('broker down', 'red')
+        node.client.forceDown()
       }).beforeDown(() => node.client.setDown())
 
       if (node.regex) {
@@ -213,11 +217,6 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType(logger.label, KafkaConsumerNode)
   setupHttpAdmin(RED, logger.label, {
-    status: (RED, node, done) => done({
-      node: node.getState(),
-      client: node.brokerNode.getState(),
-      host: node.brokerNode.hostState.getState()
-    }),
     addTopics: (RED, node, done, params, data) => {
       node.testUp()
       if (node.regex) return done(null, 'wildcard topics')
@@ -280,6 +279,11 @@ module.exports = function (RED) {
         node.log('Resetting staus to do as client set down error ' + ex.message)
         node.client.resetDown()
       }
-    }
+    },
+    status: (RED, node, done) => done({
+      node: node.getState(),
+      client: node.client.getState(),
+      host: node.brokerNode.hostState.getState()
+    })
   })
 }

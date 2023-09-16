@@ -11,7 +11,7 @@ module.exports = function (RED) {
           () => {
             node.send(msg)
           },
-          (error) => {
+          () => {
             node.send([null, msg])
           }
         )

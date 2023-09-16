@@ -55,7 +55,7 @@ attributes: 0: No compression, 1: Compress using GZip, 2: Compress using snappy
         try {
           _this.brokerNode.setDown()
         } catch (ex) {
-          _this.erro(ex.message)
+          _this.error(ex.message)
         }
         _this.whenUp(_this.sendKafka, msg)
         _this.retryCount++
@@ -194,6 +194,12 @@ function processMessageNoCompression (msg, msgData) {
   }
 }
 function processMessageCompression (msg, msgData, _this = this) {
+  if (typeof msgData !== 'string') {
+    if (!(msgData instanceof Buffer || msgData instanceof Uint8Array)) {
+      _this.processMessageNoCompression(msg, msgData)
+      return
+    }
+  }
   this.compressor.compress(msgData,
     (compressed) => _this.processMessageNoCompression(msg, compressed),
     () => {
@@ -244,17 +250,29 @@ module.exports = function (RED) {
           node.status({ fill: 'green', shape: 'ring', text: 'Up' })
           node.maxQState = false
         }).onDown(() => {
-          node.status({ fill: 'red', shape: 'ring', text: 'Down' })
+          node.status({ fill: 'red', shape: 'ring', text: 'connection down' })
         }).onError((error) =>
           node.status({ fill: 'red', shape: 'ring', text: error })
         ).setUpAction(() => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
           const kafka = node.brokerNode.getKafkaDriver()
-          node.producer = new kafka[(node.connectionType || 'Producer')](node.brokerNode.client, node.options)
+          node.producer = new kafka[(node.connectionType || 'Producer')](node.brokerNode.client.connection, node.options)
           node.producer.on('error', function (ex) {
-            const errMsg = 'connect error ' + node.brokerNode.getRevisedMessage(ex.message)
-            logger.error({ label: 'producer.on.error', node: node.id, error: ex.message, errorEnhanced: errMsg })
-            node.down(errMsg)
+            const errMsg = node.brokerNode.getRevisedMessage(ex.message)
+            logger.error({ label: 'producer.on.error', node: node.id, name: node.name, error: ex.message, errorEnhanced: errMsg })
+            if (ex.message.startsWith('Request timed out')) {
+              node.status({ fill: 'red', shape: 'ring', text: 'timed out' })
+            } else if (ex.message.startsWith('refreshBrokerMetadata failed')) {
+              node.refreshBrokerMetadataTimestamp = new Date()
+              return
+            }
+            if (node.isAvailable()) {
+              try {
+                node.setDown(errMsg)
+              } catch (ex) {
+                node.error('on error for down: ' + ex.message)
+              }
+            }
           })
           node.producer.on('close', function () {
             node.down()
@@ -282,14 +300,18 @@ module.exports = function (RED) {
       node.brokerNode = RED.nodes.getNode(this.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
       node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
-      node.brokerNode
+      node.brokerNode.hostState
         .onUp(() => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'broker available' })
-          node.setUp()
         }).onDown(() => {
           node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
-          node.setDown()
         })
+      node.brokerNode.client.onDown(() => {
+        node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
+      }).onUp(() => {
+        node.status({ fill: 'yellow', shape: 'ring', text: 'broker client up' })
+        node.setUp()
+      })
       if (node.compressionType == null) {
         switch (node.attributes) { // old method conversion
           case 1:
@@ -350,27 +372,17 @@ module.exports = function (RED) {
   }
   RED.nodes.registerType(logger.label, KafkaProducerNode)
   setupHttpAdmin(RED, logger.label, {
-    // eslint-disable-next-line standard/no-callback-literal
-    Status: (RED, node, callback) => callback({
-      'messages in': node.messageCount,
-      retryCount: node.retryCount,
-      successes: node.successes,
-      deadletters: node.deadletters,
-      errorDiscarded: node.errorDiscarded,
-      node: node.getState(),
-      client: node.brokerNode.getState(),
-      host: node.brokerNode.hostState.getState()
-    }),
-    Connect: (RED, node, done) => {
+    checkState: (RED, node, done) => {
       try {
-        node.testDisconnected()
-        node.brokerNode.testCanConnect()
-        node.setUp()
-        done('connect issued')
+        node.testConnected()
+        done('connected')
       } catch (ex) {
-        if (logger.active) logger.send({ label: 'kafkaProducer httpadmin connect', node: node.id, error: ex.message, stack: ex.stack })
         done(ex.message)
       }
+    },
+    'Clear Queue': (RED, node, done) => {
+      node.state.clearWhenUpQ((msg) => node.error('cleared q', msg))
+      done('Queue cleared')
     },
     Close: (RED, node, done) => {
       try {
@@ -389,20 +401,16 @@ module.exports = function (RED) {
         done(ex.message)
       }
     },
-    'Retry Q': (RED, node, done) => {
-      if (node.getUpQDepth() === 0) done('Empty Q')
-      node.testNotConnected()
-      node.whenUp(() => {
-        done('Processed waiting q')
-      })
-    },
-    'Reset Status': (RED, node, done) => {
-      //      node.nodeState.show()
-      done('Status reset')
-    },
-    'Clear Queue': (RED, node, done) => {
-      node.state.clearWhenUpQ((msg) => node.error('cleared q', msg))
-      done('Queue cleared')
+    Connect: (RED, node, done) => {
+      try {
+        node.testDisconnected()
+        node.brokerNode.testCanConnect()
+        node.setUp()
+        done('connect issued')
+      } catch (ex) {
+        if (logger.active) logger.send({ label: 'kafkaProducer httpadmin connect', node: node.id, error: ex.message, stack: ex.stack })
+        done(ex.message)
+      }
     },
     refreshMetadata: (RED, node, done) => {
       try {
@@ -424,13 +432,27 @@ module.exports = function (RED) {
         done(ex.message)
       }
     },
-    checkState: (RED, node, done) => {
-      try {
-        node.testConnected()
-        done('connected')
-      } catch (ex) {
-        done(ex.message)
-      }
-    }
+    'Reset Status': (RED, node, done) => {
+      //      node.nodeState.show()
+      done('Status reset')
+    },
+    'Retry Q': (RED, node, done) => {
+      if (node.getUpQDepth() === 0) done('Empty Q')
+      node.testNotConnected()
+      node.whenUp(() => {
+        done('Processed waiting q')
+      })
+    },
+    // eslint-disable-next-line standard/no-callback-literal
+    Status: (RED, node, callback) => callback({
+      'messages in': node.messageCount,
+      retryCount: node.retryCount,
+      successes: node.successes,
+      deadletters: node.deadletters,
+      errorDiscarded: node.errorDiscarded,
+      node: node.getState(),
+      client: node.brokerNode.client.getState(),
+      host: node.brokerNode.hostState.getState()
+    })
   })
 }

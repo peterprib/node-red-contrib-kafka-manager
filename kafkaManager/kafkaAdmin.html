@@ -19,6 +19,19 @@
 </script>
 
 <script type="text/javascript">
+function float(node,titleSuffix="",html="",buttons) {
+	const title=(node.name||'Consumer')+' '+titleSuffix;
+	const float=$('<div></div>');
+	float.appendTo('body')
+	.html(html)
+	.dialog({
+		modal: true, title: title, zIndex: 10000, autoOpen: true,
+		width: 'auto', resizable: true,"min-width": (title.length+5) + "px",
+		close: function (event, ui) {$(this).remove();},
+		buttons:buttons
+	});
+	return float;
+}
 function json2html(obj){
 	if(obj==="undefined" || obj === null) return "";
 	const objType=(typeof obj);
@@ -89,22 +102,25 @@ function json2html(obj){
                 	$(element).dialog("close");
 					$.get( "/"+nodeName.replace(" ","_")+"/"+node.id+"/"+action )
 			        .done(function(json) {
-//			             console.log(JSON.stringify(json));
-            		   	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-            		   	$('<div></div>').appendTo('body').html(json2html(json))
-            		   	.dialog({
-      						modal: true,
-      						title: (node.name||'Kafka Admin')+" "+action,
-      						zIndex: 10000,
-      						autoOpen: true,
-   							width: 'auto',
-   							resizable: false,
-							buttons: {
-								close: function (event, ui) {
-					    			$(this).remove();
+					  	 if(["status"].includes(action)){
+							float(node,"State",json2html(json));
+						} else {
+	            		   	RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
+    	        		   	$('<div></div>').appendTo('body').html(json2html(json))
+      	 	     		   	.dialog({
+      							modal: true,
+      							title: (node.name||'Kafka Admin')+" "+action,
+      							zIndex: 10000,
+      							autoOpen: true,
+   								width: 'auto',
+   								resizable: false,
+								buttons: {
+									close: function (event, ui) {
+					    				$(this).remove();
+									}
 								}
-							}
-						});
+							});
+						}
                 	}).fail(function( jqXHR, textStatus, error ) {
                    		if (jqXHR.status === 404) {
      			           	RED.notify(node._(nodeName+" signal not deployed"),"error");
@@ -122,12 +138,11 @@ function json2html(obj){
       				modal: true, title: (node.name||'Kafka Admin'), zIndex: 10000, autoOpen: true,
    					width: 'auto', resizable: false,
 					buttons: {
-						"List Groups": function () {
-							sendCommand(this,"listGroups");
-						},
-						"list Topics": function () {
-							sendCommand(this,"listTopics");
-						}
+						"List Groups": function (){sendCommand(this,"listGroups")},
+						"list Topics": function (){sendCommand(this,"listTopics");},
+						close:function(){sendCommand(this,"close")},
+						connect:function(){sendCommand(this,"connect")},
+						status:function(){sendCommand(this,"status")}
 					},
 					close: function (event, ui) {
 				    	$(this).remove();

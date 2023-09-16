@@ -219,14 +219,26 @@ function json2html(obj){
 					label = label.substring(0,50)+"...";
 				}
 				label = label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
+				function float(titleSuffix="",html="",buttons) {
+					const title=(node.name||'Consumer')+' '+titleSuffix;
+					const float=$('<div></div>');
+					float.appendTo('body')
+					.html(html)
+					.dialog({
+ 						modal: true, title: title, zIndex: 10000, autoOpen: true,
+						width: 'auto', resizable: true,"min-width": (title.length+5) + "px",
+						close: function (event, ui) {$(this).remove();},
+						buttons:buttons
+					});
+					return float;
+				}
 				function sendCommand(element,action) {
 					const nodeName="Kafka Consumer Group";
 					$(element).dialog("close");
 					$.get( "/"+nodeName.replace(/ /g,"_")+"/"+node.id+"/"+action )
 					.done(function( json ) {
 						RED.notify(node._(nodeName+" signal success",{label:label}),{type:"success",id:"Load Injector"});
-						if(["refresh","status"].includes(action)) float("State",json2html(json));
+						if(["refresh","status"].includes(action)) float(action,json2html(json));
 					}).fail(function( jqXHR, textStatus, error ) {
 				   		if(jqXHR.status === 404) {
 	 						RED.notify(node._(nodeName+" signal not deployed"),"error");

@@ -1,7 +1,7 @@
 const compareArrays = require('./compareArrays.js')
 const filterArray = require('./filterArray.js')
 
-const 	compareTopicsNew = (source, target) => target.filter(s => undefined == source.find(t => s.topic == t.topic && s.partition == t.partition))
+const compareTopicsNew = (source, target) => target.filter(s => undefined === source.find(t => s.topic === t.topic && s.partition === t.partition))
 
 function Metadata (broker, logger = new (require('node-red-contrib-logger'))('Metadata')) {
   this.broker = broker
@@ -14,11 +14,11 @@ function Metadata (broker, logger = new (require('node-red-contrib-logger'))('Me
   this.startRefresh = this.startRefreshFunction.bind(this)
   this.stopRefresh = this.stopRefreshFunction.bind(this)
   this.history = []
-  const _this=this
-  broker.onUp(()=>{
+  const _this = this
+  broker.client.onUp(() => {
     broker.getConnection('Admin',
-      (connection)=>_this.connection=connection,
-      (error)=>_this.logger.error('metadata getConnection error:'+error)
+      (connection) => { this.connection = connection },
+      (error) => _this.logger.error('metadata getConnection error:' + error)
     )
   })
 }
@@ -34,7 +34,7 @@ Metadata.prototype.setTopicPartitions = function () {
     const topicDetails = topics[topic]
     for (const partition in topicDetails) { r.push({ topic: topic, partition: partition }) }
   }
-  //	if(this.logger.active) this.logger.send({label: 'Metadata.setTopicPartitions', node:this.broker.id,topics:r});
+  // if(this.logger.active) this.logger.send({label: 'Metadata.setTopicPartitions', node:this.broker.id,topics:r});
   this.topicsPartitionsPrevious = Object.values(this.topicsPartitions)
   this.topicsPartitions = r
 }
@@ -46,7 +46,7 @@ Metadata.prototype.onChange = function (callBack) {
 }
 Metadata.prototype.refreshFunction = function (next) {
   if (this.logger.active) this.logger.send({ label: 'Metadata refresh', node: this.broker.id, connected: this.broker.connected })
-  if (this.broker.isNotAvailable()) return
+  if (this.broker.client.isNotAvailable()) return
   const node = this
   this.broker.adminRequest({
     action: 'listTopics',

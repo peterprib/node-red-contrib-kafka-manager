@@ -2,18 +2,15 @@ const logger = new (require('node-red-contrib-logger'))('Kafka Broker')
 logger.sendInfo('Copyright 2023 Jaroslav Peter Prib')
 const Metadata = require('./Metadata.js')
 const getDataType = require('./getDataType.js')
-const State = require('./state.js')
-const hostAvailable = require('./hostAvailable.js')
+// const State = require('./state.js')
+const HostAvailable = require('./hostAvailable.js')
 const zlib = require('node:zlib')
-const compressionTool = require('compressiontool')
+const CompressionTool = require('compressiontool')
 const kafka = require('kafka-node')
 const AdminConnection = require('./adminConnection.js')
+const ClientConnnection = require('./clientConnection.js')
 require('events').EventEmitter.prototype._maxListeners = 30
-function showStatus () {
-  this.statusText = statusText
-  this.statusfill = statusfill
-  this.status({ fill: this.statusfill, shape: 'ring', text: this.statusText })
-}
+/*
 function processData (node, message, callFunction) {
   const dataType = getDataType(message.value)
   switch (dataType) {
@@ -35,13 +32,13 @@ function processData (node, message, callFunction) {
       sendMessage2Nodered(node, message)
   }
 }
-
+*/
 function sendMsg (node, message) {
-  if (message.value == null) return //	seems to send an empty on connect if no messages waiting
+  if (message.value == null) return // seems to send an empty on connect if no messages waiting
   if (node.compressionType && node.compressionType !== 'none') {
     if (!node.compressor) {
-      node.compressor = new compressionTool()
-      node.compressor[node.compressionType]
+      const compressorTool = new CompressionTool()
+      node.compressor = compressorTool[node.compressionType]
     }
     node.compressor.decompress(message.value,
       (data) => {
@@ -49,7 +46,8 @@ function sendMsg (node, message) {
         sendMsgPostDecompose(node, message)
       },
       (err) => {
-        if ((node.compressionError++) == 1) {
+        if ((node.compressionError++) === 1) {
+          logger.error({ label: 'compression failure', error: err })
           node.warn('decompression failure(s)')
         }
         sendMsgPostDecompose(node, message)
@@ -77,12 +75,12 @@ function sendMsgPostDecompose (node, message) {
   try {
     if (!node.ready) {
       node.ready = true
-      node.status({	fill: 'green',	shape: 'ring', text: 'Ready' })
-      if (message.value == null) return //	seems to send an empty on connect in no messages waiting
+      node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
+      if (message.value == null) return // seems to send an empty on connect in no messages waiting
     }
     if (node.timedout) {
       node.timedout = false
-      node.status({	fill: 'green', shape: 'ring', text: 'Ready' })
+      node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
     }
     const dataType = getDataType(message.value)
     switch (dataType) {
@@ -104,7 +102,7 @@ function sendMsgPostDecompose (node, message) {
         sendMessage2Nodered(node, message)
     }
     if (node.closeOnEmptyQ &&
-    message.offset == (message.highWaterOffset - 1)) {
+    message.offset === (message.highWaterOffset - 1)) {
       if (logger.active) logger.send({ label: 'sendmsg', node: node.id, action: 'closing consumer as q empty' })
       node.log('consumer q empty so closing')
       node.consumer.close(true, function (err, message) {
@@ -154,8 +152,7 @@ function sendMessage2Nodered (node, message) {
   })
 }
 function getClient () {
-  this.testCanConnect()
-  return this.client
+  return new ClientConnnection(this)
 }
 function testCanConnect () {
   if (this.hostState.isNotAvailable()) throw Error('host not available')
@@ -181,7 +178,7 @@ module.exports = function (RED) {
   function KafkaBrokerNode (n) {
     RED.nodes.createNode(this, n)
     try {
-      const node = Object.assign(this, { hosts: [] }, n, {
+      const node = Object.assign(this, { hosts: [], Kafka: kafka }, n, {
         adminRequest: (request) => {
           if (logger.active) logger.send({ label: 'adminRequest', action: request.action, properties: Object.keys(request) })
           if (!request.action) throw Error('action not provided')
@@ -192,7 +189,7 @@ module.exports = function (RED) {
         },
         getConnection: (type, okCallback, errorCallback) => {
           const KafkaType = kafka[type]
-          const connection = new KafkaType(node.client)
+          const connection = new KafkaType(node.client.connection)
           connection.on('error', function (ex) {
             if (logger.active) logger.send({ label: ' getConnection on.error', type: type, node: node.id, error: ex.message })
             errorCallback(node.getRevisedMessage(ex.message))
@@ -202,33 +199,11 @@ module.exports = function (RED) {
             okCallback(connection)
           })
         },
-        getClient: getClient.bind(this),
+        getClient: () => new ClientConnnection(this),
         hostsCombined: [],
         sendMsg: sendMsg.bind(this),
         testCanConnect: testCanConnect.bind(this)
       })
-      this.state = new State(this)
-      this.state
-        .onDown(() => {
-          logger.error({ label: 'down', id: node.id, name: node.name })
-        }).onUp(() => {
-          logger.info({ label: 'up', id: node.id, name: node.name })
-        }).setDownAction(() => {
-          node.client.close(() => { node.down() })
-        }).setUpAction(() => {
-          if (logger.active) logger.send({ label: 'clientConnect', node: node.id, name: node.name })
-          node.client = node.getKafkaClient()
-          node.client.on('connect', function () {
-            logger.info({ label: 'connectKafka.client.on.connect', node: node.id, name: node.name })
-          })
-          node.client.on('brokersChanged', function () {
-            logger.info({ label: 'connectKafka.client.on.brokersChanged', node: node.id, name: node.name })
-          })
-          node.client.on('ready', function () {
-            logger.info({ label: 'client.on.ready', node: node.id, name: node.name })
-            node.available()
-          })
-        })
       if (node.hostsEnvVar) {
         if (node.hostsEnvVar in process.env) {
           try {
@@ -251,7 +226,7 @@ module.exports = function (RED) {
         node.hosts.push({ host: node.host, port: node.port })
       }
       node.hostsCombined = node.hostsCombined.concat(node.hosts)
-      if (node.hostsCombined.length == 0) throw Error('No hosts')
+      if (node.hostsCombined.length === 0) throw Error('No hosts')
       logger.send({ hosts: node.hostsCombined })
       node.kafkaHost = node.hostsCombined.map((r) => r.host + ':' + r.port).join(',')
       node.getKafkaDriver = () => kafka
@@ -274,7 +249,7 @@ module.exports = function (RED) {
             if (node.tls) {
               node.tlsNode = RED.nodes.getNode(node.tls)
               if (!node.tlsNode) throw Error('tls configuration not found')
-              //      	  	      Object.assign(options.sslOptions,node.tlsNode.credentials);
+              //        Object.assign(options.sslOptions,node.tlsNode.credentials);
               node.tlsNode.addTLSOptions(options.sslOptions)
               if (logger.active) logger.send({ label: 'getKafkaClient sslOptions', properties: Object.keys(options.sslOptions) })
             }
@@ -291,7 +266,7 @@ module.exports = function (RED) {
           }
         }
         if (logger.active) logger.send({ label: 'getKafkaClient', options: Object.assign({}, options, options.sslOptions ? { sslOptions: '***masked***' } : null) })
-        return ((node.connectViaZookeeper || false) == true)
+        return ((node.connectViaZookeeper || false) === true)
           ? new kafka.Client(options)
           : new kafka.KafkaClient(options)
       }
@@ -300,33 +275,37 @@ module.exports = function (RED) {
         return err
       }
       node.setConsumerProperties = setConsumerProperties
+      node.hostState = new HostAvailable(node.hosts, node.checkInterval * 1000)
+      node.onDown = node.hostState.onDown
+      node.onUp = node.hostState.onUp
+      this.client = node.getClient()
+      node.hostState
+        .onDown(() => {
+          node.log('host state change down ')
+          if (node.client.isAvailable()) node.client.forceDown()
+        }).onUp(() => {
+          node.log('host state change up')
+          node.client.setUp()
+        })
+      node.metadata = new Metadata(node, logger)
+      node.adminConnection = new AdminConnection(node)
+      node.client
+        .onUp(() => node.adminConnection.setUp())
+        .onDown(() => node.adminConnection.setDown())
+        .onUp(node.metadata.startRefresh.bind(node.metadata))
+        .onDown(node.metadata.stopRefresh.bind(node.metadata))
+      node.onChangeMetadata = node.metadata.onChange.bind(node.metadata)
+      node.metadataRefresh = node.metadata.refresh.bind(node.metadata)
+      node.getTopicsPartitions = node.metadata.getTopicsPartitions.bind(node.metadata)
       node.close = function (removed, done) {
         try {
           if (done) node.whenDown(done)
           node.setDown()
         } catch (ex) {
           logger.sendErrorAndStackDump(ex.message, ex)
+          node.forceDown()
         }
       }
-      node.metadata = new Metadata(node, logger)
-      node.onUp(node.metadata.startRefresh.bind(node.metadata))
-        .onDown(node.metadata.stopRefresh.bind(node.metadata))
-      node.onChangeMetadata = node.metadata.onChange.bind(node.metadata)
-      node.metadataRefresh = node.metadata.refresh.bind(node.metadata)
-      node.getTopicsPartitions = node.metadata.getTopicsPartitions.bind(node.metadata)
-      node.hostState = new hostAvailable(node.hosts, node.checkInterval * 1000)
-      node.hostState
-        .onDown(() => {
-          node.log('state change down')
-          node.setDown()
-        }).onUp(() => {
-          node.log('state change up')
-          node.setUp()
-        })
-      node.adminConnection = new AdminConnection(node)
-      node.state
-        .onUp(() => node.adminConnection.setUp())
-        .onDown(() => node.adminConnection.setDown())
     } catch (ex) {
       this.status({ fill: 'red', shape: 'ring', text: ex.toString() })
       logger.sendErrorAndStackDump(ex.message, ex)

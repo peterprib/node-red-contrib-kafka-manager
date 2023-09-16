@@ -37,10 +37,10 @@ module.exports = function (RED) {
             node.log('state changed to up, resume issued')
             node.resume()
           }
-          node.status({ fill: 'green', shape: 'ring', text: 'active' })
-        })
-        .onDown(() => node.status({ fill: 'red', shape: 'ring', text: 'down' }))
-        .setUpAction(() => {
+          node.status({ fill: 'green', shape: 'ring', text: 'ready' })
+        }).onDown(() => {
+          node.status({ fill: 'red', shape: 'ring', text: 'down' })
+        }).setUpAction(() => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
           node.messageCount = 0
           const kafka = node.brokerNode.getKafkaDriver()
@@ -92,11 +92,12 @@ module.exports = function (RED) {
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
       node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
-      node.brokerNode.onUp(() => {
-        node.status({ fill: 'red', shape: 'ring', text: 'client down' })
+      node.brokerNode.client.onUp(() => {
+        node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
         node.setUp()
       }).onDown(() => {
-        node.setStatus('broker down', 'red')
+        if (node.isAvailable()) node.forceDown()
+        node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
       })
       node.on('close', function (removed, done) {
         if (logger.active) logger.send({ label: 'close', node: node.id, name: node.name })
@@ -154,6 +155,11 @@ module.exports = function (RED) {
       node.testUp()
       const error = node.brokerNode.metadataRefresh()
       done(null, error)
-    }
+    },
+    status: (RED, node, done) => done({
+      node: node.getState(),
+      client: node.brokerNode.client.getState(),
+      host: node.brokerNode.hostState.getState()
+    })
   })
 }

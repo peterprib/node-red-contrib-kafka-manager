@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+/* global it, describe */
 const assert = require('assert')
 const State = require('../kafkaManager/state.js')
 const showOn = (message = 'onUp', done) => {
@@ -199,10 +199,10 @@ describe('state', function () {
     let sequence = ''
     const expectedSequence = ',onUp,whenup1,setTimeout,whenup2,beforeDown1,onIdle,downAction'
     const state = new State()
-    state.setUpAction((upDone) =>{console.log('up action'); upDone() })
+    state.setUpAction((upDone) => { console.log('up action'); upDone() })
       .setUpOnUpQDepth(0).setIdleTime(1000)
       .onIdle((idleDone) => {
-        console.log('onIdle: '+sequence)
+        console.log('onIdle: ' + sequence)
         sequence += ',onIdle'
         idleDone()
       }).onDown(() => {
@@ -230,5 +230,25 @@ describe('state', function () {
       })
     }, 800)
     console.log('end script')
-  }).timeout(4000);
+  }).timeout(4000)
+  it('setUpFail upFailedAndClearQ', function (done) {
+    const state = new State()
+    const testMessage = 'test message'
+    let test = ''
+    state.setUpAction((done) => { state.upFailedAndClearQ(testMessage) })
+    state.setDownAction((done) => { test += ',setDownAction'; done() })
+      .onDown(() => { test += ',onDown' })
+    state.whenUp(() => { done('fail whenup1') })
+    state.whenUp({
+      call: () => done('fail whenup4'),
+      onDisgard: (message) => {
+        if (message === testMessage) {
+          console.log(test)
+          done()
+        } else done('wrong message: ' + message)
+      }
+    })
+    state.whenUp(() => { done('fail whenup3') })
+    state.setUp()
+  })
 })

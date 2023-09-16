@@ -1,38 +1,47 @@
-const State = require('./state.js');
-function ClientConnnection(brokerNode) {
-    this.brokerNode=brokerNode
-    this.state=new State(this)
-    const _this=this
-    this.state
-    .setDownAction(()=>{
-        _this.connection.close(()=>_this.down())
-    }).setUpAction(()=>{
+const ProcesStack = require('./processStack.js')
+const State = require('./state.js')
+function ClientConnnection (brokerNode, logger = new (require('node-red-contrib-logger'))('ClientConnnection')) {
+  this.brokerNode = brokerNode
+  this.logger = logger
+  this.state = new State(this)
+  this.brokersChanged = (new ProcesStack()).setRunNext()
+  const _this = this
+  this.state
+    .setDownAction((down) => {
+      if (logger.active) logger.send({ label: 'setDownAction' })
+      if (_this.connection) this.connection.close(() => down())
+      down()
+    }).setUpAction((up) => {
+      if (logger.active) logger.send({ label: 'setUpAction' })
+      try {
         _this.connection = _this.brokerNode.getKafkaClient()
+        _this.connection.on('error', function (error) {
+          if (logger.active) logger.send({ label: 'setUpAction on.error', error: error })
+          _this.upFailedAndClearQ(error)
+        })
         _this.connection.on('ready', function () {
-            _this.available()
+          if (logger.active) logger.send({ label: 'setUpAction on.ready' })
+          up()
         })
-        if(this.connect)
-            _this.connection.on('connect', function () {
-                this.connect.callFunction(...this.brokersChanged.args)
-            })
-        if(this.brokersChanged)
-            _this.connection.on('brokersChanged', function () {
-                this.brokersChanged.callFunction(...this.brokersChanged.args)
-            })
+        if (this.connectAction) {
+          if (logger.active) logger.send({ label: 'setUpAction on.connect' })
+          _this.connection.on('connect', function () {
+            this.connectAction.callFunction(...this.brokersChanged.args)
+          })
+        }
+        _this.connection.on('brokersChanged', function () {
+          if (logger.active) logger.send({ label: 'setUpAction on.brokersChanged' })
+          this.brokersChanged.run()
+        })
+      } catch (ex) {
+        if (logger.active) logger.send({ label: 'setUpAction error', error: ex.message })
+        _this.upFailedAndClearQ(ex.message)
+      }
     })
+  this.brokerNode.onDown(this.forceDown.bind(this))
+  return this
 }
-ClientConnnection.prototype.onBrokersChanged = function(callFunction,...args) {
-    this.brokersChanged={callFunction:callFunction,args:args}
-    if(_this.isAvailable())
-        _this.connection.on('brokersChanged', function () {
-            this.brokersChanged.callFunction(...this.brokersChanged.args)
-        })
+ClientConnnection.prototype.onBrokersChanged = function (callFunction, ...args) {
+  this.brokersChanged.add(callFunction, ...args)
 }
-ClientConnnection.prototype.onConnect = function(callFunction,...args) {
-    this.connect={callFunction:callFunction,args:args}
-    if(_this.isAvailable())
-        _this.connection.on('brokersChanged', function () {
-            this.connect.callFunction(...this.brokersChanged.args)
-        })
-}
-module.exports = ClientConnnection;
+module.exports = ClientConnnection
