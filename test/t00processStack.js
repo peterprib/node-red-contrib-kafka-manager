@@ -106,7 +106,7 @@ describe('ProcessStack', function () {
       const test = 0; const expected = 0
       const stack = new ProcessStack()
       stack.runAsync(() => {
-        console.log('end');
+        console.log('end')
         if (test === expected) done()
         else done('failed expected: ' + expected + ' result: ' + test)
       })
@@ -116,7 +116,7 @@ describe('ProcessStack', function () {
       const stack = new ProcessStack()
         .add((next) => { console.log(1); test += 1; next() })
       stack.runAsync(() => {
-        console.log('end');
+        console.log('end')
         if (test === expected) done()
         else done('failed expected: ' + expected + ' result: ' + test)
       })
@@ -154,7 +154,7 @@ describe('ProcessStack', function () {
       const test = 0; const expected = 0
       const stack = new ProcessStack()
       stack.runAsyncShift(() => {
-        console.log('end');
+        console.log('end')
         if (test === expected) done()
         else done('failed expected: ' + expected + ' result: ' + test)
       })
@@ -164,7 +164,7 @@ describe('ProcessStack', function () {
       const stack = new ProcessStack()
         .add((next) => { console.log(1); test += 1; next() })
       stack.runAsyncShift(() => {
-        console.log('end');
+        console.log('end')
         if (test === expected) done()
         else done('failed expected: ' + expected + ' result: ' + test)
       })
@@ -197,4 +197,76 @@ describe('ProcessStack', function () {
       })
     })
   })
+})
+
+describe('runSequentiallyShift', function () {
+  it('zero entries', function (done) {
+    const test = 0; const expected = 0
+    const stack = new ProcessStack()
+    stack.setSequentiallyShift().run(() => {
+      console.log('end')
+      if (test === expected) done()
+      else done('failed expected: ' + expected + ' result: ' + test)
+    })
+  })
+
+  it('three entries', function (done) {
+    let test = 0; const expected = 1 + 2 + 3
+    const stack = new ProcessStack()
+      .add((next) => { console.log(1); test += 1 })
+      .add((next) => { console.log(2); test += 2 })
+      .add((next) => { console.log(3); test += 3 })
+    stack.setSequentiallyShift().run(() => {
+      console.log('end')
+      if (test === expected) done()
+      else done('failed expected: ' + expected + ' result: ' + test)
+    })
+  })
+})
+
+describe('runSequentiallyPop', function () {
+  it('zero entries', function (done) {
+    const test = 0; const expected = 0
+    const stack = new ProcessStack()
+    stack.setSequentiallyPop().run(() => {
+      console.log('end')
+      if (test === expected) done()
+      else done('failed expected: ' + expected + ' result: ' + test)
+    })
+  })
+
+  it('three entries', function (done) {
+    let test = 0; const expected = 1 + 2 + 3
+    const stack = new ProcessStack()
+      .add((next) => { console.log(1); test += 1 })
+      .add((next) => { console.log(2); test += 2 })
+      .add((next) => { console.log(3); test += 3 })
+    stack.setSequentiallyPop().run(() => {
+      console.log('end')
+      if (test === expected) done()
+      else done('failed expected: ' + expected + ' result: ' + test)
+    })
+  })
+})
+
+describe('setActionOnMax', function () {
+  it('three entries', function (done) {
+    let test = 0; const expected = 1 + 2 + 3
+    const stack = new ProcessStack()
+      .setSequentiallyPop()
+      .setMaxDepth(2)
+    stack
+      .add(() => { console.log(1); test += 1 })
+      .add(() => { console.log(2); test += 2 })
+      .add(() => { console.log(3); test += 3 })
+      .add(() => { console.log(4); test += 4 })
+      .add(() => {
+        console.log('last add');
+        if (test === expected) done()
+        else done('failed expected: ' + expected + ' result: ' + test)
+      })
+  })
+})
+
+describe('setActionOnEmpty', function () {
 })
