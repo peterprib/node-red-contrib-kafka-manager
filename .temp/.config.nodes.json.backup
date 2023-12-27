@@ -1,15 +1,13 @@
 {
     "node-red": {
         "name": "node-red",
-        "version": "3.0.2-git",
+        "version": "3.1.0-git",
         "local": false,
         "user": false,
         "nodes": {
             "junction": {
                 "name": "junction",
-                "types": [
-                    "junction"
-                ],
+                "types": [],
                 "enabled": true,
                 "local": false,
                 "user": false,
@@ -94,6 +92,17 @@
                 "user": false,
                 "module": "node-red",
                 "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\90-comment.js"
+            },
+            "global-config": {
+                "name": "global-config",
+                "types": [
+                    "global-config"
+                ],
+                "enabled": true,
+                "local": false,
+                "user": false,
+                "module": "node-red",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\@node-red\\nodes\\core\\common\\91-global-config.js"
             },
             "unknown": {
                 "name": "unknown",
@@ -419,7 +428,7 @@
     "node-red-contrib-logger": {
         "name": "node-red-contrib-logger",
         "version": "0.0.6",
-        "local": false,
+        "local": true,
         "user": false,
         "nodes": {
             "loggerNode": {
@@ -428,10 +437,235 @@
                     "Logger"
                 ],
                 "enabled": true,
-                "local": false,
+                "local": true,
                 "user": false,
                 "module": "node-red-contrib-logger",
-                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\node_modules\\node-red-contrib-logger\\loggerNode.js"
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-logger\\loggerNode.js"
+            }
+        }
+    },
+    "node-red-contrib-kafka-manager": {
+        "name": "node-red-contrib-kafka-manager",
+        "version": "0.7.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "kafkaAdmin": {
+                "name": "kafkaAdmin",
+                "types": [
+                    "Kafka Admin"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaAdmin.js"
+            },
+            "kafkaBroker": {
+                "name": "kafkaBroker",
+                "types": [
+                    "Kafka Broker"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaBroker.js"
+            },
+            "kafkaCommit": {
+                "name": "kafkaCommit",
+                "types": [
+                    "Kafka Commit"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaCommit.js"
+            },
+            "kafkaConsumer": {
+                "name": "kafkaConsumer",
+                "types": [
+                    "Kafka Consumer"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaConsumer.js"
+            },
+            "kafkaConsumerGroup": {
+                "name": "kafkaConsumerGroup",
+                "types": [
+                    "Kafka Consumer Group"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaConsumerGroup.js"
+            },
+            "kafkaOffset": {
+                "name": "kafkaOffset",
+                "types": [
+                    "Kafka Offset"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaOffset.js"
+            },
+            "kafkaProducer": {
+                "name": "kafkaProducer",
+                "types": [
+                    "Kafka Producer"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaProducer.js"
+            },
+            "kafkaRollback": {
+                "name": "kafkaRollback",
+                "types": [
+                    "Kafka Rollback"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-kafka-manager",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-kafka-manager\\kafkaManager\\kafkaRollback.js"
+            }
+        }
+    },
+    "node-red-contrib-prib-functions": {
+        "name": "node-red-contrib-prib-functions",
+        "version": "0.18.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "append": {
+                "name": "append",
+                "types": [
+                    "append"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\append\\append.js"
+            },
+            "dataAnalysis": {
+                "name": "dataAnalysis",
+                "types": [
+                    "Data Analysis"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\dataAnalysis\\dataAnalysis.js"
+            },
+            "hostAvailable": {
+                "name": "hostAvailable",
+                "types": [
+                    "Host Available"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\hostAvailable.js"
+            },
+            "levenshteinDistance": {
+                "name": "levenshteinDistance",
+                "types": [
+                    "Levenshtein Distance"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\levenshteinDistance\\levenshteinDistanceNode.js"
+            },
+            "load-injector": {
+                "name": "load-injector",
+                "types": [
+                    "Load Injector"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\load-injector.js"
+            },
+            "matrix": {
+                "name": "matrix",
+                "types": [
+                    "matrix"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\matrix\\matrixNode.js"
+            },
+            "monitorflow": {
+                "name": "monitorflow",
+                "types": [
+                    "Monitor Flow"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\monitor\\monitorflow.js"
+            },
+            "os": {
+                "name": "os",
+                "types": [
+                    "os"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\nodejs\\os.js"
+            },
+            "spawnProcess": {
+                "name": "spawnProcess",
+                "types": [
+                    "Spawn Process"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\spawnProcess\\spawnProcess.js"
+            },
+            "test": {
+                "name": "test",
+                "types": [
+                    "test"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\testing\\test.js"
+            },
+            "transform": {
+                "name": "transform",
+                "types": [
+                    "transform"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-prib-functions",
+                "file": "C:\\Users\\peter\\source\\repos\\node-red-contrib-kafka-manager\\.temp\\node_modules\\node-red-contrib-prib-functions\\transform\\transform.js"
             }
         }
     }

@@ -7,6 +7,8 @@ const evalInFunction = require('./evalInFunction.js')
 const State = require('./state.js')
 const zlib = require('node:zlib')
 const compressionTool = require('compressiontool')
+const noderedBase=require("node-red-contrib-noderedbase");
+
 function showStatus (statusText, statusfill) {
   this.statusText = statusText
   this.statusfill = statusfill
@@ -221,6 +223,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, n)
     try {
       const node = Object.assign(this, n, {
+        payload:"payload",
+        payloadType: "msg",
         compressionError: 0,
         deadletters: 0,
         errorDiscarded: 0,
@@ -244,6 +248,9 @@ module.exports = function (RED) {
           partitionerType: this.partitionerType || 0
         }
       })
+      node._base=new noderedBase(RED,node);
+      this._base.setSource("payload")
+
       this.state = new State(this)
       this.state
         .onUp(() => {
@@ -336,18 +343,19 @@ module.exports = function (RED) {
         node.compressor[node.compressionType]()
         node.processMessage = this.processMessageCompression
       }
+
       if (node.convertFromJson) {
-        node.getMessage = (RED, node, msg) => JSON.stringify(msg.payload)
+        node.getMessage = (RED, node, msg) => JSON.stringify(node.getPayload(msg))
       } else {
         node.getMessage = (RED, node, msg) => {
-          const data = msg.payload
+          const data = node.getPayload(msg)
           if (data == null) return null
           const dataType = typeof data
           if (['string', 'number'].includes(dataType) ||
-            data instanceof Buffer) return msg.payload
-          if (dataType === 'object') return JSON.stringify(msg.payload)
+            data instanceof Buffer) return data
+          if (dataType === 'object') return JSON.stringify(data)
           if (data.buffer) { return Buffer.from(data.buffer) }
-          throw Error('unknow data type: ' + dataType)
+          throw Error('unknown data type: ' + dataType)
         }
       }
       if (logger.active) logger.send({ label: 'kafkaProducer', node: node.id, getKey: node.getKey.toString() })

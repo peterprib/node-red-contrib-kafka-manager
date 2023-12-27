@@ -277,6 +277,7 @@ module.exports = function (RED) {
       node.setConsumerProperties = setConsumerProperties
       node.hostState = new HostAvailable(node.hosts, node.checkInterval * 1000)
       node.onDown = node.hostState.onDown
+      node.setDown = node.hostState.setDown
       node.onUp = node.hostState.onUp
       this.client = node.getClient()
       node.hostState
@@ -299,11 +300,10 @@ module.exports = function (RED) {
       node.getTopicsPartitions = node.metadata.getTopicsPartitions.bind(node.metadata)
       node.close = function (removed, done) {
         try {
-          if (done) node.whenDown(done)
-          node.setDown()
+          node.setDown(done)
         } catch (ex) {
           logger.sendErrorAndStackDump(ex.message, ex)
-          node.forceDown()
+          node.forceDown(done)
         }
       }
     } catch (ex) {

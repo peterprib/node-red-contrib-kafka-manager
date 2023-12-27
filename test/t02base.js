@@ -10,6 +10,25 @@ const kafkaOffset = require("../kafkaManager/kafkaOffset.js");
 const kafkaProducer = require("../kafkaManager/kafkaProducer.js");
 const kafkaRollback = require("../kafkaManager/kafkaRollback.js");
 const nodes=[kafkaBroker,kafkaAdmin,kafkaCommit,kafkaConsumer,kafkaConsumerGroup,kafkaOffset,kafkaProducer,kafkaRollback]
+const net = require("net");
+let dummyReader={}
+const dummyKafkaPort = 9093
+before("Starts dummy server", done => {
+	dummyReader.server = net.createServer(socket => {
+		dummyReader.socket = socket;
+		socket.end('goodbye\n');
+	});
+	dummyReader.server.listen(dummyKafkaPort,()=>{
+		console.log('server started on', dummyReader.server.address());
+		done();
+	});
+});
+
+after("Kills dummy server", done => {
+	dummyReader.server.close();
+	dummyReader.socket.destroy();
+	done();
+});
 
 helper.init(require.resolve('node-red'));
 
@@ -34,8 +53,8 @@ const broker={
 	"type" : "Kafka Broker",
 	"name" : "Kafta",
 	"hosts" : [ {
-		"host" : "dummy127.0.0.1",
-		"port" : 9092
+		"host" : "127.0.0.1",
+		"port" : dummyKafkaPort
 	} ],
 	"hostsEnvVar" : "",
 	"connectTimeout" : "100",

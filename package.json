@@ -6,7 +6,8 @@
     "compressiontool": "*",
     "kafka-node": "*",
     "node": ">=0.6.13",
-    "node-red-contrib-logger": "*"
+    "node-red-contrib-logger": ">=0.0.8",
+    "node-red-contrib-noderedbase": ">=0.0.16"
   },
   "optionalDependencies": {
     "snappy": "^6.0.1"
@@ -14,19 +15,13 @@
   "devDependencies": {
     "bcrypt": ">=5.0.0",
     "bl": ">=2.2.1",
-    "eslint": "^8.9.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
     "mocha": "^9.2.0",
     "node-red": "^3.0.2",
     "node-red-node-test-helper": "*",
     "zlib": "*"
   },
   "scripts": {
-    "test": "mocha \"test/t00p*.js\"",
+    "test": "mocha --exit \"test/t01*.js\"",
     "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
   },
   "repository": {

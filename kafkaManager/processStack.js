@@ -2,32 +2,41 @@ const nextTick = require('process').nextTick
 
 class ProcesStack {
   constructor (onError) {
+    this.push=this.add.bind(this)
     this.stack = []
     this.onError = onError
     this.runAction = this.runSequentially
     this.running = false
+    this.isRunnable=()=>true
     this.stopOnError = true
     this.maxDepth = 1000
-    this.runOnDepth = null
-    this.runOnEmpty = null
+    this.ActionOnEmpty = null
     this.concurrent = 11111
     this.maxWait = null
-    this.actionOnMax = this.run.bind(this)
+    this.destructiveStack=false
+    this.setActionOnMax()
     return this
   }
 
   add (callFunction, ...args) {
-    if (typeof callFunction === 'object') {
-      this.stack.push({ callFunction: callFunction, args: args })
-      return this
-    }
-    if (typeof callFunction !== 'function') throw Error('expected function')
-    this.stack.push({ callFunction: callFunction, args: args })
+    this.add2Stack(callFunction,...args)
     if (this.running === true) return this
     if (this.stack.length > this.maxDepth) {
       this.actionOnMax && this.actionOnMax()
     } else {
       this.setWaitOn()
+    }
+    return this
+  }
+  add2Stack (callFunction, ...args) {
+    if (typeof callFunction === 'object') {
+      if(!callFunction.callFunction) throw Error("no callFunction property in "+JSON.stringify(callFunction))
+      if(callFunction.args) callFunction.args = callFunction.args = callFunction.args.concat(args)
+      else callFunction.args = args
+      this.stack.push(callFunction) 
+    } else {
+      if (typeof callFunction !== 'function') throw Error('expected function')
+      this.stack.push({ callFunction: callFunction, args: args })
     }
     return this
   }
@@ -49,6 +58,20 @@ class ProcesStack {
       if (action.onError) action.onError(ex)
       if (onError) onError(ex)
     }
+  }
+
+  clearQ (callFunction) {
+    if(callFunction) {
+      while (this.stack.length){
+        callFunction(this.stack.shift())
+      }
+    }
+    this.stack = []
+    return this
+  }
+
+  getDepth () {
+    return this.stack.length
   }
 
   run (done, ...args) {
@@ -222,8 +245,8 @@ class ProcesStack {
     return this
   }
 
-  setActionOnMax (callFunction) {
-    this.ActionOnMax = callFunction
+  setActionOnMax (callFunction=this.run.bind(this)) {
+    this.actionOnMax = callFunction
     return this
   }
 
@@ -234,7 +257,11 @@ class ProcesStack {
 
   setAsync () { this.run = this.runAsync; return this }
 
-  setAsyncShift () { this.run = this.runAsyncShift; return this }
+  setAsyncShift () {
+    this.destructiveStack=true
+    this.run = this.runAsyncShift
+     return this
+  }
 
   setConcurrent (concurrent) {
     this.concurrent = concurrent
@@ -244,29 +271,42 @@ class ProcesStack {
   setMaxWait (maxWait) { this.maxWait = maxWait; return this }
 
   setMaxDepth (maxDepth) {
-    if (this.runAction === this.runAsyncShift ||
-      this.runAction === this.runNextPop ||
-      this.runAction === this.runSequentiallyPop ||
-    this.runAction === this.runSequentiallyShift
-    ) {
+    if(this.destructiveStack===true){
       this.maxDepth = maxDepth
     } else throw Error('not destructive stack')
     if (!this.maxWait) this.setMaxWait(1000)
-
     return this
   }
 
   setNext () { this.runAction = this.runNext; return this }
 
-  setNextPop () { this.runAction = this.runNextPop; return this }
+  setNextPop () {
+    this.destructiveStack=true
+    this.runAction = this.runNextPop
+    return this
+  }
 
-  setNextShift () { this.runAction = this.runNextShift; return this }
+  setNextShift () {
+    this.destructiveStack=true
+    this.runAction = this.runNextShift
+    return this
+  }
 
+  setRunnableTest (callFunction) { this.isRunnable = callFunction; return this }
+  
   setSequentially () { this.runAction = this.runSequentially; return this }
 
-  setSequentiallyShift () { this.runAction = this.runSequentiallyShift; return this }
+  setSequentiallyShift () {
+    this.destructiveStack=true
+    this.runAction = this.runSequentiallyShift
+    return this
+  }
 
-  setSequentiallyPop () { this.runAction = this.runSequentiallyPop; return this }
+  setSequentiallyPop () {
+    this.destructiveStack=true
+    this.runAction = this.runSequentiallyPop
+    return this
+  }
 
   setWaitOff () {
     if (this.waitTimer) {
@@ -281,6 +321,7 @@ class ProcesStack {
     const _this = this
     this.waitTimer = setInterval(() => {
       try {
+        if(!_this.isRunnable()) return
         _this.run()
       } catch (ex) {
         console.error(ex)

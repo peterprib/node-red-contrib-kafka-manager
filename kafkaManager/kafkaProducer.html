@@ -63,6 +63,11 @@
         <input type="hidden" id="node-input-key-type">
     </div>
     <div class="form-row">
+        <label for="node-input-payload"><i class="fa fa-tag"></i> Key </label>
+        <input type="text" id="node-input-payload" placeholder="key">
+        <input type="hidden" id="node-input-payload-type">
+    </div>
+    <div class="form-row">
         <label for="node-input-partition"><i class="fa fa-tag"></i> Partition </label>
         <input type="number" min="0" max="1000" step="1" id="node-input-partition">
     </div>
@@ -139,6 +144,8 @@ function json2html(obj){
             partitionerType: {value:0,required:true},
             key: {required:false},"keyType":{required:false,default:"str"},
             partition: {value:0,required:true},
+            payload: {value:"payload", validate: RED.validators.typedInput("payloadType")},
+            payloadType: {value:"msg"},
             attributes: {value:0},
             connectionType: {value:"Producer",required:true},
             convertFromJson: {value: false, required: true},
@@ -158,6 +165,12 @@ function json2html(obj){
         },
         oneditprepare: function() {
             const node=this;
+            $("#node-input-payloadType").val(this.payloadType||"msg");
+            $("#node-input-payload").typedInput({
+                type:"msg",
+                types:["msg", "flow","global","env","str"],
+                typeField: "#node-input-payloadType"
+            });
             $("#node-input-msgOveride").typedInput({type:'bool',types:['bool']});
             $("#node-input-msgTopicOveride").typedInput({type:'bool',types:['bool']});
         	if(!this.connectionType) this.connectionType="Producer";

@@ -4,7 +4,7 @@ function ClientConnnection (brokerNode, logger = new (require('node-red-contrib-
   this.brokerNode = brokerNode
   this.logger = logger
   this.state = new State(this)
-  this.brokersChanged = (new ProcesStack()).setRunNext()
+  this.brokersChanged = (new ProcesStack()).setNext()
   const _this = this
   this.state
     .setDownAction((down) => {
@@ -21,7 +21,7 @@ function ClientConnnection (brokerNode, logger = new (require('node-red-contrib-
         })
         _this.connection.on('ready', function () {
           if (logger.active) logger.send({ label: 'setUpAction on.ready' })
-          up()
+          up&&up()
         })
         if (this.connectAction) {
           if (logger.active) logger.send({ label: 'setUpAction on.connect' })
