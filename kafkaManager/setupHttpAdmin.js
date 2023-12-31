@@ -19,7 +19,7 @@ function setupHttpAdmin (RED, nodeType, actions) {
         if (!(action in actions)) throw Error('unknown action: ' + action)
         const callFunction = actions[action].bind(node)
         callFunction(RED, node, (data, err) => {
-          if (logger.active) logger.error({ label: 'setupHttpAdmin', data: data, error: err})
+          if (logger.active) logger.info({ label: 'setupHttpAdmin', data: data, error: err})
           adminRequest(node, res, data, err)
         },
         req.params, req.body

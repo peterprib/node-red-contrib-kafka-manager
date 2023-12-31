@@ -60,13 +60,36 @@ class ProcesStack {
     }
   }
 
-  clearQ (callFunction) {
+clearQ (done,callFunction,...args) {
     if(callFunction) {
-      while (this.stack.length){
-        callFunction(this.stack.shift())
-      }
+      this.clearQNextShift (done, callFunction, ...args)
+    } else {
+      this.stack = []
+      done();
     }
-    this.stack = []
+    return this
+}
+
+clearQNextShift (done, callFunction, ...args) {
+    const _this = this
+    this.clearQNextFramework(() => _this.stack.length <= 0, () => _this.stack.shift(),done, callFunction, ...args)
+  }
+
+clearQNextFramework (hasFinished, getNext, done, callFunction, ...args) {
+    if (hasFinished()) {
+      done && done()
+      return this
+    }
+    const action = getNext()
+    try {
+      const _this = this
+      callFunction(() => _this.clearQNextFramework(hasFinished, getNext, done, callFunction, ...args), action ,...action.args.concat(...args))
+    } catch (ex) {
+      if (action.onError) {
+        action.onError(ex)
+      } else console.error(ex)
+      this.clearQNextFramework(hasFinished, getNext, done, ...args)
+    }
     return this
   }
 
@@ -74,7 +97,7 @@ class ProcesStack {
     return this.stack.length
   }
 
-  run (done, ...args) {
+  run (done=(next)=>next&&next(), ...args) {
     this.running = true
     this.runAction(done, ...args)
     this.running = false

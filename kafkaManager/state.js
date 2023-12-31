@@ -100,19 +100,30 @@ State.prototype.callStack = function (stack, ...args) {
   }
   return error
 }
-State.prototype.clearWhenUpQ = function (reason, callFunction, ...args) {
+State.prototype.clearWhenUpQ = function (done=(next)=>next&&next(),reason, callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, clearWhenUpQ')
-  this.waitUp.clearQ((action)=>{
-    try {
-      if (action.onDisgard) action.onDisgard(reason, ...action.args.concat(args))
-      if (callFunction) callFunction(...action.args.concat(args))
-    } catch (ex) {
-      this.logger.error('clearWhenUpQ error: ' + ex.message)
-      this.logger.error(ex.stack)
+  this.waitUp.clearQ(()=>{
+      this.logl1 && this.logl1.warn('state, clearWhenUpQ done')
+      if (this.upOnDownEmptyQ === true) this.setDown(()=>done()) 
+      else done()
+    },
+    (next,action)=>{
+      try {
+        this.logl1 && this.logl1.warn('state, clearWhenUpQ action onDisgard:'+action.onDisgard)
+        if (action.onDisgard) action.onDisgard(reason,
+          next=>{
+            if (callFunction) callFunction(next,...action.args.concat(args))
+            else next()
+          },
+          ...action.args.concat(args))
+        if (callFunction) callFunction(next,...action.args.concat(args))
+        else  next()
+      } catch (ex) {
+        this.logger.error('clearWhenUpQ error: ' + ex.message)
+        this.logger.error(ex.stack)
+      }
     }
-
-  })
-  if (this.upOnDownEmptyQ === true) this.setDown()
+  )
   return this
 }
 State.prototype.down = function (done) {
@@ -472,10 +483,11 @@ State.prototype.up = function (done) {
     this.logl1 && this.logl1.warn('state, already up')
     return this
   }
-  if(this.transitioning.up === false) {
-    if (this.upActionCall) throw Error('not transitioning up')
-    else  this.transitioning.up = true
-  }
+//  if(this.transitioning.up === false) {
+//    if (this.upActionCall) throw Error('not transitioning up')
+//    else  this.transitioning.up = true
+//  }
+  this.transitioning.up = true
   this.logl1 && this.logl1.info('state, onUp run')
   const _this = this
   this.stack.onUp.run(()=>{
@@ -490,16 +502,22 @@ State.prototype.up = function (done) {
   })
   return this
 }
-State.prototype.upFailed = function (error) {
+State.prototype.upFailed = function (error,done) {
   this.logl1 && this.logl1.info('state, upFailed')
-  this.stack.onError.run(error)
-  this.transitioning.up = false
+  this.stack.onError.run(()=>{
+    this.transitioning.up = false
+    done&&done()
+  },error)
   return this
 }
-State.prototype.upFailedAndClearQ = function (error) {
+State.prototype.upFailedAndClearQ = function (error,done) {
   this.logl1 && this.logl1.warn('state, upFailedAndClearQ')
-  this.clearWhenUpQ(error)
-  this.upFailed(error)
+  this.clearWhenUpQ(()=>{
+      this.upFailed(error,done)
+      done&&done()
+    },
+    error
+  )
   return this
 }
 

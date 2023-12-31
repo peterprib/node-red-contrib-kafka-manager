@@ -287,35 +287,40 @@ describe('state', function () {
   }).timeout(4000)
   it('setUpFail upFailedAndClearQ', function (done) {
     const state = new State()
+    .setLogLevel1()
     const testMessage = 'test message'
     let test = ''
     state.setUpAction((next) => { 
-      state.upFailedAndClearQ(testMessage)
-      next()
+      test += ',setUpAction'; console.log(test)
+      state.upFailedAndClearQ(testMessage,next)
+//      next()
     })
-    state.setDownAction((next) => { test += ',setDownAction'; next() })
-      .onDown((next) => { test += ',onDown' ; next()})
+    state.setDownAction((next) => { test += ',setDownAction'; console.log(test); next() })
+      .onDown((next) => { test += ',onDown'; console.log(test) ; next()})
     state.whenUp((next) => { done('fail whenup1') ; next()})
     state.whenUp({
       callFunction: (next) => {
-        done('fail whenup4')
+        done('fail whenup2')
         next()
       },
-      onDisgard: (message) => {
-        if (message === testMessage) {
-          console.log(test)
-          done()
-        } else done('wrong message: ' + message)
+      onDisgard: (message,next) => {
+        test += ',whenUp2 onDisgard'; console.log(test)
+        if (message === testMessage) done()
+        else done('wrong message: ' + message)
+        next()
       }
     })
     state.whenUp((next) => { done('fail whenup3'); next() })
-    state.setUp()
+    state.setUp((done)=>{
+      test += ',setUp'; console.log(test); next()
+    })
     console.log("***setUpFail upFailedAndClearQ wait on done")
   })
   it('on Idle', function (done) {
     let sequence = ''
     const expectedSequence = ',upAction,onUp,whenup1,beforeDown1,downAction,onDown,whenDown,setTimeout,onIdle,whenDownTimeout'
-    const state = new State().setLogLevel1()
+    const state = new State()
+//    .setLogLevel1()
     state.setUpAction((next) => {
       sequence += ',upAction'; console.log(sequence); 
       next() 
@@ -349,9 +354,6 @@ describe('state', function () {
       })
       next()
     })
-//    state.setUp((next) => { 
-//      sequence += ',setUp'; console.log(sequence); next() 
-//    })
     console.log('*** fire when up in 800')
     setTimeout(() => {
       console.log('*** 800 has past')

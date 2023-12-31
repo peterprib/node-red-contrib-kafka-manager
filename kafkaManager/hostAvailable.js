@@ -2,7 +2,8 @@ const net = require('net')
 const State = require('./state.js')
 
 // host=(host:<ip/uri>,port:<number>)
-function hostAvailable (host, checkInterval = 60000) {
+function hostAvailable (host, checkInterval = 60000, debug) {
+  this.debug=debug
   this.testsOutstanding = 0
   this.timeOuts = 0
   this.hosts = host instanceof Array ? host : [host]
@@ -18,35 +19,41 @@ hostAvailable.prototype.test = function () {
   return this
 }
 hostAvailable.prototype.hostUnAvailable = function (host) {
+  this.debug && this.debug('hostAvailable hostUnAvailable '+host)
   if (--this.testsOutstanding > 0) return this
   if (this.isNotAvailable()) return this
-  if (this.hosts.findIndex(host => host.available) < 0) this.setDown()
+  if (this.hosts.findIndex(host => host.available) < 0) {
+    this.debug && this.debug('hostAvailable setDown ')
+    this.setDown()
+  }
   return this
 }
 hostAvailable.prototype.testHost = function (host) {
-//  console.log('testhost '+(host.address||host.host))+":"+host.port)
+  this.debug && this.debug('hostAvailable testhost '+(host.address||host.host)+":"+host.port)
   const _this = this
   if (!host.socket) {
+    this.debug && this.debug('hostAvailable testhot create socket')
     host.socket = new net.Socket()
     host.socket.on('connect', function () {
-      //      console.log('hostAvailable on connect')
+      this.debug && this.debug('hostAvailable on connect')
       host.socket.destroy()
       if (host.available !== true) {
         host.available = true
         if (_this.isNotAvailable()) {
           try {
+            this.debug && this.debug('hostAvailable on connect setup')
             _this.setUp()
           } catch (ex) { }
         }
       }
     }).on('end', function () {
-      //      console.log('hostAvailable on end')
+      this.debug && this.debug('hostAvailable on end')
     }).on('error', function (_err) {
-      //      console.log("hostAvailable on error "+_err)
+      this.debug && this.debug("hostAvailable on error "+_err)
       _this.hostUnAvailable(host)
     }).on('timeout', function () {
       host.socket.destroy()
-      console.log('hostAvailable timeout')
+      this.debug && this.debug('hostAvailable timeout')
       this.timeOuts++
       _this.hostUnAvailable(host)
     }).setTimeout(100)

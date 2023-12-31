@@ -446,7 +446,7 @@ module.exports = function (RED) {
     },
     'Retry Q': (RED, node, done) => {
       if (node.getUpQDepth() === 0) done('Empty Q')
-      node.testNotConnected()
+      node.isNotAvailable()
       node.whenUp(() => {
         done('Processed waiting q')
       })

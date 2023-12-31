@@ -14,19 +14,22 @@ function AdminConnnection (brokerNode, logger = new (require('node-red-contrib-l
   this.logger = logger
   this.state = new State(this)
   const _this = this
-  this.state.setUpAction((up) => {
+  this.state.setUpAction((next) => {
     brokerNode.getConnection('Admin',
       (connection) => {
         _this.connection = connection
-        up()
+        next()
       },
-      (error) => _this.logger.error('AdminConnnection getConnection error:' + error)
+      (error) => {
+        _this.logger.error('AdminConnnection getConnection error:' + error)
+        brokerNode.state.upFailed(error,next)
+      }
     )
-  }).setDownAction((down) => {
+  }).setDownAction((next) => {
     _this.connection.close(false, () => {
       if (_this.logger.active) _this.logger.send({ label: 'AdminConnnection close', node: _this.brokerNode.id })
       delete _this.consumer
-      down()
+      next()
     })
   })
   this.brokerNode.onDown(this.forceDown.bind(this))
