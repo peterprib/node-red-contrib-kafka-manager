@@ -253,11 +253,13 @@ module.exports = function (RED) {
 
       this.state = new State(this)
       this.state
-        .onUp(() => {
+        .onUp((next) => {
           node.status({ fill: 'green', shape: 'ring', text: 'Up' })
           node.maxQState = false
-        }).onDown(() => {
+          next()
+        }).onDown((next) => {
           node.status({ fill: 'red', shape: 'ring', text: 'connection down' })
+          next()
         }).onError((error) =>
           node.status({ fill: 'red', shape: 'ring', text: error })
         ).setUpAction(() => {
@@ -308,16 +310,20 @@ module.exports = function (RED) {
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
       node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
       node.brokerNode.hostState
-        .onUp(() => {
+        .onUp((next) => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'broker available' })
-        }).onDown(() => {
+          next()
+        }).onDown((next) => {
           node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
+          next()
         })
-      node.brokerNode.client.onDown(() => {
+      node.brokerNode.client.onDown((next) => {
         node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
-      }).onUp(() => {
+        next()
+      }).onUp((next) => {
         node.status({ fill: 'yellow', shape: 'ring', text: 'broker client up' })
         node.setUp()
+        next()
       })
       if (node.compressionType == null) {
         switch (node.attributes) { // old method conversion

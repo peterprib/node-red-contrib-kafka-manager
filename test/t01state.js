@@ -3,7 +3,7 @@ const assert = require('assert')
 const State = require('../kafkaManager/state.js')
 const { stat } = require('fs')
 const showOn = (done,message = 'onUp', finalDone) => {
-  console.log(done,"showOn "+message)
+  console.log("showOn "+message)
   finalDone && finalDone()
   done()
 }
@@ -52,7 +52,6 @@ describe('state', function () {
     state.onUp(showOn.bind(this), 'onUp')
       .onDown((next) =>{
          done('onDown should not be called')
-         next()
       })
       .up(()=>{
         console.log("up called")
@@ -89,6 +88,20 @@ describe('state', function () {
     state.setUpAction((done) => { test = true; done() })
       .onUp(showOn.bind(this), 'onUp ok')
       .onUp((next) => { if (test) done(); else done('call action no completed') ; next()})
+      .onDown((next) =>{ done('onDown should not be called'); next() })
+      .setUp()
+  })
+  it('upAction error', function (done) {
+    const state = new State()
+    let test
+    state.setUpAction((next,error) => {
+      console.log("call error")
+      error(()=>{
+        state.testDown()
+        done()
+      })
+    })
+      .onUp(showOn.bind(this), 'onUp ok')
       .onDown((next) =>{ done('onDown should not be called'); next() })
       .setUp()
   })
@@ -316,15 +329,15 @@ describe('state', function () {
     })
     console.log("***setUpFail upFailedAndClearQ wait on done")
   })
-  it('on Idle', function (done) {
+  it('on Idle 200', function (done) {
     let sequence = ''
-    const expectedSequence = ',upAction,onUp,whenup1,beforeDown1,downAction,onDown,whenDown,setTimeout,onIdle,whenDownTimeout'
+    const expectedSequence = ',upAction,onUp,whenup1,beforeDown1,downAction,onDown,whenDown,onIdle,setTimeout,upAction,onUp,whenup2,beforeDown1,downAction,onDown,onIdle,whenDownTimeout'
     const state = new State()
 //    .setLogLevel1()
     state.setUpAction((next) => {
       sequence += ',upAction'; console.log(sequence); 
       next() 
-    }).setUpOnUpQDepth(0).setIdleTime(500).onIdle((next) => {
+    }).setUpOnUpQDepth(0).setIdleTime(200).onIdle((next) => {
       sequence += ',onIdle'; console.log(sequence); 
       next()
     }).onDown((next) => {
@@ -345,18 +358,18 @@ describe('state', function () {
         sequence += ',whenDown'; console.log(sequence);
         console.log('*** fire when up in 1000')
         setTimeout(() => {
-          console.log('*** 1000 has past')
+          console.log('*** 1000 has past, whenDownTimeout')
           sequence += ',whenDownTimeout'; console.log(sequence)
           if (sequence === expectedSequence) done()
-          else done('expected:' + expectedSequence + ' actual:' + sequence)
-          nextWhenDown() 
+          else done('\nexpected:' + expectedSequence + '\n  actual:' + sequence)
           }, 1000)
+          nextWhenDown() 
       })
       next()
     })
     console.log('*** fire when up in 800')
     setTimeout(() => {
-      console.log('*** 800 has past')
+      console.log('*** 800 has past, whenup2')
       sequence += ',setTimeout'; console.log(sequence);
       state.whenUp((next) => {
         sequence += ',whenup2'; console.log(sequence);

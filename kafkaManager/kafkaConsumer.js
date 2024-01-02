@@ -60,7 +60,7 @@ module.exports = function (RED) {
         }
       })
       this.state
-        .onUp(() => {
+        .onUp((next) => {
           if (node.paused) {
             node.log('state changed to up and in paused state')
             node.paused()
@@ -68,6 +68,7 @@ module.exports = function (RED) {
             node.log('state changed to up, resume issued')
             node.resume()
           }
+          next()
         }).onDown(() => node.status({ fill: 'red', shape: 'ring', text: 'down' }))
         .setUpAction(() => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
@@ -124,23 +125,29 @@ module.exports = function (RED) {
       node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
 
       this.client = node.brokerNode.getClient()
-      this.client.onUp(() => {
+      this.client.onUp((next) => {
         node.setStatus('client up', 'yellow')
         node.log('client connected, connection')
-        node.setUp()
-      }).onDown(() => {
+        node.setUp(next)
+      }).onDown((next) => {
         node.setStatus('client down', 'red')
         if (node.isAvailable()) node.forceDown()
-      }).beforeDown(() => node.setDown())
+        next()
+      }).beforeDown((next) => {
+        node.setDown(next=>{
+          node.setStatus('client going down', 'red')
+          next()
+        })
+        next()
+      })
       node.setStatus('broker down', 'red')
-      node.brokerNode.hostState.onUp(() => {
+      node.brokerNode.hostState.onUp((next) => {
         node.setStatus('client down', 'red')
-        node.client.setUp()
-      }).onDown(() => {
+        node.client.setUp(next)
+      }).onDown((next) => {
         node.setStatus('broker down', 'red')
-        node.client.forceDown()
-      }).beforeDown(() => node.client.setDown())
-
+        node.client.forceDown(next)
+      }).beforeDown((next) => node.client.setDown(next))
       if (node.regex) {
         node.activeTopics = []
         node.filters = node.topics.map(t => new RegExp(t.topic))

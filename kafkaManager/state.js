@@ -111,7 +111,7 @@ State.prototype.clearWhenUpQ = function (done=(next)=>next&&next(),reason, callF
       try {
         this.logl1 && this.logl1.warn('state, clearWhenUpQ action onDisgard:'+action.onDisgard)
         if (action.onDisgard) action.onDisgard(reason,
-          next=>{
+          ()=>{
             if (callFunction) callFunction(next,...action.args.concat(args))
             else next()
           },
@@ -157,13 +157,20 @@ State.prototype.foundDown = function () {
 }
 State.prototype.forceDown = function (done) {
   this.logl1 && this.logl1.warn('state, forceDown')
-  if (this.available === false) return this
+  this.transitioning.up = false
+  if ( this.transitioning.down !== true && this.available === false) {
+    done && done()
+    return this
+  } 
+  this.transitioning.down = true  
   this.available = false
-  this.stack.setDownDone.run()
   const _this = this
-  this.waitDown.run(()=>{
-    if (_this.upOnDownEmptyQ === true) _this.setDown(done)
-    else done && done()
+  this.stack.setDownDone.run(()=>{
+    this.transitioning.down = false
+    _this.waitDown.run(()=>{
+      if (_this.upOnDownEmptyQ === true) _this.setDown(done)
+      else done && done()
+    })
   })
   return this
 }
@@ -426,7 +433,7 @@ State.prototype.setUpPart2 = function () {
   this.logl1 && this.logl1.info('state, setUpPart2')
   const up = this.up.bind(this)
   if (this.upActionCall) {
-    this.upActionCall.callFunction(up, ...this.upActionCall.args)
+    this.upActionCall.callFunction(up,this.forceDown.bind(this), ...this.upActionCall.args)
   } else up()
   return this
 }

@@ -29,7 +29,7 @@ module.exports = function (RED) {
     try {
       const node = Object.assign(this, n, { connected: false, paused: false, timedout: false })
       this.state
-        .onUp(() => {
+        .onUp((next) => {
           if (node.paused) {
             node.log('state changed to up and in paused state')
             node.paused()
@@ -38,9 +38,11 @@ module.exports = function (RED) {
             node.resume()
           }
           node.status({ fill: 'green', shape: 'ring', text: 'ready' })
-        }).onDown(() => {
+          next()
+        }).onDown((next) => {
           node.status({ fill: 'red', shape: 'ring', text: 'down' })
-        }).setUpAction(() => {
+          next()
+        }).setUpAction((next) => {
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
           node.messageCount = 0
           const kafka = node.brokerNode.getKafkaDriver()
@@ -54,7 +56,7 @@ module.exports = function (RED) {
               return
             }
             node.status({ fill: 'red', shape: 'ring', text: node.brokerNode.getRevisedMessage(err) })
-            node.setDown()
+            node.forceDown()
           })
           node.consumer.on('message', (message) => {
             if (logger.active) logger.send({ label: 'consumerGroup on.message', node: node.id, name: node.name, message: message })
@@ -80,24 +82,26 @@ module.exports = function (RED) {
             node.consumer.pause()
             node.status({ fill: 'red', shape: 'ring', text: 'offsetOutOfRange ' + err.message + ' (PAUSED)' })
           })
+          next()
         })
-        .setDownAction(() => {
+        .setDownAction((next) => {
           if (logger.active) logger.send({ label: 'close', node: node.id, name: node.name })
           node.status({ fill: 'red', shape: 'ring', text: 'Closing' })
           node.consumer.close(false, () => {
             node.status({ fill: 'red', shape: 'ring', text: 'Closed' })
-            node.down()
+            node.down(next)
           })
         })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
       node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
-      node.brokerNode.client.onUp(() => {
+      node.brokerNode.client.onUp((next) => {
         node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
-        node.setUp()
-      }).onDown(() => {
+        node.setUp(next)
+      }).onDown((next) => {
+        node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
         if (node.isAvailable()) node.forceDown()
-        node.status({ fill: 'red', shape: 'ring', text: 'broker client down' })
+        next()
       })
       node.on('close', function (removed, done) {
         if (logger.active) logger.send({ label: 'close', node: node.id, name: node.name })
