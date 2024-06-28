@@ -7,7 +7,8 @@ setIdleTime
 */
 const { runInThisContext } = require('vm')
 const ProcessStack = require('./processStack.js')
-
+let debugFunction=console
+let debug=debugFunction
 function State (node, logger = console) {
   const _this=this
   if (node) {
@@ -16,20 +17,20 @@ function State (node, logger = console) {
   }
   this.logger = logger
   this.stack = {
-    onUp: this.getDoneStack(),
-    onDown: this.getDoneStack(),
+    onUp: this.getDoneStackAvailable(),
+    onDown: this.getDoneStackNotAvailable(),
     beforeUp: this.getDoneStack(),
     beforeDown: this.getDoneStack(),
+    beforeDown: this.getDoneStack(),
     onError: this.getDoneStack(),
-    setUpDone: this.getDoneStack(),
-    setDownDone: this.getDoneStack(),
+    setUpDone: this.getDoneStackAvailable(),
+    setDownDone: this.getDoneStackNotAvailable(),
     onIdle: this.getDoneStack()
   }
   this.resetDown()
-  this.waitDown = this.getDoneStack()
+  this.waitDown = this.getDoneStackNotAvailable()
   this.waitDown.setNextShift().setMaxDepth();
-  this.waitUp = this.getDoneStack()
-  this.waitUp.setRunnableTest(this.isAvailable.bind(this))
+  this.waitUp = this.getDoneStackAvailable()
   this.waitUp.setNextShift().setMaxDepth()
   .setActionOnMax(()=>_this.isAvailable(_this.runWaitUp.bind(this),_this.setUp.bind(this)))
   this.setMaxQDepth();
@@ -37,6 +38,13 @@ function State (node, logger = console) {
   this.upOnDownEmptyQ = false
   this.idleTime = null
 }
+State.prototype.getDoneStackNotAvailable = function () {
+  return this.getDoneStack().setRunnableTest(this.isNotAvailable.bind(this))
+}
+State.prototype.getDoneStackAvailable = function () {
+  return this.getDoneStack().setRunnableTest(this.isAvailable.bind(this))
+}
+
 State.prototype.getDoneStack = function () {
   const stack=new ProcessStack()
   return stack.setNext()
@@ -51,12 +59,12 @@ State.prototype.setUpOnUpQDepth = function (depth) {
 }
 State.prototype.beforeDown = function (callFunction, ...args) {
   if (typeof callFunction !== 'function') throw Error('expected function')
-  this.stack.beforeDown.add({ callFunction: callFunction, args: args })
+  this.stack.beforeDown.add({ callFunction: callFunction, args: args, label: "State beforeDown call"  })
   return this
 }
 State.prototype.beforeUp = function (callFunction, ...args) {
   if (typeof callFunction !== 'function') throw Error('expected function')
-  this.stack.beforeUp.add({ callFunction: callFunction, args: args })
+  this.stack.beforeUp.add({ callFunction: callFunction, args: args, label: "State beforeUp call"  })
   return this
 }
 State.prototype.callForEachNext = function (stack, args, done, index = 0) {
@@ -144,8 +152,8 @@ State.prototype.downWaitNext = function () {
   } else if (this.upOnDownEmptyQ === true) this.setUp()
   this.done()
 }
-State.prototype.error = function (err) {
-  this.stack.onError.run(err)
+State.prototype.error = function (err,done) {
+  this.stack.onError.run(done,err)
   return this
 }
 State.prototype.foundUp = function () {
@@ -199,7 +207,7 @@ State.prototype.isNotAvailable = function (down, up) {
 }
 State.prototype.isDown = State.prototype.isNotAvailable
 State.prototype.isTransitioning = function () {
-  return this.transitioning.up === true || this.transitioning.down === true
+  return this.transitioning.up === true || this.transitioning.down === true || this.transitioning.up === true
 }
 State.prototype.isNotTransitioning = function () {
   return this.transitioning.up === false && this.transitioning.down === false
@@ -212,13 +220,17 @@ State.prototype.onError = function (callFunction, ...args) {
 State.prototype.onDown = function (callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, onDown')
   if (typeof callFunction !== 'function') throw Error('expected function')
-  this.stack.onDown.add({ callFunction: callFunction, args: args })
+  this.stack.onDown.add({ callFunction: callFunction, args: args ,label: "State onDown call" })
+  if(this.available!==true){
+    this.logl1 && this.logl1.log('state, onDown down so run')
+    callFunction(()=>{this.logl1 && this.logl1.log('state, onDown run')},...args)
+  }
   return this
 }
 State.prototype.onIdle = function (callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, onIdle')
   if (typeof callFunction !== 'function') throw Error('expected function')
-  this.stack.onIdle.add({ callFunction: callFunction, args: args })
+  this.stack.onIdle.add({ callFunction: callFunction, args: args ,label: "State onIdle call" })
   return this
 }
 State.prototype.onMaxQActionDefault = () => {
@@ -229,7 +241,11 @@ State.prototype.onMaxQDownAction = State.prototype.onMaxQActionDefault
 State.prototype.onUp = function (callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, onUp')
   if (typeof callFunction !== 'function') throw Error('expected function')
-  if (callFunction) this.stack.onUp.add({ callFunction: callFunction, args: args })
+  if (callFunction) this.stack.onUp.add({ callFunction: callFunction, args: args ,label: "State onUp call" })
+  if(this.available==true){
+    this.logl1 && this.logl1.log('state, onUp up so run')
+    callFunction(()=>{this.logl1 && this.logl1.log('state, onUp run')},...args)
+  }
   return this
 }
 State.prototype.onAvailable = State.prototype.up
@@ -316,11 +332,10 @@ State.prototype.setCheckIdleOn = function (done) {
           _this.testUp(
             ()=>{    // up
               _this.logl1 && this.logl1.info('state, onIdle set whenDown')
-              _this.whenDown((next)=>{
+              _this.whenDown(()=>{
                 _this.logl1 && this.logl1.info('state, onIdle run')
                 _this.stack.onIdle.run(() =>{ 
                   _this.logl1 && this.logl1.info('state, onIdle run finish')
-                  next()
                 })
               })
               _this.setDown()
@@ -348,11 +363,27 @@ State.prototype.setCheckIdleOn = function (done) {
   done && done()
   return this
 }
+State.prototype.setDebug = function (callFunction=debugFuction) {
+  debug&&debug.log("State setDebug")
+  debug = {log:(message)=>debugFunction.log("State "+message)}
+  debugFunction=callFunction
+  return this 
+}
+State.prototype.setDebugOff = function () {
+  debug&&debug.log("State setDebugOff")
+  debug=null
+  return this 
+}
 State.prototype.setDown = function (done, ...args) {
   this.logl1 && this.logl1.info('state, setDown')
+  if(this.isNotAvailable()){
+    this.logl1 && this.logl1.info('state, setDown already down')
+    done&&done(...args)
+    return
+  } 
   this.setCheckIdleOff()
   if (done) {
-    this.stack.setDownDone.add({ callFunction: done, args: args })
+    this.stack.setDownDone.add({ callFunction: done, args: args ,label: "State SetDown done callback" })
   } else { this.testUp() }
   this.setDownTransitioning(done)
   const _this = this
@@ -414,27 +445,44 @@ State.prototype.setMaxQDepth = function (depth = 1000) {
   return this
 }
 State.prototype.setUp = function (done, ...args) {
-  this.logl1 && this.logl1.info('state, setUp')
-  if (done) {
-    this.stack.setUpDone.add({ callFunction: done, args: args })
+  try{
+    this.logl1 && this.logl1.info('state, setUp')
+    if(this.isAvailable()) {
+      this.logl1 && this.logl1.info('state, setUp alreadyup')
+      done&&done(...args)
+      return
+    } 
+    done&&this.stack.setUpDone.add({ callFunction: done, args: args, label: "State SetUp done callback"  })
+    if( this.transitioning.up === true) {
+      this.logl1 && this.logl1.info('state, setUp already transitioning up')
+      return this
+    }
+    try{
+      this.testDown() 
+     } catch(ex) {
+      this.logl1 && this.logl1.info('state, setup '+ex.message)
+     }
+    this.setUpTransitioning()
+    const _this = this
+    this.logl1 && this.logl1.info('state, beforeUp')
+    this.stack.beforeUp.run(() => _this.setUpPart2())
+  } catch(ex) {
+    console.error(ex.stack)
+    this.error(ex.message,done)
   }
-  if( this.transitioning.up === true) {
-    this.logl1 && this.logl1.info('state, setUp already transitioning up')
-    return this
-  }
-  this.testDown() 
-  this.setUpTransitioning()
-  const _this = this
-  this.logl1 && this.logl1.info('state, beforeUp')
-  this.stack.beforeUp.run(() => _this.setUpPart2())
-  return this
+   return this
 }
 State.prototype.setUpPart2 = function () {
   this.logl1 && this.logl1.info('state, setUpPart2')
-  const up = this.up.bind(this)
-  if (this.upActionCall) {
-    this.upActionCall.callFunction(up,this.forceDown.bind(this), ...this.upActionCall.args)
-  } else up()
+  try{
+    const up = this.up.bind(this)
+    if (this.upActionCall) {
+      this.upActionCall.callFunction(up,this.forceDown.bind(this), ...this.upActionCall.args)
+    } else up()
+  
+  } catch(ex) {
+    console.error(ex.stack)
+  }
   return this
 }
 State.prototype.setUpAction = function (callFunction, ...args) {
@@ -442,6 +490,12 @@ State.prototype.setUpAction = function (callFunction, ...args) {
   if (!callFunction) throw Error('no function specified')
   if (typeof callFunction !== 'function') throw Error('expected function')
   this.upActionCall = { callFunction: callFunction, args: args }
+  return this
+}
+State.prototype.setUpIfDown = function (done, ...args) {
+  if (ths.isNotAvailable()){
+    this.setUp(done,...args)
+  } else done&&done()
   return this
 }
 State.prototype.setUpTransitioning = function (done) {
@@ -490,10 +544,6 @@ State.prototype.up = function (done) {
     this.logl1 && this.logl1.warn('state, already up')
     return this
   }
-//  if(this.transitioning.up === false) {
-//    if (this.upActionCall) throw Error('not transitioning up')
-//    else  this.transitioning.up = true
-//  }
   this.transitioning.up = true
   this.logl1 && this.logl1.info('state, onUp run')
   const _this = this
@@ -530,38 +580,81 @@ State.prototype.upFailedAndClearQ = function (error,done) {
 
 State.prototype.whenDown = function (callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, whenDown')
+  const runFunction=(next)=>{
+    try{
+      callFunction(...args)
+    } catch(ex) {
+      console.error(ex.message)
+      console.error(ex.stack)
+    }
+    next()
+  }
   if(this.transitioning.up===true) {
     this.logl1 && this.logl1.warn('state, whenDown transitioning down so run when up')
     const _this=this
-    this.whenUp((next)=>{
+    this.whenUp(()=>{
       this.logl1 && this.logl1.warn('state, whenDown transitioning down, now down so adding as whenDown')
-      _this.waitDown.add2Stack(callFunction, ...args)
-      next()
+      _this.waitDown.add2Stack(runFunction)
     })
-  } else this.waitDown.add(callFunction, ...args)
+  } else this.waitDown.add(runFunction)
   return this
+}
+State.prototype.stackAsyncCall = async function (stack,asyncFunction,...args) {
+  if(!this.logl1) {
+    asyncFunction(...args)
+    return
+  }
+  this.logl1 && this.logl1.warn('state, stackAsyncCall for '+stack)
+  const stackAsync=stack+"AsyncCalls"
+  if(this.hasOwnProperty(stackAsync)) {
+    return this[stackAsync].push(asyncFunction(...args));
+  }
+  this.logl1 && this.logl1.warn('state, stackAsyncCall for '+stack)
+  this[stackAsync]=[]
+  const asyncCalls=this[stackAsync]
+  const stackEmpty= async () =>{
+    asyncCalls=[asyncFunction(...args)]
+    try{
+      const result = await Promise.all(asyncCalls);
+      this.logl1 && this.logl1.warn('state, whenUp async calls completed')
+    }catch(ex){
+      console.error("await error Occur: ", ex.message);
+      console.error(ex.stack);
+    }
+  }
 }
 
 State.prototype.whenUp = function (callFunction, ...args) {
   this.logl1 && this.logl1.warn('state, whenUp')
+  const _this=this
+  const runFunction=(next)=>{
+    try{
+     callFunction(...args)
+    } catch(ex) {
+      console.error(ex.message)
+      console.error(ex.stack)
+    }
+    next()
+  }
   if(this.transitioning.down===true) {
     this.logl1 && this.logl1.warn('state, whenUp transitioning down so run when down')
     const _this=this
-    this.whenDown((next)=>{
+    this.whenDown(()=>{
       this.logl1 && this.logl1.warn('state, whenUp transitioning down, now down so adding as whenup')
-      _this.waitUp.add2Stack(callFunction, ...args)
-      next()
+      _this.waitUp.add2Stack(runFunction)
     })
   } else
-    this.waitUp.add(callFunction, ...args)
+    this.waitUp.add(runFunction)
   return this
 }
 
 State.prototype.setMethods = function (node) {
   if (node == null) throw Error('no object specified')
   node.available = this.up.bind(this)
-  node.forceDown = this.foundDown.bind(this)
+  node.beforeDown = this.beforeDown.bind(this)
+  node.beforeUp = this.beforeUp.bind(this)
   node.down = this.down.bind(this)
+  node.forceDown = this.foundDown.bind(this)
   node.getDownQDepth = this.getDownQDepth.bind(this)
   node.getUpQDepth = this.getUpQDepth.bind(this)
   node.getState = this.getState.bind(this)
@@ -584,6 +677,7 @@ State.prototype.setMethods = function (node) {
   node.testUp = this.testUp.bind(this)
   node.testDisconnected = this.testDisconnected.bind(this)
   node.testDown = this.testDown.bind(this)
+  node.upFailed = this.upFailed.bind(this)
   node.upFailedAndClearQ = this.upFailedAndClearQ.bind(this)
   node.whenUp = this.whenUp.bind(this)
   node.whenDown = this.whenDown.bind(this)

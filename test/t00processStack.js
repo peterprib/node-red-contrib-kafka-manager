@@ -105,6 +105,7 @@ describe('ProcessStack', function () {
     it('zero entries', function (done) {
       const test = 0; const expected = 0
       const stack = new ProcessStack()
+      .setDebug()
       stack.runAsync(() => {
         console.log('end')
         if (test === expected) done()
@@ -114,7 +115,8 @@ describe('ProcessStack', function () {
     it('one entries', function (done) {
       let test = 0; const expected = 1
       const stack = new ProcessStack()
-        .add((next) => { console.log(1); test += 1; next() })
+      .setDebug()
+        .add(() => { console.log(1); test += 1; })
       stack.runAsync(() => {
         console.log('end')
         if (test === expected) done()
@@ -124,9 +126,9 @@ describe('ProcessStack', function () {
     it('three entries', function (done) {
       let test = 0; const expected = 1 + 2 + 3
       const stack = new ProcessStack()
-        .add((next) => { console.log(1); test += 1; next() })
-        .add((next) => { console.log(2); test += 2; next() })
-        .add((next) => { console.log(3); test += 3; next() })
+        .add(() => { console.log(1); test += 1;})
+        .add(() => { console.log(2); test += 2;})
+        .add(() => { console.log(3); test += 3;})
       stack.runAsync(() => {
         console.log('end')
         if (test === expected) done()
@@ -136,12 +138,12 @@ describe('ProcessStack', function () {
     it('six entries concurrent 2', function (done) {
       let test = 0; const expected = 1 + 2 + 3 + 4 + 5 + 6
       const stack = new ProcessStack().setConcurrent(2)
-        .add((next) => { console.log(1); test += 1; next() })
-        .add((next) => { console.log(2); test += 2; next() })
-        .add((next) => { console.log(3); test += 3; next() })
-        .add((next) => { console.log(4); test += 4; next() })
-        .add((next) => { console.log(5); test += 5; next() })
-        .add((next) => { console.log(6); test += 6; next() })
+        .add(() => { console.log(1); test += 1;  })
+        .add(() => { console.log(2); test += 2;  })
+        .add(() => { console.log(3); test += 3;  })
+        .add(() => { console.log(4); test += 4;  })
+        .add(() => { console.log(5); test += 5;  })
+        .add(() => { console.log(6); test += 6;  })
       stack.runAsync(() => {
         console.log('end')
         if (test === expected) done()
@@ -153,6 +155,7 @@ describe('ProcessStack', function () {
     it('zero entries', function (done) {
       const test = 0; const expected = 0
       const stack = new ProcessStack()
+      .setDebug()
       stack.runAsyncShift(() => {
         console.log('end')
         if (test === expected) done()
@@ -162,7 +165,8 @@ describe('ProcessStack', function () {
     it('one entries', function (done) {
       let test = 0; const expected = 1
       const stack = new ProcessStack()
-        .add((next) => { console.log(1); test += 1; next() })
+        .setDebug()
+        .add(() => { console.log(1); test += 1})
       stack.runAsyncShift(() => {
         console.log('end')
         if (test === expected) done()
@@ -172,9 +176,9 @@ describe('ProcessStack', function () {
     it('three entries', function (done) {
       let test = 0; const expected = 1 + 2 + 3
       const stack = new ProcessStack()
-        .add((next) => { console.log(1); test += 1; next() })
-        .add((next) => { console.log(2); test += 2; next() })
-        .add((next) => { console.log(3); test += 3; next() })
+        .add(() => { console.log(1); test += 1;  })
+        .add(() => { console.log(2); test += 2;  })
+        .add(() => { console.log(3); test += 3;  })
       stack.runAsyncShift(() => {
         console.log('end')
         if (test === expected) done()
@@ -184,12 +188,12 @@ describe('ProcessStack', function () {
     it('six entries concurrent 2', function (done) {
       let test = 0; const expected = 1 + 2 + 3 + 4 + 5 + 6
       const stack = new ProcessStack().setConcurrent(2)
-        .add((next) => { console.log(1); test += 1; next() })
-        .add((next) => { console.log(2); test += 2; next() })
-        .add((next) => { console.log(3); test += 3; next() })
-        .add((next) => { console.log(4); test += 4; next() })
-        .add((next) => { console.log(5); test += 5; next() })
-        .add((next) => { console.log(6); test += 6; next() })
+        .add(() => { console.log(1); test += 1;  })
+        .add(() => { console.log(2); test += 2;  })
+        .add(() => { console.log(3); test += 3;  })
+        .add(() => { console.log(4); test += 4;  })
+        .add(() => { console.log(5); test += 5;  })
+        .add(() => { console.log(6); test += 6;  })
       stack.runAsyncShift(() => {
         console.log('end')
         if (test === expected) done()

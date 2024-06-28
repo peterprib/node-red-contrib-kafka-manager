@@ -4,33 +4,34 @@ logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
 // const zlib = require('node:zlib');
 const setupHttpAdmin = require('./setupHttpAdmin.js')
 const State = require('./state.js')
-
+const commonConsumerHostState = require('./commonConsumerHostState.js')
+const commonConsumerUpAction = require('./commonConsumerUpAction.js')
 function setStatus (message, fill = 'green') {
   this.status({ fill: fill, shape: 'ring', text: message })
 }
 
 function onChangeMetadata (change) {
-  if (logger.active) logger.send({ label: 'onChangeMetadata', node: this.id, change: change, filters: this.filters.length })
+  logger.active&&logger.send({ label: 'onChangeMetadata', node:{id:this.id,name:this.name} , change: change, filters: this.filters })
   const node = this
   const removeTopics = change.remove
   const addTopics = change.add.filter(cell => node.filters.find(regex => regex.test(cell.topic)))
-  if (logger.active) logger.send({ label: 'onChangeMetadata actions', node: this.id, add: addTopics, remove: removeTopics })
+  logger.active&&logger.send({ label: 'onChangeMetadata actions', node:{id:this.id,name:this.name}, add: addTopics, remove: removeTopics })
   if (!node.consumer) {
     if (addTopics.length + addTopics.length === 0) return
-    logger.warn({ label: 'onChangeMetadata', id: node.id, warn: 'consumer down', topics: node.activeTopics, remove: removeTopics, add: addTopics })
+    logger.warn({ label: 'onChangeMetadata', node:{id:this.id,name:this.name}, warn: 'consumer down', topics: node.activeTopics, remove: removeTopics, add: addTopics })
     this.activeTopics = this.activeTopics.filter(p => !removeTopics.find(c => p.topic === c.topic && c.partition === p.partition))
     this.activeTopics.push(...addTopics)
     return
   }
   if (addTopics.length > 0) {
-    logger.warn({ label: 'onChangeMetadata add topics', id: node.id, topics: node.activeTopics, add: addTopics })
+    logger.warn({ label: 'onChangeMetadata add topics', node:{id:this.id,name:this.name}, topics: node.activeTopics, add: addTopics })
     node.addTopics(addTopics, undefined, err => {
       if (err) {
         node.error('auto add topics for ' + JSON.stringify(addTopics) + ' error:' + err)
       }
     })
   } else if (removeTopics.length > 0) { // else to only allow one at a time
-    logger.warn({ label: 'onChangeMetadata remove topics', id: node.id, topics: node.activeTopics, remove: removeTopics })
+    logger.warn({ label: 'onChangeMetadata remove topics', node:{id:this.id,name:this.name}, topics: node.activeTopics, remove: removeTopics })
     node.removeTopics(removeTopics, undefined, err => {
       if (err) {
         node.error('auto remove topics for ' + JSON.stringify(addTopics) + ' error:' + err)
@@ -60,138 +61,43 @@ module.exports = function (RED) {
         }
       })
       this.state
-        .onUp((next) => {
-          if (node.paused) {
-            node.log('state changed to up and in paused state')
-            node.paused()
-          } else {
-            node.log('state changed to up, resume issued')
-            node.resume()
-          }
-          next()
-        }).onDown(() => node.status({ fill: 'red', shape: 'ring', text: 'down' }))
-        .setUpAction(() => {
+        .setUpAction((next,error)=> {
+          logger.active&&logger.send({ label: 'consumer connecting', node: node.id, name: node.name })
           node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
           node.messageCount = 0
-          if (logger.active) logger.send({ label: 'consumer connecting', node: node.id, name: node.name })
-          node.consumer = new node.brokerNode.Kafka.Consumer(node.client.connection, node.activeTopics, node.options)
-          node.consumer.on('message', (message) => {
-            if (logger.active) logger.send({ label: 'consumer on.message', node: node.id, name: node.name })
-            try {
-              if (++node.messageCount === 1 || node.timedout) {
-                node.timedout = false
-                node.status({ fill: 'green', shape: 'ring', text: 'Processing Messages' })
-                if (message.value == null) return // seems to send an empty on connect in no messages waiting
-              } else if (node.messageCount % 100 === 0) node.setStatus('processed ' + node.messageCount)
-              node.brokerNode.sendMsg(node, message)
-            } catch (ex) {
-              logger.sendErrorAndStackDump(ex.message, ex)
-              node.paused()
-              this.status({ fill: 'red', shape: 'ring', text: 'Error and paused' })
-            }
-          })
-          node.consumer.on('error', function (ex) {
-            const err = ex.message ? ex.message : ex.toString()
-            if (logger.active) logger.send({ label: 'consumer on.error', node: node.id, name: node.name, error: err })
-            node.setError(err)
-            if (err.startsWith('Request timed out')) {
-              node.setStatus(err, 'yellow')
-              node.timedout = true
-              return
-            }
-            node.setStatus(node.brokerNode.getRevisedMessage(err), 'red')
-          })
-          node.consumer.on('offsetOutOfRange', (ex) => {
-            if (logger.active) logger.send({ label: 'consumer on.offsetOutOfRange', node: node.id, error: ex })
-            node.consumer.pause()
-            node.setStatus('offsetOutOfRange ' + ex.message + ' (PAUSED)', 'red')
-          })
-          node.consumer.on('ready', () => {
-            if (logger.active) logger.send({ label: 'consumer on.ready', node: node.id, name: node.name })
-            node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
-          })
-          node.available()
-        }).setDownAction(() => {
-          if (logger.active) logger.send({ label: 'close', node: node.id })
+          node.consumer = new node.brokerNode.Kafka.Consumer(node.brokerNode.client.connection, node.activeTopics, node.options)
+          commonConsumerUpAction(node,next,error,logger)
+        }).setDownAction(next => {
+          logger.active&&logger.send({ label: 'downAction close', node: node.id, name: node.name })
           node.setStatus('closing', 'red')
           node.consumer.close(false, () => {
-            if (logger.active) logger.send({ label: 'close close', node: node.id })
+            logger.active&&logger.send({ label: 'close close', node: node.id, name: node.name })
             delete node.consumer
             node.down()
+            node.setStatus('closed', 'red')
+            next()
           })
         })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
       node.brokerNode.onChangeMetadata(onChangeMetadata.bind(node))
-
-      this.client = node.brokerNode.getClient()
-      this.client.onUp((next) => {
-        node.setStatus('client up', 'yellow')
-        node.log('client connected, connection')
-        node.setUp(next)
-      }).onDown((next) => {
-        node.setStatus('client down', 'red')
-        if (node.isAvailable()) node.forceDown()
-        next()
-      }).beforeDown((next) => {
-        node.setDown(next=>{
-          node.setStatus('client going down', 'red')
-          next()
-        })
-        next()
-      })
-      node.setStatus('broker down', 'red')
-      node.brokerNode.hostState.onUp((next) => {
-        node.setStatus('client down', 'red')
-        node.client.setUp(next)
-      }).onDown((next) => {
-        node.setStatus('broker down', 'red')
-        node.client.forceDown(next)
-      }).beforeDown((next) => node.client.setDown(next))
+      commonConsumerHostState(node,logger)
       if (node.regex) {
         node.activeTopics = []
         node.filters = node.topics.map(t => new RegExp(t.topic))
         logger.info({ label: 'regex', node: node.id, topics: node.topics })
         //        node.setStatus('Initialising wildcard topics', 'yellow')
       } else {
+        node.filters=[]
         if (!node.topics) node.activeTopics = [{ topic: node.topic, partition: 0 }] // legacy can be removed in future
         node.activeTopics = node.topics
         //        node.setStatus('Initialising', 'yellow')
       }
-      node.on('close', function (removed, done) {
-        if (logger.active) logger.send({ label: 'on.close', node: node.id })
-        node.setStatus('closing', 'red')
-        node.consumer.close(false, () => {
-          if (logger.active) logger.send({ label: 'on.close consumer.close', node: node.id })
-          try {
-            node.setDown()
-          } catch (ex) {
-            node.error('on close ' + ex.message)
-          }
-          node.connected = false
-          delete node.consumer
-          done()
-        })
-      })
-      node.pause = (done) => {
-        if (logger.active) logger.send({ label: 'pause', node: node.id })
-        node.paused = true
-        node.consumer.pause()
-        node.setStatus('Paused', 'red')
-        done && done()
-      }
-      node.resume = (done) => {
-        if (logger.active) logger.send({ label: 'resume', node: node.id })
-        node.resumed = true
-        node.consumer.resume()
-        node.setStatus('Ready')
-        done && done()
-      }
       node.addTopics = (topics, fromOffset, done) => {
-        if (logger.active) logger.send({ label: 'consumer.addTopics', node: node.id, topics: topics, fromOffset: fromOffset })
+        logger.active&&logger.send({ label: 'consumer.addTopics', node: node.id, topics: topics, fromOffset: fromOffset })
         node.consumer.addTopics(topics,
           (err, added) => {
-            if (logger.active) logger.send({ label: 'consumer.addTopics  done', node: node.id, topics: topics, fromOffset: fromOffset, added: added, error: err })
+            logger.active&&logger.send({ label: 'consumer.addTopics  done', node: node.id, topics: topics, fromOffset: fromOffset, added: added, error: err })
             if (err) node.error('add topics to consumer failed error:' + err)
             else node.activeTopics.push(...topics)
             done && done(err)
@@ -200,20 +106,15 @@ module.exports = function (RED) {
         )
       }
       node.removeTopics = (topics, done) => {
-        if (logger.active) logger.send({ label: 'consumer.removeTopics', node: node.id, topics: topics })
+        logger.active&&logger.send({ label: 'consumer.removeTopics', node: node.id, name: node.name, topics: topics })
         node.consumer.removeTopics(topics, (err, removed) => {
-          if (logger.active) logger.send({ label: 'consumer.removeTopics  done', node: node.id, topics: topics, removed: removed, error: err })
+          logger.active&&logger.send({ label: 'consumer.removeTopics  done', node: node.id, name: node.name, topics: topics, removed: removed, error: err })
           if (err) node.error('remove topics from consumer failed error:' + err)
           else node.activeTopics = node.activeTopics.filter(p => !topics.find(c => p.topic === c.topic && c.partition === p.partition))
           done && done(err)
         })
       }
-      node.commit = () => {
-        node.consumer.commit((err, data) => {
-          if (logger.active) logger.send({ label: 'commit', node: node.id, error: err, data: data })
-        })
-      }
-      node.setOffset = (topic, partition, offset) => node.consumer.setOffset(topic, partition, offset)
+        node.setOffset = (topic, partition, offset) => node.consumer.setOffset(topic, partition, offset)
       node.pauseTopics = (topics) => node.consumer.pauseTopics(topics)
       node.resumeTopics = (topics) => node.consumer.resumeTopics(topics)
     } catch (ex) {
@@ -252,8 +153,11 @@ module.exports = function (RED) {
     connect: (RED, node, done) => {
       node.testDown()
       if (node.client.isNotAvailable()) {
-        node.client.setUp(done)
-      } else { node.setUp(done) }
+        node.client.setUp()
+      } else {
+        node.setUp()
+      }
+      done("Connect issued")
     },
     pause: (RED, node, done) => {
       node.testUp()

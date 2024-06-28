@@ -7,7 +7,9 @@
         "nodes": {
             "junction": {
                 "name": "junction",
-                "types": [],
+                "types": [
+                    "junction"
+                ],
                 "enabled": true,
                 "local": false,
                 "user": false,

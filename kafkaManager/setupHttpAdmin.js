@@ -6,7 +6,7 @@ function adminRequest (node, res, data, err) {
     res.status(500).send(err)
     return
   }
-  res.status(200).send(data)
+  res.status(200).send(data||"OK")
 }
 
 function setupHttpAdmin (RED, nodeType, actions) {
@@ -19,13 +19,13 @@ function setupHttpAdmin (RED, nodeType, actions) {
         if (!(action in actions)) throw Error('unknown action: ' + action)
         const callFunction = actions[action].bind(node)
         callFunction(RED, node, (data, err) => {
-          if (logger.active) logger.info({ label: 'setupHttpAdmin', data: data, error: err})
+          logger.active&&logger.info({ label: 'setupHttpAdmin', action:action, data: data, error: err})
           adminRequest(node, res, data, err)
         },
         req.params, req.body
         )
       } catch (ex) {
-        if (logger.active) logger.error({ label: 'setupHttpAdmin', error: ex.messsage, stack: ex.stack })
+        logger.active&&logger.error({ label: 'setupHttpAdmin', error: ex.messsage, stack: ex.stack })
         adminRequest(node, res, null, 'Internal Server Error, ' + req.params.action + ' failed ' + ex.toString())
       }
     } else {

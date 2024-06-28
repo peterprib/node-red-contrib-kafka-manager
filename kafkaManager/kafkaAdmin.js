@@ -3,10 +3,12 @@ const logger = new (require('node-red-contrib-logger'))('Kafka Admin')
 logger.sendInfo('Copyright 2020 Jaroslav Peter Prib')
 const setupHttpAdmin = require('./setupHttpAdmin.js')
 const State = require('./state.js')
+const nodeStatus = require('./nodeStatus.js')
 const formatError = require('./formatError.js')
+const { error } = require('console')
 function msgProcess (msg, errObject, data) {
   const _this = this
-  if (logger.active) logger.send({ label: 'msgProcess', error: errObject, data: data })
+  logger.active&&logger.send({ label: 'msgProcess', error: errObject, data: data })
   if (errObject) {
     const err = typeof errObject !== 'string' ? errObject.toString() : errObject.message.toString()
     if (err.startsWith('Broker not available') || err.startsWith('Request timed out')) {
@@ -22,9 +24,9 @@ function msgProcess (msg, errObject, data) {
   if (['createAcls', 'createTopics', 'deleteAcls', 'deleteTopics', 'electPreferredLeaders'].includes(msg.topic)) {
     data.forEach((c, i, a) => {
       const t = msg.payload.find((cp) => cp.topic === c.topic)
-      if (logger.active) logger.send({ label: 'msgProcess multi response', topic: c, data: t })
+      logger.active&&logger.send({ label: 'msgProcess multi response', topic: c, data: t })
       if (c.hasOwnProperty('error')) {
-        if (logger.active) logger.send({ label: 'msgProcess multi response', data: { topic: msg.topic, error: formatError(c.error), payload: [t] } })
+       logger.active&&logger.send({ label: 'msgProcess multi response', data: { topic: msg.topic, error: formatError(c.error), payload: [t] } })
         _this.send([null, {
           topic: msg.topic,
           error: formatError(c.error),
@@ -32,7 +34,7 @@ function msgProcess (msg, errObject, data) {
         }])
         return
       }
-      if (logger.active) logger.send({ label: 'msgProcess multi response ok', data: { topic: msg.topic, payload: [c] } })
+      logger.active&&logger.send({ label: 'msgProcess multi response ok', data: { topic: msg.topic, payload: [c] } })
       _this.send({
         topic: msg.topic,
         payload: [t]
@@ -43,6 +45,7 @@ function msgProcess (msg, errObject, data) {
     this.send(msg)
   }
 }
+/*
 const processInputNoArg = ['listConsumerGroups', 'listGroups', 'listTopics']
 const processInputPayloadArg = [
   'alterConfigs', 'alterReplicaLogDirs', 'createAcls', '', 'createDelegationToken',
@@ -52,20 +55,24 @@ const processInputPayloadArg = [
   'expireDelegationToken', 'incrementalAlterConfigs', 'listConsumerGroupOffsets',
   'renewDelegationToken'
 ]
-
+*/
 function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data), onError) {
-  if (logger.active) logger.send({ label: 'processInput', msg })
+  logger.active&&logger.send({ label: 'processInput', msg })
   try {
-    if (this.client.connection == null) throw Error('no connection')
+    this.brokerNode.adminConnection.request({action:msg.topic,data:msg.payload},done,onError)
+
+/*
+    const connection=this.client.connection
+    if (connection == null) throw Error('no connection')
     const action = msg.topic
     if (processInputNoArg.includes(action)) {
-      if (logger.active) logger.send({ label: 'processInput processInputNoArg', msg })
-      this.client.connection[action](done)
+      logger.active&&logger.send({ label: 'processInput processInputNoArg', msg })
+      connection[action](done)
       return
     }
     if (processInputPayloadArg.includes(action)) {
-      if (logger.active) logger.send({ label: 'processInput processInputPayloadArg', msg })
-      this.connection[action](msg.payload, done)
+      logger.active&&logger.send({ label: 'processInput processInputPayloadArg', msg })
+      connection[action](msg.payload, done)
       return
     }
     let resource = {}
@@ -74,7 +81,7 @@ function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data
       case 'describeConfigs':
         // msg.payload={type:'topic',name:'a-topic'}
         resource = {
-          resourceType: this.connection.RESOURCE_TYPES[msg.payload.type || 'topic'], // 'broker' or 'topic'
+          resourceType: connection.RESOURCE_TYPES[msg.payload.type || 'topic'], // 'broker' or 'topic'
           resourceName: msg.payload.name,
           configNames: [] // specific config names, or empty array to return all,
         }
@@ -82,13 +89,14 @@ function processInput (msg, done = (err, data) => this.msgProcess(msg, err, data
           resources: [resource],
           includeSynonyms: false // requires kafka 2.0+
         }
-        this.connection.describeConfigs(payload, done)
+        connection.describeConfigs(payload, done)
         break
       default:
-        throw Error('invalid message topic')
+        throw Error('invalid message topic '+action)
     }
+*/
   } catch (ex) {
-    if (logger.active) logger.send({ label: 'processInput catch', error: ex.message, msg: msg, connection: Object.keys(this.connection || {}), stack: ex.stack })
+    logger.active&&logger.send({ label: 'processInput catch', error: ex.message, msg: msg, connection: Object.keys(this.connection || {}), stack: ex.stack })
     if (onError) {
       onError(ex)
       return
@@ -110,49 +118,81 @@ module.exports = function (RED) {
         processInput: processInput.bind(this),
         processInputWithOnDisgard: { call: processInput.bind(this), onDisgard: onDisgard.bind(this) }
       })
-      node.state.setUpOnUpQDepth(0)
-        .setUpAction((up) => {
-          node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
-          node.client.whenUp(() => {
-            logger.info({ label: 'client.on.ready', node: node.id, name: node.name })
-            node.connection = new node.brokerNode.Kafka.Admin(node.client.connection)
-            up()
-          })
-        }).setDownAction((down) => {
-          node.status({ fill: 'red', shape: 'ring', text: 'closing' })
-          down()
-        }).onDown(() => {
-          if (node.client.isNotAvailable()) return
-          node.client.setDown()
-        }).onUp(() => {
-          node.status({ fill: 'green', shape: 'ring', text: 'connectioned' })
-        }).onError((error) => {
-          node.error(error)
-        })
       node.status({ fill: 'yellow', shape: 'ring', text: 'Initialising' })
       node.brokerNode = RED.nodes.getNode(node.broker)
       if (!node.brokerNode) throw Error('Broker not found ' + node.broker)
-      node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
-      node.brokerNode.hostState
-        .onUp(() => {
+      nodeStatus(node)
+      node.client = node.brokerNode.adminConnection
+      node.client
+//      .setIdleTime(10).setUpOnUpQDepth(0)
+        .onDown(next => {
+          logger.active&&logger.send({ label: 'client onDown',node:{id:node.id, name: node.name}})
           node.status({ fill: 'green', shape: 'ring', text: 'ready auto connect' })
+//          if (node.isAvailable()){
+//            logger.active&&logger.send({ label: 'client onDown isAvailable forceDown',node:{id:node.id, name: node.name}})
+//            node.forceDown(nextForceDown=>{
+//              logger.active&&logger.send({ label: 'client onDown isAvailable forceDown done',node:{id:node.id, name: node.name}})
+//              nextForceDown()
+//            }) 
+//          }
+          next()
+        }).onUp(next => {
+          logger.active&&logger.send({ label: 'client onUp',node:{id:node.id, name: node.name, nextSupplied:next==null}})
+          nodeStatus(node)
+          node.state.setUp()
+          next()
         })
-        .onDown(() => {
-          if (node.client.isAvailable()) node.client.forceDown()
-          node.status({ fill: 'red', shape: 'ring', text: 'broker down' })
+        node.brokerNode.hostState
+        .onUp(next => {
+          logger.active&&logger.send({ label: 'broker onUp',node:{id:node.id, name: node.name}})
+          nodeStatus(node)
+          next()
         })
-      node.client = node.brokerNode.getClient()
-      node.client.setIdleTime(10).setUpOnUpQDepth(0)
-        .onDown(() => {
-          node.status({ fill: 'green', shape: 'ring', text: 'ready auto connect' })
-          if (node.isAvailable()) node.forceDown()
-        }).onUp(() => {
-          node.status({ fill: 'yellow', shape: 'ring', text: 'client connected' })
+        .onDown(next => {
+          logger.active&&logger.send({ label: 'broker onDone',node:{id:node.id, name: node.name}})
+          nodeStatus(node)
+          if (node.client.isAvailable()){
+            node.status({ fill: 'red', shape: 'ring', text: 'forcing client down' })
+            node.client.forceDown(next=>{
+              logger.active&&logger.send({ label: 'broker onDone client.isAvailable forceDown',node:{id:node.id, name: node.name}})
+              next()
+            })
+          } 
+          next()
+        })
+        node.state.setUpOnUpQDepth(0)
+        .setUpAction((next,error) => {
+          logger.active&&logger.send({ label: 'UpAction',node:{id:node.id, name: node.name}})
+          node.status({ fill: 'yellow', shape: 'ring', text: 'Connecting' })
+          node.client.whenUp(() => {
+            logger.active&&logger.send({ label: 'UpAction client whenup',node:{id:node.id, name: node.name}})
+            logger.info({ label: 'client.on.ready', node: node.id, name: node.name })
+            nodeStatus(node)
+          })
+          next()
+        }).setDownAction(next=> {
+          logger.active&&logger.send({ label: 'downAction',node:{id:node.id, name: node.name}})
+          node.status({ fill: 'red', shape: 'ring', text: 'closed' })
+          next()
+        }).onDown(next => {
+          logger.active&&logger.send({ label: 'onDown',node:{id:node.id, name: node.name}})
+          nodeStatus(node)
+          if (node.client.isAvailable()) node.client.setDown(()=>{
+            logger.active&&logger.send({ label: 'onDown setDown done',node:{id:node.id, name: node.name}})
+          })
+          next()
+        })
+        .onError((error,next) => {
+          logger.active&&logger.send({ label: 'onError',node:{id:node.id, name: node.name},error:error})
+          node.error(error)
+          next()
         })
       node.on('input', function (msg) {
+        logger.active&&logger.send({ label: 'on input',node:{id:node.id, name: node.name}})
         node.whenUp(node.processInput, msg)
       })
       node.on('close', function (removed, done) {
+        logger.active&&logger.send({ label: 'on close',node:{id:node.id, name: node.name}})
         node.setDown(done)
       })
     } catch (ex) {
@@ -177,9 +217,13 @@ module.exports = function (RED) {
     },
     connect: (RED, node, done) => {
       node.testDown()
-      if (node.isNotAvailable()) {
-        node.setUp(done)
-      } else { node.setUp(done) }
+      if (node.isNotAvailable() )  node.setUp(done)
+      else done("already available")
+    },
+    debug: (RED, node, done) => {
+      logger.setOn()
+      node.brokerNode.debugNode()
+      done()
     },
     status: (RED, node, done) => done({
       node: node.getState(),

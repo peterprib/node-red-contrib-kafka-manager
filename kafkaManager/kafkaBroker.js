@@ -9,6 +9,7 @@ const CompressionTool = require('compressiontool')
 const kafka = require('kafka-node')
 const AdminConnection = require('./adminConnection.js')
 const ClientConnnection = require('./clientConnection.js')
+const nodeStatus = require('./nodeStatus.js')
 require('events').EventEmitter.prototype._maxListeners = 30
 /*
 function processData (node, message, callFunction) {
@@ -21,7 +22,7 @@ function processData (node, message, callFunction) {
         { finishFlush: zlib.constants.Z_FULL_FLUSH },
         (err, buffer) => {
           if (err) {
-            if (logger.active) logger.send({ label: 'consumer.on.message buffer decompress', node: node.id, nodeName: node.name, error: err })
+            logger.active&&logger.send({ label: 'consumer.on.message buffer decompress', node: node.id, nodeName: node.name, error: err })
           } else {
             message.value = buffer
           }
@@ -33,6 +34,7 @@ function processData (node, message, callFunction) {
   }
 }
 */
+
 function sendMsg (node, message) {
   if (message.value == null) return // seems to send an empty on connect if no messages waiting
   if (node.compressionType && node.compressionType !== 'none') {
@@ -57,7 +59,7 @@ function sendMsg (node, message) {
 }
 
 function sendMsgPostDecompose (node, message) {
-  if (logger.active) {
+  logger.active&&
     logger.send({
       label: 'sendMsg',
       node: node.id,
@@ -70,11 +72,12 @@ function sendMsgPostDecompose (node, message) {
         key: message.key
       }
     })
-  }
 
   try {
-    if (!node.ready) {
-      node.ready = true
+//    if (!node.ready) {
+    if(node.isNotAvailable()){
+      node.available()
+//      node.ready = true
       node.status({ fill: 'green', shape: 'ring', text: 'Ready' })
       if (message.value == null) return // seems to send an empty on connect in no messages waiting
     }
@@ -91,7 +94,7 @@ function sendMsgPostDecompose (node, message) {
           { finishFlush: zlib.constants.Z_FULL_FLUSH },
           (err, buffer) => {
             if (err) {
-              if (logger.active) logger.send({ label: 'consumer.on.message buffer decompress', node: node.id, nodeName: node.name, error: err })
+              logger.active&&logger.send({ label: 'consumer.on.message buffer decompress', node:{id:node.id,name: node.name}, error: err })
             } else {
               message.value = buffer
             }
@@ -103,10 +106,10 @@ function sendMsgPostDecompose (node, message) {
     }
     if (node.closeOnEmptyQ &&
     message.offset === (message.highWaterOffset - 1)) {
-      if (logger.active) logger.send({ label: 'sendmsg', node: node.id, action: 'closing consumer as q empty' })
+      logger.active&&logger.send({ label: 'sendmsg', node: node.id, action: 'closing consumer as q empty' })
       node.log('consumer q empty so closing')
       node.consumer.close(true, function (err, message) {
-        if (logger.active) logger.send({ label: 'sendmsg', node: node.id, action: 'closed', error: err, message: message })
+        logger.active&&logger.send({ label: 'sendmsg', node:{id:node.id,name: node.name}, action: 'closed', error: err, message: message })
         if (err) node.error('close error:' + err)
       })
     }
@@ -151,58 +154,53 @@ function sendMessage2Nodered (node, message) {
     _kafka: kafka
   })
 }
-function getClient () {
-  return new ClientConnnection(this)
-}
+
 function testCanConnect () {
   if (this.hostState.isNotAvailable()) throw Error('host not available')
   this.testConnected()
 }
-
-const setConsumerProperties = (consumerNode) => {
-  if (!consumerNode.checkInterval) consumerNode.checkInterval = 1000
-  if (!consumerNode.autoCommitIntervalMs) consumerNode.autoCommitIntervalMs = 5000
-  if (!consumerNode.fetchMaxWaitMs) consumerNode.fetchMaxWaitMs = 100
-  if (!consumerNode.fetchMinBytes) consumerNode.fetchMinBytes = 1
-  if (!consumerNode.fetchMaxBytes) consumerNode.fetchMaxBytes = 1024 * 1024
-  if (!consumerNode.fromOffset) consumerNode.fromOffset = 'latest'
-  if (!consumerNode.encoding) consumerNode.encoding = 'utf8'
-  if (!consumerNode.keyEncoding) consumerNode.keyEncoding = 'utf8'
-  if (!consumerNode.connected) consumerNode.connected = false
-  if (!consumerNode.paused) consumerNode.paused = false
-  if (!consumerNode.timedout) consumerNode.timedout = false
-  if (!consumerNode.decomressionsErrors) consumerNode.decomressionsErrors = 0
-}
-
 module.exports = function (RED) {
   function KafkaBrokerNode (n) {
     RED.nodes.createNode(this, n)
     try {
-      const node = Object.assign(this, { hosts: [], Kafka: kafka }, n, {
+      const node = Object.assign(this, { hosts: [], Kafka: kafka}, n, {
         adminRequest: (request) => {
-          if (logger.active) logger.send({ label: 'adminRequest', action: request.action, properties: Object.keys(request) })
+          logger.active&&logger.send({ label: 'adminRequest', action: request.action, properties: Object.keys(request) })
           if (!request.action) throw Error('action not provided')
           if (!request.callback) throw Error('callback not provided')
           if (!request.error) throw Error('error function not provided')
           const adminNode = node.adminConnection
           adminNode.whenUp(adminNode.request.bind(adminNode), request)
         },
-        getConnection: (type, okCallback, errorCallback) => {
-          const KafkaType = kafka[type]
-          const connection = new KafkaType(node.client.connection)
-          connection.on('error', function (ex) {
-            if (logger.active) logger.send({ label: ' getConnection on.error', type: type, node: node.id, error: ex.message })
-            errorCallback(node.getRevisedMessage(ex.message))
-          })
-          connection.on('connect', function () {
-            if (logger.active) logger.send({ label: 'connectKafka.on.connect', type: type, node: node.id })
+        debugNode:()=>logger.setOn(),
+        getConnection: (type, okCallback=()=>{throw Error("no ok callback")}, errorCallback=()=>{throw Error("no error callback")}) => {
+          logger.active&&logger.send({ label: 'getConnection', type: type, node: node.id})
+          try{
+            const KafkaType = kafka[type]
+            const connection = new KafkaType(node.client.connection)
+            connection.on('error', function (ex) {
+              logger.active&&logger.send({ label: 'getConnection on.error', type: type, node:{id:node.id,name: node.name}, error: ex.message })
+              errorCallback(node.getRevisedMessage(ex.message))
+            })
+            connection.on('connect', function () {
+              logger.active&&logger.send({ label: 'getConnection connectKafka.on.connect', type: type, node:{id:node.id,name: node.name} })
+ //             okCallback(connection)
+            })
             okCallback(connection)
-          })
+          } catch(ex) {
+            logger.active&&logger.send({ label: 'getConnection catch', type: type, node:{id:node.id,name: node.name}, error: ex.message })
+            errorCallback(ex.message)
+          }
         },
-        getClient: () => new ClientConnnection(this),
+        getClient: () => new ClientConnnection(this,
+            (message) => {
+              logger.active&&logger.send({ label: 'getclient called',node:{id:node.id,name:node.name},data:message})
+            }
+          ),
         hostsCombined: [],
         sendMsg: sendMsg.bind(this),
-        testCanConnect: testCanConnect.bind(this)
+        testCanConnect: testCanConnect.bind(this),
+        nodeStatus:nodeStatus
       })
       if (node.hostsEnvVar) {
         if (node.hostsEnvVar in process.env) {
@@ -240,10 +238,10 @@ module.exports = function (RED) {
           reconnectOnIdle: (node.reconnectOnIdle || 'true') === 'true',
           maxAsyncRequests: node.maxAsyncRequests || 10
         }, optionsOrridden)
-        if (logger.active) logger.send({ label: 'getKafkaClient', usetls: node.usetls, options: options })
+        logger.active&&logger.send({ label: 'getKafkaClient', usetls: node.usetls, options: options })
         if (node.usetls) {
           options.sslOptions = { rejectUnauthorized: node.selfSign }
-          if (logger.active) logger.send({ label: 'getKafkaClient tls use', selfSign: node.selfSign })
+          logger.active&&logger.send({ label: 'getKafkaClient use tls', selfSign: node.selfSign })
           try {
             if (!(node.selfServe || node.tls)) throw Error('not self serve or no tls configuration selected')
             if (node.tls) {
@@ -251,21 +249,21 @@ module.exports = function (RED) {
               if (!node.tlsNode) throw Error('tls configuration not found')
               //        Object.assign(options.sslOptions,node.tlsNode.credentials);
               node.tlsNode.addTLSOptions(options.sslOptions)
-              if (logger.active) logger.send({ label: 'getKafkaClient sslOptions', properties: Object.keys(options.sslOptions) })
+              logger.active&&logger.send({ label: 'getKafkaClient ssl Options', properties: Object.keys(options.sslOptions) })
             }
           } catch (e) {
             node.error('get node tls ' + node.tls + ' failed, error:' + e)
           }
         }
         if (options.useCredentials) {
-          if (logger.active) logger.send({ label: 'getKafkaClient node has configured credentials, note sasl mechanism is plain' })
+          logger.active&&logger.send({ label: 'getKafkaClient node has configured credentials, note sasl mechanism is plain' })
           options.sasl = {
             mechanism: 'plain',
             username: this.credentials.user,
             password: node.credentials.password
           }
         }
-        if (logger.active) logger.send({ label: 'getKafkaClient', options: Object.assign({}, options, options.sslOptions ? { sslOptions: '***masked***' } : null) })
+        logger.active&&logger.send({ label: 'getKafkaClient return client', options: Object.assign({}, options, options.sslOptions ? { sslOptions: '***masked***' } : null) })
         return ((node.connectViaZookeeper || false) === true)
           ? new kafka.Client(options)
           : new kafka.KafkaClient(options)
@@ -274,31 +272,54 @@ module.exports = function (RED) {
         if (typeof err === 'string' && err.startsWith('connect ECONNREFUSED')) return 'Connection refused, check if Kafka up'
         return err
       }
-      node.setConsumerProperties = setConsumerProperties
-      node.hostState = new HostAvailable(node.hosts, node.checkInterval * 1000)
+      node.hostState = new HostAvailable(node.hosts, node.checkInterval * 1000,(message)=>{logger.active&&logger.send(message)})
+      node.beforeDown = node.hostState.beforeDown
       node.onDown = node.hostState.onDown
       node.setDown = node.hostState.setDown
       node.onUp = node.hostState.onUp
       this.client = node.getClient()
       node.hostState
-        .onDown(() => {
-          node.log('host state change down ')
-          if (node.client.isAvailable()) node.client.forceDown()
-        }).onUp(() => {
-          node.log('host state change up')
-          node.client.setUp()
+        .onDown(next=>{
+          node.log('host state change down '+JSON.stringify({node:{id:node.id,name:node.name}}))
+          if (node.client.isAvailable()){
+            node.log('host state change down client.isAvailable forcing down'+JSON.stringify({node:{id:node.id,name:node.name}}))
+            node.client.forceDown(()=>{
+              node.log('host state change down client.isAvailable forced down'+JSON.stringify({node:{id:node.id,name:node.name}}))
+              next()
+            })
+          }
+          next()
+        }).onUp(next=> {
+          node.log('host state change up'+JSON.stringify({node:{id:node.id,name:node.name}}))
+          node.client.setUp(next=>{
+            logger.active&&logger.send({ label: 'client onUp',node:{id:node.id,name:node.name}})
+            next()
+          })
+          next()
         })
       node.metadata = new Metadata(node, logger)
-      node.adminConnection = new AdminConnection(node)
-      node.client
-        .onUp(() => node.adminConnection.setUp())
-        .onDown(() => node.adminConnection.setDown())
-        .onUp(node.metadata.startRefresh.bind(node.metadata))
-        .onDown(node.metadata.stopRefresh.bind(node.metadata))
       node.onChangeMetadata = node.metadata.onChange.bind(node.metadata)
       node.metadataRefresh = node.metadata.refresh.bind(node.metadata)
       node.getTopicsPartitions = node.metadata.getTopicsPartitions.bind(node.metadata)
+      node.adminConnection = new AdminConnection(node)
+      node.client.onUp(next=>{
+        logger.active&&logger.send({ label: 'client.onUp',node:{id:node.id,name:node.name}})
+        node.adminConnection.setUp(next=>{
+          logger.active&&logger.send({ label: 'client.onUp.adminConnection.setup done',node:{id:node.id,name:node.name}})
+          next&&next()
+        })
+        next()
+      }).onDown(next=>{
+        logger.active&&logger.send({ label: 'client.onDown',node:{id:node.id,name:node.name}})
+        node.adminConnection.setDown(next=>{
+          logger.active&&logger.send({ label: 'client.adminConnection.onDown setDown',node:{id:node.id,name:node.name}})
+          next&&next()
+        })
+        next()
+      }).onUp(node.metadata.startRefresh.bind(node.metadata))
+      .onDown(node.metadata.stopRefresh.bind(node.metadata))
       node.close = function (removed, done) {
+        logger.active&&logger.send({ label: 'close',node:{id:node.id,name:node.name}})
         try {
           node.setDown(done)
         } catch (ex) {

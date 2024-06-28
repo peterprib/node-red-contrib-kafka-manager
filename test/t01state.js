@@ -20,7 +20,7 @@ describe('state', function () {
     state.setUp()
     assert.equal(state.isAvailable(), true)
     assert.equal(state.isNotAvailable(), false)
-    assert.throws(() => state.setUp(), '')
+    state.setUp()
     done()
   })
   it('initial setDown', function (done) {
@@ -28,7 +28,7 @@ describe('state', function () {
     state.setUp().setDown()
     assert.equal(state.isAvailable(), false)
     assert.equal(state.isNotAvailable(), true)
-    assert.throws(() => state.setDown(), '')
+    state.setDown()
     done()
   })
   it('isAvailable functions down', function (done) {
@@ -126,11 +126,10 @@ describe('state', function () {
     state.setDownAction((next) => { test += ',setDownAction'; next() })
       .onUp((next) => { test += ',onUp'; next() })
       .onDown((next) => { test += ',onDown'; next() })
-      .whenUp((next) => { test += ',whenUp'; next() })
-      .whenUp((next) => {
+      .whenUp(() => { test += ',whenUp'})
+      .whenUp(() => {
         if (test === ',setUpAction,onUp,whenUp') done()
         else done('test is ' + test) 
-        next()
       })
       .setUp()
   })
@@ -143,19 +142,18 @@ describe('state', function () {
       .setDownAction((next) => { test += ',setDownAction'; next() })
       .onUp((next) => { test += ',onUp'; next() })
       .onDown((next) => { test += ',onDown'; next() })
-      .whenUp((next) => { test += ',whenUp'; next() })
-      .whenUp((next) => { test += ',whenUp1'; next() })
+      .whenUp(() => { test += ',whenUp'})
+      .whenUp(() => { test += ',whenUp1' })
     console.log({ label: 'pre setup', state: state.getState() })
     state.setUp()
     console.log({ label: 'pre setup', state: state.getState() })
-    state.whenUp((next) => { test += ',whenUp2'; next() })
-    state.whenDown((next) => { 
+    state.whenUp(() => { test += ',whenUp2'})
+    state.whenDown(() => { 
       if (test === result) done(); 
       else done('result: ' + test + " expected: "+result)
-      next()
     })
     console.log({ label: 'pre setdown', state: state.getState() })
-    state.whenUp((next) => { state.setDown() ; next() })
+    state.whenUp(() => { state.setDown() })
   })
   it('setUp(done)', function (done) {
     const state = new State()
@@ -165,7 +163,7 @@ describe('state', function () {
     state.setDownAction((next) => { test += ',setDownAction'; next() })
       .onUp((next) => { test += ',onUp'; next() })
       .onDown((next) => { test += ',onDown'; next() })
-      .whenUp((next) => { test += ',whenUp'; next() })
+      .whenUp(() => { test += ',whenUp' })
     state.setUp(() => {
       if (test === result) done()
       else done('result: ' + test + " expected: "+result)
@@ -179,13 +177,13 @@ describe('state', function () {
     state.setDownAction((next) => { test += ',setDownAction';  console.log(test); next() })
       .onUp((next) => { test += ',onUp' ;  console.log(test); next() })
       .onDown((next) => { test += ',onDown' ;  console.log(test); next() })
-      .whenUp((next) => { test += ',whenUp' ;  console.log(test); next() })
+      .whenUp(() => { test += ',whenUp' ;  console.log(test) })
     setTimeout(() =>{
         console.log('setTimeout1 paused .2 second')
         state.setUp((next) => {
           console.log("setTimeout1 up")
-          state.whenUp((next) => { 
-            test += ',whenUp1';  console.log(test); next() 
+          state.whenUp(() => { 
+            test += ',whenUp1';  console.log(test) 
           })
           setTimeout(() =>{
             console.log("setTimeout2 setDown pause .2 secs")
@@ -209,7 +207,7 @@ describe('state', function () {
     }).setDownAction((next) => { test += ',setDownAction'; next() })
       .onUp((next) => { test += ',onUp' ; next()})
       .onDown((next) => { test += ',onDown' ; next()})
-      .whenUp((next) => { if (test === ',setCheck,setCheck,setUpAction,onUp') done(); else done('test is ' + test) ; next()})
+      .whenUp(() => { if (test === ',setCheck,setCheck,setUpAction,onUp') done(); else done('test is ' + test)})
       .setCheck((onUp, onDown) => {
         if (++checkCount > 2) return onUp()
         test += ',setCheck'
@@ -231,11 +229,10 @@ describe('state', function () {
       console.log('up1 done') 
       next()
     })
-    state.whenUp((next) => {
+    state.whenUp(() => {
       console.log('whenup')
       if (up1 === true && up2 === true) done()
       else done('whenUp actioned too early up1:' + up1 + ' up2:' + up2 + ' stack:' + state.stack.setUpDone.length)
-      next()
     })
     setTimeout(() =>{
       try{
@@ -261,11 +258,10 @@ describe('state', function () {
       .beforeUp((next) => { sequence += ',beforeUp2'; next() })
       .beforeUp((next) => { sequence += ',beforeUp3'; next() })
       .setUp(() => console.log('setUp done'))
-      .whenUp((next) => {
+      .whenUp(() => {
         console.log('whenup')
         if (sequence === expectedSequence) done()
         else done('expected:' + expectedSequence + ' actual:' + sequence)
-        next()
       })
   })
   it('beforeDown', function (done) {
@@ -285,16 +281,14 @@ describe('state', function () {
       .beforeDown((next) => { sequence += ',beforeDown2'; console.log(sequence); next() })
       .beforeDown((next) => { sequence += ',beforeDown3'; console.log(sequence); next() })
       .setUp(() => { sequence += ',setUp'; console.log(sequence);  next() })
-      .whenUp((next) => {
+      .whenUp(() => {
         sequence += ',whenUp'; console.log(sequence);
-        state.whenDown((next) => {
+        state.whenDown(() => {
           sequence += ',whenDown'; console.log(sequence);
           if (sequence === expectedSequence) done()
           else done('expected:' + expectedSequence + ' actual:' + sequence)
-          next()
         })
-        .setDown(() => { sequence += ',setDown'; console.log(sequence);  next() })
-        next()
+        .setDown(() => { sequence += ',setDown'; console.log(sequence)})
       })
       console.log("***beforeDown wait on done")
   }).timeout(4000)
@@ -306,15 +300,13 @@ describe('state', function () {
     state.setUpAction((next) => { 
       test += ',setUpAction'; console.log(test)
       state.upFailedAndClearQ(testMessage,next)
-//      next()
     })
     state.setDownAction((next) => { test += ',setDownAction'; console.log(test); next() })
       .onDown((next) => { test += ',onDown'; console.log(test) ; next()})
-    state.whenUp((next) => { done('fail whenup1') ; next()})
+    state.whenUp(() => { done('fail whenup1')})
     state.whenUp({
-      callFunction: (next) => {
+      callFunction: () => {
         done('fail whenup2')
-        next()
       },
       onDisgard: (message,next) => {
         test += ',whenUp2 onDisgard'; console.log(test)
@@ -323,9 +315,11 @@ describe('state', function () {
         next()
       }
     })
-    state.whenUp((next) => { done('fail whenup3'); next() })
-    state.setUp((done)=>{
-      test += ',setUp'; console.log(test); next()
+    state.whenUp(() => { done('fail whenup3')})
+    state.setUp((next)=>{
+      test += ',setUp'; console.log(test)
+      done()
+      next()
     })
     console.log("***setUpFail upFailedAndClearQ wait on done")
   })
@@ -352,9 +346,9 @@ describe('state', function () {
     }).setDownAction((next) => { 
         sequence += ',downAction'; console.log(sequence);
         next()
-    }).whenUp((next) => {
+    }).whenUp(() => {
       sequence += ',whenup1';console.log(sequence)
-      state.whenDown((nextWhenDown) => {
+      state.whenDown(() => {
         sequence += ',whenDown'; console.log(sequence);
         console.log('*** fire when up in 1000')
         setTimeout(() => {
@@ -363,17 +357,14 @@ describe('state', function () {
           if (sequence === expectedSequence) done()
           else done('\nexpected:' + expectedSequence + '\n  actual:' + sequence)
           }, 1000)
-          nextWhenDown() 
       })
-      next()
     })
     console.log('*** fire when up in 800')
     setTimeout(() => {
       console.log('*** 800 has past, whenup2')
       sequence += ',setTimeout'; console.log(sequence);
-      state.whenUp((next) => {
+      state.whenUp(() => {
         sequence += ',whenup2'; console.log(sequence);
-        next()
       })
     }, 800)
     console.log("*** idle ended now waiting on final done")

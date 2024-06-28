@@ -21,8 +21,13 @@
     "zlib": "*"
   },
   "scripts": {
-    "test": "mocha --exit \"test/t01*.js\"",
-    "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json"
+    "test": "mocha --exit \"test/*.js\"",
+    "testState": "mocha --exit \"test/t01s*.js\"",
+    "testProcessStack": "mocha --exit \"test/t00p*.js\"",
+    
+    "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json",
+
+    "update":"npm update"
   },
   "repository": {
     "type": "git",

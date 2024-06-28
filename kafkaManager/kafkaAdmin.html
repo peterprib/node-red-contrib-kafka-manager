@@ -142,7 +142,8 @@ function json2html(obj){
 						"list Topics": function (){sendCommand(this,"listTopics");},
 						close:function(){sendCommand(this,"close")},
 						connect:function(){sendCommand(this,"connect")},
-						status:function(){sendCommand(this,"status")}
+						status:function(){sendCommand(this,"status")},
+						"debug":function(){sendCommand(this,"debug")}
 					},
 					close: function (event, ui) {
 				    	$(this).remove();
