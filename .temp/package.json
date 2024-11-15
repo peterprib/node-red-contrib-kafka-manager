@@ -5,6 +5,7 @@
     "private": true,
     "dependencies": {
         "node-red-contrib-kafka-manager": "file:..",
-        "node-red-contrib-prib-functions": "~0.18.0"
+        "node-red-contrib-prib-functions": "~0.18.0",
+        "node-red-project": "file:"
     }
 }

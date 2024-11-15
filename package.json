@@ -6,6 +6,7 @@
     "compressiontool": "*",
     "kafka-node": "*",
     "node": ">=0.6.13",
+    "node-red-contrib-kafka-manager": "file:",
     "node-red-contrib-logger": ">=0.0.8",
     "node-red-contrib-noderedbase": ">=0.0.16"
   },
@@ -24,10 +25,8 @@
     "test": "mocha --exit \"test/*.js\"",
     "testState": "mocha --exit \"test/t01s*.js\"",
     "testProcessStack": "mocha --exit \"test/t00p*.js\"",
-    
     "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json",
-
-    "update":"npm update"
+    "update": "npm update"
   },
   "repository": {
     "type": "git",
