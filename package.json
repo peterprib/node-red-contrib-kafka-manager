@@ -21,6 +21,9 @@
     "node-red-node-test-helper": "*",
     "zlib": "*"
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "test": "mocha --exit \"test/*.js\"",
     "testState": "mocha --exit \"test/t01s*.js\"",
